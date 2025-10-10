@@ -1,0 +1,100 @@
+/* General page layout */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #a0a0a0, #3e3e3e);
+    height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Login form container */
+form {
+    background-color: #d1cfcf;
+    padding: 40px 50px;
+    border-radius: 20px;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 320px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Subtle hover lift effect */
+form:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* Labels (email pass) */
+label {
+    font-weight: 600;
+    color: #000000;
+    display: block;
+    margin-top: 15px;
+}
+
+/* Inputs */
+input[type="text"],
+input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    border: 1px solid #ffffff;
+    border-radius: 10px;
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+    border-color: #64b5f6;
+    background-color: #ffffff;
+    outline: none;
+}
+
+/* Submit button */
+input[type="submit"] {
+    margin-top: 25px;
+    width: 100%;
+    padding: 12px;
+    background-color: #2894ff;
+    border: none;
+    border-radius: 10px;
+    color: rgb(255, 255, 255);
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+input[type="submit"]:hover {
+    background-color: #017df9;
+}
+
+/* Home button */
+button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background-color: #ffffff;
+    border: none;
+    color: rgb(5, 4, 4);
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+    background-color: #2993e9;
+    transform: translateY(-2px);
+}
+
+/* Login message */
+#loginMessage {
+    margin-top: 10px;
+    font-weight: 500;
+    color: #d32f2f;
+}
