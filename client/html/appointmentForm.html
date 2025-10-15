@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  
+<head>
+  <meta charset="UTF-8">
+  <title>Appointment Request Form</title>
+
+  <link rel="stylesheet" href="../css/appointmentForm.css"> 
+
+</head>
+<button id="home" onclick= "window.location.href= 'index.html'"> Home </button> <!-- To go home -->
+
+<body>
+
+  <div class="container">
+    <h2>Service Appointment Request</h2>
+
+    <form id="appointmentForm">
+      <label for="name">Full Name:</label>
+      <input type="text" id="name" name="name" required>
+
+      <label for="phone">Phone Number:</label>
+      <input type="text" id="phone" name="phone" placeholder=""
+        pattern="^(\+?\d{1,2}[\s-]?)?(\(?\d{3}\)?[\s-]?)?\d{3}[\s-]?\d{4}$" 
+        title="Enter Phone Number" required>
+
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email" required>
+
+      <label for="address">Address:</label>
+      <input type="text" id="address" name="address" required>
+
+      <label for="zip">ZIP Code:</label>
+      <input type="number" id="zip" name="zip" required>
+
+      <label for="service">Type of Service:</label>
+      <select id="service" name="service" required>
+        <option value="">--Select Service--</option>
+        <option value="plumbing">Plumbing</option>
+        <option value="electrician">Electrician</option>
+        <option value="other">Other</option>
+      </select>
+
+      <label for="job">Job Type:</label>
+      <select id="job" name="job" required>
+        <option value="">--Select Job Type--</option>
+        <option value="repair">Repair</option>
+        <option value="install">Install</option>
+        <option value="quote">Quote</option>
+        <option value="other">Other</option>
+      </select>
+
+      <label for="description">Job Description:</label>
+      <textarea id="description" name="description" placeholder="Describe the issue or job details..."></textarea>
+
+      <label for="photo">Upload a Photo (optional):</label>
+      <input type="file" id="photo" name="photo" accept="image/*">
+
+      <h3 style="margin-top:30px;">Select Preferred Date & Time:</h3>
+      <div class="scheduler">
+        <div class="calendar">
+          <header>
+            <button type="button" class="nav" id="prevMonth">&lt;</button>
+            <h3 id="monthYear"></h3>
+            <button type="button" class="nav" id="nextMonth">&gt;</button>
+          </header>
+          <table id="calendarTable">
+            <thead>
+              <tr>
+                <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
+              </tr>
+            </thead>
+            <tbody id="calendarBody"></tbody>
+          </table>
+        </div>
+
+        <div class="time-section" id="timeSlots">
+          <h4>Select a Time:</h4>
+        </div>
+      </div>
+
+      <div class="confirm" id="confirmText">No date/time selected yet</div>
+
+      <button type="submit">Submit Request</button>
+    </form>
+  </div>
+
+<script src="/client/js/appointmentForm.js"> </script>
+
+</body>
+</html>

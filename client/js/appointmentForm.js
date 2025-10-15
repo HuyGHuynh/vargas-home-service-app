@@ -1,4 +1,4 @@
-// === Calendar generation ===
+ // Calendar generation
     const monthYear = document.getElementById('monthYear');
     const calendarBody = document.getElementById('calendarBody');
     let currentDate = new Date();
@@ -64,7 +64,7 @@
       }
     }
 
-    // === Time slots generation ===
+    // Time slots generation
     const timeSlotsContainer = document.getElementById("timeSlots");
     const startHour = 9;
     const endHour = 18.5; // 6:30 PM
@@ -95,7 +95,7 @@
 
     generateCalendar(currentDate);
 
-    // === Form submission ===
+    // Form submission
     document.getElementById("appointmentForm").addEventListener("submit", function(e) {
       e.preventDefault();
       if (!selectedDate || !selectedTime) {

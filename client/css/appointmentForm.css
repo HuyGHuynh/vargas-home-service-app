@@ -1,3 +1,26 @@
+ /* Home button */
+#home {
+    position: absolute;       
+    top: 10px;               
+    left: 10px;              
+    background-color: #f3f0f0; 
+    border: 2px solid black;   
+    color: #050404;        
+    padding: 6px 10px;         
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;   
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+/* Optional hover effect */
+#home:hover {
+    background-color: #e0dedf;  /* Slightly darker on hover */
+    transform: scale(1.05);      /* Slight zoom effect */
+}
+
+
 body {
       font-family: Arial, sans-serif;
       background: #f4f7fb;

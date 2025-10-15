@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vargas’ Home Services</title>
+  <link rel="stylesheet" href="../css/home.css">
+</head>
+
+<body>
+  <!-- Navigation Bar -->
+  <header>
+    <div class="container nav-container">
+      <h1 class="logo-text">Vargas’ Home Services</h1>
+
+      <nav class="nav-links" id="navLinks">
+        <a href="#services">Services</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#process">Our Process</a>
+        <a href="#about">About</a>
+        <a href="appointementForm.html" class="highlight">Schedule</a>
+        <a href="login.html" class="login-btn">Log In</a>
+      </nav>
+
+      <!-- Hamburger Icon -->
+      <div class="hamburger" id="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section --> <!--add logo-->
+  <section class="hero">
+    <div class="hero-content">
+      <img src="client/images/detective.webp" alt="Vargas Home Services Logo" class="hero-logo">
+      <h2>Your trusted partner for all home improvement needs.</h2>
+      <p class="phone">Call us today: <strong>(555) 123-4567</strong></p>
+      <button class="appointment-btn" onclick="window.location.href='appointmentForm.html'">Schedule Appointment</button>
+    </div>
+  </section>
+
+  <!-- Services -->
+  <section class="services" id="services">
+    <h2>Our Services</h2>
+    <div class="service-grid">
+      <div class="card">
+        <h3>Home Repairs</h3>
+        <p>Reliable fixes for leaks, drywall, electrical, and more—done right the first time.</p>
+      </div>
+      <div class="card">
+        <h3>Remodeling</h3>
+        <p>Transform your living spaces with expert kitchen, bath, and home remodels.</p>
+      </div>
+      <div class="card">
+        <h3>Outdoor Projects</h3>
+        <p>Beautiful patios, fences, and decks designed to enhance your outdoor living.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Gallery --> <!--add work photo from client-->
+  <section class="gallery" id="gallery">
+    <h2>Our Work</h2>
+    <div class="gallery-grid">
+      <img src="client/images/work1.webp" alt="Project 1">
+      <img src="client/images/work2.webp" alt="Project 2">
+      <img src="client/images/work3.webp" alt="Project 3">
+      <img src="client/images/work4.webp" alt="Project 4">
+    </div>
+  </section>
+
+  <!-- Process -->
+  <section class="process" id="process">
+    <h2>Our Process</h2>
+    <div class="process-steps">
+      <div class="step">
+        <span>1</span>
+        <h4>Consultation</h4>
+        <p>We discuss your goals, timeline, and expectations in detail.</p>
+      </div>
+      <div class="step">
+        <span>2</span>
+        <h4>Planning</h4>
+        <p>Our team creates a clear project plan with transparent pricing.</p>
+      </div>
+      <div class="step">
+        <span>3</span>
+        <h4>Execution</h4>
+        <p>We complete the project with expert craftsmanship and precision.</p>
+      </div>
+      <div class="step">
+        <span>4</span>
+        <h4>Final Touches</h4>
+        <p>We ensure every detail meets our quality standards—and your vision.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section class="about" id="about">
+    <h2>About Vargas’ Home Services</h2>
+    <p>
+      Founded by the Vargas family, we take pride in turning houses into homes.  
+      With years of experience, we provide dependable, top-quality home improvement services with honesty and care.  
+      Our goal is simple: to help you love where you live.
+    </p>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2025 Vargas’ Home Services | Built with love for our community</p>
+  </footer>
+
+ <script src="/client/js/index.js"> </script>
+
+</body>
+</html>
