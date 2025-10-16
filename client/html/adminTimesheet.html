@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+  
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Timesheet - Admin Dashboard</title>
+
+  <!-- Load FullCalendar -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css">
+  <link rel="stylesheet" href="../css/adminTimesheet.css">
+</head>
+
+<body>
+  <!-- Navigation Bar -->
+  <header class="admin-header">
+    <div class="admin-nav-container">
+      <h1 class="admin-logo">Admin Dashboard</h1>
+      <nav class="admin-nav-links">
+        <a href="ownerView.html">Dashboard</a>
+        <a href="adminService.html">Service</a>
+        <a href="adminWarranty.html">Warranty</a>
+        <a href="adminFinancial.html">Financial</a>
+        <a href="adminEmployee.html">Manage Employee</a>
+        <a href="adminTimesheet.html" class="active">Timesheet</a>
+        <a href="home.html" class="logout-btn">Log Out</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Timesheet Content -->
+  <div class="timesheet-container">
+    <div class="timesheet-header">
+      <h2>Technician Availability Timesheet</h2>
+      <p class="timesheet-description">View all technicians' work schedules and availability for the biweekly period</p>
+    </div>
+
+    <!-- Controls Section -->
+    <div class="timesheet-controls">
+      <div class="period-selector">
+        <button class="period-btn" onclick="changePeriod(-1)">
+          <span>◀</span> Previous Period
+        </button>
+        <div class="current-period">
+          <h3 id="currentPeriod">Loading...</h3>
+        </div>
+        <button class="period-btn" onclick="changePeriod(1)">
+          Next Period <span>▶</span>
+        </button>
+      </div>
+
+      <div class="filter-section">
+        <div class="filter-group">
+          <label for="technicianFilter">Filter by Technician:</label>
+          <select id="technicianFilter" onchange="filterByTechnician()">
+            <option value="all">All Technicians</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="statusFilter">Filter by Status:</label>
+          <select id="statusFilter" onchange="filterByStatus()">
+            <option value="all">All Status</option>
+            <option value="available">Available</option>
+            <option value="assigned">Assigned</option>
+          </select>
+        </div>
+
+        <button class="refresh-btn" onclick="refreshTimesheet()">
+          🔄 Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Calendar Section -->
+    <div class="calendar-section">
+      <div id="calendar"></div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend-section">
+      <h4>Legend:</h4>
+      <div class="legend-items">
+        <div class="legend-item">
+          <span class="legend-color available"></span>
+          <span class="legend-text">Available</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color assigned"></span>
+          <span class="legend-text">Assigned to Job</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Availability Detail Modal -->
+  <div id="availabilityModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeAvailabilityModal()">&times;</span>
+      <h2>Availability Details</h2>
+      
+      <div class="detail-section">
+        <h3>Technician Information</h3>
+        <div class="detail-row">
+          <span class="detail-label">Name:</span>
+          <span class="detail-value" id="modalTechName">-</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Date:</span>
+          <span class="detail-value" id="modalDate">-</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Time:</span>
+          <span class="detail-value" id="modalTime">-</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Status:</span>
+          <span class="detail-value status-badge" id="modalStatus">-</span>
+        </div>
+      </div>
+
+      <div class="detail-section" id="jobDetailsSection" style="display: none;">
+        <h3>Job Assignment</h3>
+        <div class="detail-row">
+          <span class="detail-label">Work Order:</span>
+          <span class="detail-value" id="modalWorkOrder">-</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Customer:</span>
+          <span class="detail-value" id="modalCustomer">-</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Service:</span>
+          <span class="detail-value" id="modalService">-</span>
+        </div>
+      </div>
+
+      <div class="detail-section" id="unavailableDetailsSection" style="display: none;">
+        <h3>Unavailability Reason</h3>
+        <div class="detail-row">
+          <span class="detail-label">Type:</span>
+          <span class="detail-value" id="modalUnavailableType">-</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Reason:</span>
+          <span class="detail-value" id="modalUnavailableReason">-</span>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="close-btn" onclick="closeAvailabilityModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load FullCalendar js -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+  <script src="../js/adminTimesheet.js"></script>
+</body>
+</html>

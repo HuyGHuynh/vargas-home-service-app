@@ -1,99 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../css/warranty.css">
-    <title>Warranty Information</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Warranty Lookup - Vargas' Home Services</title>
+  <link rel="stylesheet" href="../css/warranty.css">
 </head>
 
 <body>
+  <!-- Navigation Bar -->
+  <header>
+    <div class="container nav-container">
+      <h1 class="logo-text">Vargas' Home Services</h1>
 
-    <button onclick="window.location.href='home.html'">Home</button> <!-- To go home -->
+      <nav class="nav-links" id="navLinks">
+        <a href="home.html">Home</a>
+        <a href="warranty.html" class="active">Warranty</a>
+        <a href="workOrder.html">Work Order</a>
+        <a href="appointmentForm.html">Schedule</a>
+        <a href="login.html">Login</a>
+      </nav>
 
+      <!-- Hamburger Icon -->
+      <div class="hamburger" id="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
     <div class="container">
-        <h2>Warranty Information</h2>
-        <p class="description">Enter your email or phone number to look up your warranty information.</p>
+      <!-- Page Header -->
+      <div class="page-header">
+        <h1>Warranty Lookup</h1>
+        <p>Enter your phone number or email to view your service warranties</p>
+      </div>
 
-        <form id="warrantyForm">
-            <div class="form-group">
-                <label for="email">Email Address:</label>
-                <input type="email" id="email" name="email" placeholder="example@email.com">
-            </div>
+      <!-- Search Form -->
+      <div class="search-form">
+        <input 
+          type="text" 
+          id="warrantySearchInput" 
+          placeholder="Enter phone number or email" 
+          class="search-input"
+        />
+        <button onclick="lookupWarranty()" class="search-btn">Search</button>
+      </div>
 
-            <div class="divider">
-                <span>OR</span>
-            </div>
-
-            <div class="form-group">
-                <label for="phone">Phone Number:</label>
-                <input type="tel" id="phone" name="phone" placeholder="(555) 123-4567"
-                    pattern="^(\+?\d{1,2}[\s-]?)?(\(?\d{3}\)?[\s-]?)?\d{3}[\s-]?\d{4}$">
-            </div>
-
-            <div class="submit-container">
-                <button type="submit">Look Up Warranty</button>
-            </div>
-        </form>
-
-        <div id="warrantyMessage"></div>
-        
-        <div id="warrantyResults"></div>
+      <!-- Results Container -->
+      <div id="warrantyResults" class="results-container"></div>
     </div>
+  </main>
 
-    <!-- Service Request Modal -->
-    <div id="serviceRequestModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeServiceModal()">&times;</span>
-            <h2>Request Warranty Service</h2>
-            <p class="modal-description">Please describe the issue you're experiencing with your warranty service.</p>
-            
-            <form id="serviceRequestForm">
-                <input type="hidden" id="modalWarrantyId" name="warrantyId">
-                <input type="hidden" id="modalWorkOrderId" name="workOrderId">
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="issueType">Issue Type: <span style="color: red;">*</span></label>
-                        <select id="issueType" name="issueType" required>
-                            <option value="">-- Select Issue Type --</option>
-                            <option value="repair">Repair Needed</option>
-                            <option value="malfunction">Malfunction</option>
-                            <option value="damage">Damage</option>
-                            <option value="inspection">Inspection Request</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="urgency">Urgency Level: <span style="color: red;">*</span></label>
-                        <select id="urgency" name="urgency" required>
-                            <option value="">-- Select Urgency --</option>
-                            <option value="low">Low - Can wait a week</option>
-                            <option value="medium">Medium - Within 3-5 days</option>
-                            <option value="high">High - Within 24-48 hours</option>
-                            <option value="emergency">Emergency - ASAP</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="form-group-full">
-                    <label for="problemDescription">Problem Description: <span style="color: red;">*</span></label>
-                    <textarea id="problemDescription" name="problemDescription" rows="5" 
-                        placeholder="Please describe the issue in detail..." required></textarea>
-                </div>
-                
-                <div class="modal-actions">
-                    <button type="button" class="cancel-btn" onclick="closeServiceModal()">Cancel</button>
-                    <button type="submit" class="submit-btn">Submit Request</button>
-                </div>
-            </form>
-        </div>
-    </div>
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2025 Vargas' Home Services | Built with love for our community</p>
+  </footer>
 
-    <script src="../js/warranty.js"></script>
-
+  <script src="../js/warranty.js"></script>
+  <script>
+    // Mobile Menu Toggle
+    const hamburger = document.querySelector('.hamburger');
+    const navLinks = document.querySelector('.nav-links');
+    if (hamburger) {
+      hamburger.addEventListener('click', () => {
+        navLinks.classList.toggle('active');
+        hamburger.classList.toggle('active');
+      });
+    }
+  </script>
 </body>
-
 </html>

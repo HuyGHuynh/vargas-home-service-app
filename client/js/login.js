@@ -2,11 +2,23 @@
 const loginForm = document.getElementById('login');
 const loginMessage = document.getElementById('loginMessage');
 
-// test user (get rid for final)
-const testUser = {
-    email: 'test@example.com',
-    password: '123'
-};
+// Sample accounts for testing
+const sampleAccounts = [
+    {
+        email: 'admin@vargas',
+        password: 'admin',
+        role: 'admin',
+        redirectTo: 'ownerView.html',
+        name: 'Admin User'
+    },
+    {
+        email: 'employee@vargas',
+        password: 'employee',
+        role: 'employee',
+        redirectTo: 'employeeView.html',
+        name: 'Employee User'
+    }
+];
 
 // Function to handle login
 loginForm.addEventListener('submit', async function(event) {
@@ -21,17 +33,26 @@ loginForm.addEventListener('submit', async function(event) {
         return;
     }
 
-    // test user (get rid for final)
-    if (email === testUser.email && password === testUser.password) {
-        loginMessage.textContent = 'Login successful! Redirecting...';
+    // Check sample accounts
+    const account = sampleAccounts.find(acc => acc.email === email && acc.password === password);
+    
+    if (account) {
+        // Store user session info in localStorage
+        localStorage.setItem('currentUser', JSON.stringify({
+            email: account.email,
+            role: account.role,
+            name: account.name
+        }));
+        
+        loginMessage.textContent = `Login successful! Welcome ${account.name}. Redirecting...`;
         loginMessage.style.color = '#28a745';
         setTimeout(() => {
-            window.location.href = 'ownerView.html';
+            window.location.href = account.redirectTo;
         }, 1000);
         return;
     }
 
-    // Send login request to DB (using json)
+    // If no sample account match, try backend API
     try {
         const response = await fetch('/api/login', {
             method: 'POST',

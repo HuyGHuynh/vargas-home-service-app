@@ -1,341 +1,204 @@
-// Work Order Form Handling
-document.getElementById('workOrderForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const email = document.getElementById('email').value.trim();
-    const phone = document.getElementById('phone').value.trim();
-    const messageDiv = document.getElementById('workOrderMessage');
-    const workOrderResultsDiv = document.getElementById('workOrderResults');
-    
-    // Check if at least one field is filled
-    if (!email && !phone) {
-        messageDiv.className = 'error';
-        messageDiv.textContent = 'Please enter either an email address or phone number.';
-        workOrderResultsDiv.innerHTML = '';
-        return;
+// Sample work order data
+const sampleWorkOrders = [
+    {
+        id: 'WO-2024-001',
+        customerPhone: '555-123-4567',
+        customerEmail: 'john@example.com',
+        customerName: 'John Smith',
+        serviceType: 'Kitchen Remodel',
+        description: 'Complete kitchen renovation including cabinets, countertops, and new appliances',
+        status: 'Completed',
+        priority: 'Normal',
+        dateRequested: '2024-02-01',
+        dateScheduled: '2024-03-15',
+        dateCompleted: '2024-04-20',
+        technician: 'Mike Johnson',
+        estimatedCost: '$15,000',
+        actualCost: '$14,800',
+        notes: 'Customer very satisfied. Left 5-star review.'
+    },
+    {
+        id: 'WO-2024-089',
+        customerPhone: '555-123-4567',
+        customerEmail: 'john@example.com',
+        customerName: 'John Smith',
+        serviceType: 'HVAC Installation',
+        description: 'Install new central air conditioning system',
+        status: 'In Progress',
+        priority: 'High',
+        dateRequested: '2024-05-22',
+        dateScheduled: '2024-06-10',
+        dateCompleted: null,
+        technician: 'Dave Martinez',
+        estimatedCost: '$8,500',
+        actualCost: null,
+        notes: 'Installation 75% complete. Final inspection scheduled for next week.'
+    },
+    {
+        id: 'WO-2023-045',
+        customerPhone: '555-123-4567',
+        customerEmail: 'john@example.com',
+        customerName: 'John Smith',
+        serviceType: 'Roof Repair',
+        description: 'Fix damaged shingles and flashing on north side of roof',
+        status: 'Completed',
+        priority: 'High',
+        dateRequested: '2023-08-01',
+        dateScheduled: '2023-08-20',
+        dateCompleted: '2023-08-21',
+        technician: 'Tom Wilson',
+        estimatedCost: '$2,800',
+        actualCost: '$2,650',
+        notes: 'Completed ahead of schedule. Weather conditions were favorable.'
+    },
+    {
+        id: 'WO-2024-156',
+        customerPhone: '555-987-6543',
+        customerEmail: 'jane@example.com',
+        customerName: 'Jane Doe',
+        serviceType: 'Plumbing Repair',
+        description: 'Fix leaking pipe under kitchen sink',
+        status: 'Scheduled',
+        priority: 'Normal',
+        dateRequested: '2024-10-10',
+        dateScheduled: '2024-10-20',
+        dateCompleted: null,
+        technician: 'Mike Johnson',
+        estimatedCost: '$350',
+        actualCost: null,
+        notes: 'Customer requested morning appointment'
     }
-    
-    // Prepare the data to send
-    const workOrderData = {};
-    if (email) workOrderData.email = email;
-    if (phone) workOrderData.phone = phone;
-    
-    // Show loading message
-    messageDiv.className = 'success';
-    messageDiv.textContent = 'Looking up your work orders...';
-    workOrderResultsDiv.innerHTML = '';
-    
-    // HARDCODED SAMPLE DATA FOR TESTING
-    // Simulate a delay to mimic API call
-    setTimeout(() => {
-        // Sample work order data
-        const sampleData = {
-            workOrders: [
-                {
-                    id: 1,
-                    workOrderId: 'WO-2024-156',
-                    serviceType: 'Plumbing',
-                    description: 'Kitchen sink repair and faucet replacement',
-                    status: 'completed',
-                    createdDate: '2024-08-15',
-                    completedDate: '2024-08-18',
-                    estimatedCost: '$450',
-                    actualCost: '$425',
-                    technician: 'John Smith'
-                },
-                {
-                    id: 2,
-                    workOrderId: 'WO-2024-189',
-                    serviceType: 'Electrical',
-                    description: 'Living room light fixture installation',
-                    status: 'in-progress',
-                    createdDate: '2024-10-10',
-                    scheduledDate: '2024-10-16',
-                    estimatedCost: '$320',
-                    technician: 'Mike Johnson'
-                },
-                {
-                    id: 3,
-                    workOrderId: 'WO-2024-203',
-                    serviceType: 'HVAC',
-                    description: 'Annual AC maintenance and filter replacement',
-                    status: 'pending',
-                    createdDate: '2024-10-14',
-                    scheduledDate: '2024-10-20',
-                    estimatedCost: '$150',
-                    technician: 'Not assigned yet'
-                },
-                {
-                    id: 4,
-                    workOrderId: 'WO-2024-098',
-                    serviceType: 'General Repair',
-                    description: 'Drywall repair in bedroom',
-                    status: 'cancelled',
-                    createdDate: '2024-06-05',
-                    cancelledDate: '2024-06-07',
-                    estimatedCost: '$200',
-                    cancellationReason: 'Customer requested cancellation'
-                }
-            ]
-        };
-        
-        displayWorkOrders(sampleData.workOrders);
-        messageDiv.style.display = 'none';
-    }, 1000);
-    
-    /* UNCOMMENT THIS SECTION TO USE REAL BACKEND API
-    try {
-        // Send request to backend
-        const response = await fetch('/api/workorder/lookup', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(workOrderData)
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to fetch work orders');
-        }
-        
-        const data = await response.json();
-        
-        // Display work orders
-        displayWorkOrders(data.workOrders);
-        messageDiv.style.display = 'none';
-        
-    } catch (error) {
-        console.error('Error:', error);
-        messageDiv.className = 'error';
-        messageDiv.textContent = 'Error looking up work orders. Please try again later.';
-        workOrderResultsDiv.innerHTML = '';
-    }
-    */
-});
+];
 
-// Function to display work orders
-function displayWorkOrders(workOrders) {
-    const workOrderResultsDiv = document.getElementById('workOrderResults');
-    
-    if (!workOrders || workOrders.length === 0) {
-        workOrderResultsDiv.innerHTML = `
-            <div class="no-work-orders">
-                <p>No work orders found for this email/phone number.</p>
+// Lookup work orders by phone or email
+function lookupWorkOrders() {
+    const searchInput = document.getElementById('searchInput').value.trim();
+    const resultsContainer = document.getElementById('resultsContainer');
+
+    if (!searchInput) {
+        resultsContainer.innerHTML = `
+            <div class="error-message">
+                <p>⚠️ Please enter a phone number or email address</p>
             </div>
         `;
         return;
     }
+
+    // Search for work orders matching the input
+    const foundOrders = sampleWorkOrders.filter(order => 
+        order.customerPhone.includes(searchInput) || 
+        order.customerEmail.toLowerCase().includes(searchInput.toLowerCase())
+    );
+
+    if (foundOrders.length === 0) {
+        resultsContainer.innerHTML = `
+            <div class="not-found-message">
+                <h3>No Work Orders Found</h3>
+                <p>We couldn't find any work orders associated with "${searchInput}"</p>
+                <p>Please check your information and try again, or contact us at (555) 123-4567</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Display work orders as a list
+    displayWorkOrders(foundOrders);
+}
+
+// Display work orders in list format
+function displayWorkOrders(orders) {
+    const resultsContainer = document.getElementById('resultsContainer');
     
-    let html = '<div class="work-orders-container"><h3>Your Work Orders</h3><div class="work-order-grid">';
-    
-    workOrders.forEach((order) => {
-        const createdDate = new Date(order.createdDate).toLocaleDateString();
+    let html = `
+        <div class="results-header">
+            <h2>Your Work Orders</h2>
+            <p class="results-count">${orders.length} work ${orders.length === 1 ? 'order' : 'orders'} found</p>
+        </div>
+        <div class="order-list">
+    `;
+
+    orders.forEach((order, index) => {
+        const dateRequested = new Date(order.dateRequested).toLocaleDateString();
+        const dateScheduled = order.dateScheduled ? new Date(order.dateScheduled).toLocaleDateString() : 'Not scheduled';
+        const dateCompleted = order.dateCompleted ? new Date(order.dateCompleted).toLocaleDateString() : 'N/A';
+        
         const statusClass = order.status.toLowerCase().replace(' ', '-');
-        const statusText = order.status.charAt(0).toUpperCase() + order.status.slice(1).replace('-', ' ');
-        const isPending = order.status.toLowerCase() === 'pending';
-        
+
         html += `
-            <div class="work-order-card ${statusClass}">
-                <div class="work-order-header">
-                    <h4>Work Order #${order.workOrderId}</h4>
-                    <span class="status-badge ${statusClass}">
-                        ${statusText}
-                    </span>
-                </div>
-                <div class="work-order-details">
-                    <p><strong>Service Type:</strong> ${order.serviceType}</p>
-                    <p><strong>Description:</strong> ${order.description}</p>
-                    <p><strong>Created Date:</strong> ${createdDate}</p>
-                    ${order.scheduledDate ? `<p><strong>Scheduled Date:</strong> ${new Date(order.scheduledDate).toLocaleDateString()}</p>` : ''}
-                    ${order.completedDate ? `<p><strong>Completed Date:</strong> ${new Date(order.completedDate).toLocaleDateString()}</p>` : ''}
-                    ${order.cancelledDate ? `<p><strong>Cancelled Date:</strong> ${new Date(order.cancelledDate).toLocaleDateString()}</p>` : ''}
-                    <p><strong>Estimated Cost:</strong> ${order.estimatedCost}</p>
-                    ${order.actualCost ? `<p><strong>Actual Cost:</strong> ${order.actualCost}</p>` : ''}
-                    <p><strong>Technician:</strong> ${order.technician}</p>
-                    ${order.cancellationReason ? `<p><strong>Cancellation Reason:</strong> ${order.cancellationReason}</p>` : ''}
-                </div>
-                ${isPending ? `
-                    <div class="work-order-actions">
-                        <button class="action-btn reschedule-btn" onclick="rescheduleWorkOrder('${order.id}', '${order.workOrderId}')">
-                            <span class="btn-icon">📅</span> Reschedule
-                        </button>
-                        <button class="action-btn cancel-btn" onclick="cancelWorkOrder('${order.id}', '${order.workOrderId}')">
-                            <span class="btn-icon">✖</span> Cancel
-                        </button>
+            <div class="order-card">
+                <div class="order-header">
+                    <div class="order-header-left">
+                        <h3>${order.serviceType}</h3>
+                        <p class="order-id">Work Order #${order.id}</p>
                     </div>
-                ` : ''}
+                    <div class="order-header-right">
+                        <span class="status-badge ${statusClass}">${order.status}</span>
+                        <span class="priority-badge priority-${order.priority.toLowerCase()}">${order.priority}</span>
+                    </div>
+                </div>
+
+                <div class="order-body">
+                    <div class="order-description">
+                        <p><strong>Description:</strong> ${order.description}</p>
+                    </div>
+
+                    <div class="order-details-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Customer</span>
+                            <span class="detail-value">${order.customerName}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Technician</span>
+                            <span class="detail-value">${order.technician}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Date Requested</span>
+                            <span class="detail-value">${dateRequested}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Date Scheduled</span>
+                            <span class="detail-value">${dateScheduled}</span>
+                        </div>
+                        ${order.dateCompleted ? `
+                            <div class="detail-item">
+                                <span class="detail-label">Date Completed</span>
+                                <span class="detail-value">${dateCompleted}</span>
+                            </div>
+                        ` : ''}
+                        <div class="detail-item">
+                            <span class="detail-label">Estimated Cost</span>
+                            <span class="detail-value">${order.estimatedCost}</span>
+                        </div>
+                        ${order.actualCost ? `
+                            <div class="detail-item">
+                                <span class="detail-label">Actual Cost</span>
+                                <span class="detail-value">${order.actualCost}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    ${order.notes ? `
+                        <div class="order-notes">
+                            <p><strong>Notes:</strong> ${order.notes}</p>
+                        </div>
+                    ` : ''}
+                </div>
             </div>
         `;
     });
-    
-    html += '</div></div>';
-    workOrderResultsDiv.innerHTML = html;
+
+    html += '</div>';
+    resultsContainer.innerHTML = html;
 }
 
-// Function to reschedule a work order
-function rescheduleWorkOrder(orderId, workOrderId) {
-    // Store work order info in modal
-    document.getElementById('modalOrderId').value = orderId;
-    document.getElementById('modalWorkOrderId').value = workOrderId;
-    
-    // Set minimum date to today
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('preferredDate').setAttribute('min', today);
-    
-    // Show modal
-    document.getElementById('rescheduleModal').style.display = 'block';
-    document.body.style.overflow = 'hidden'; // Prevent background scrolling
-}
-
-// Function to close reschedule modal
-function closeRescheduleModal() {
-    document.getElementById('rescheduleModal').style.display = 'none';
-    document.body.style.overflow = 'auto'; // Re-enable scrolling
-    document.getElementById('rescheduleForm').reset();
-}
-
-// Close modal when clicking outside of it
-window.onclick = function(event) {
-    const modal = document.getElementById('rescheduleModal');
-    if (event.target === modal) {
-        closeRescheduleModal();
-    }
-}
-
-// Handle reschedule form submission
+// Allow Enter key to trigger search
 document.addEventListener('DOMContentLoaded', function() {
-    const rescheduleForm = document.getElementById('rescheduleForm');
-    if (rescheduleForm) {
-        rescheduleForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const orderId = document.getElementById('modalOrderId').value;
-            const workOrderId = document.getElementById('modalWorkOrderId').value;
-            const email = document.getElementById('email').value.trim();
-            const phone = document.getElementById('phone').value.trim();
-            
-            // Get form data
-            const requestData = {
-                orderId: orderId,
-                workOrderId: workOrderId,
-                email: email,
-                phone: phone,
-                preferredDate: document.getElementById('preferredDate').value,
-                preferredTime: document.getElementById('preferredTime').value,
-                action: 'reschedule'
-            };
-            
-            console.log('Submitting reschedule request:', requestData);
-            
-            // Close modal
-            closeRescheduleModal();
-            
-            // Show success message
-            showNotification('Reschedule request submitted! We will contact you within 24 hours to confirm.', 'success');
-            
-            // TODO: Send actual API request
-            /*
-            try {
-                const response = await fetch('/api/workorder/reschedule', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(requestData)
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    closeRescheduleModal();
-                    showNotification('Reschedule request submitted successfully!', 'success');
-                } else {
-                    showNotification('Failed to submit request. Please try again.', 'error');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showNotification('Failed to submit request. Please try again.', 'error');
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                lookupWorkOrders();
             }
-            */
         });
     }
 });
-
-// Function to cancel a work order
-function cancelWorkOrder(orderId, workOrderId) {
-    const confirmed = confirm(`Cancel Work Order #${workOrderId}?\n\nThis action cannot be undone. Are you sure you want to cancel this work order?`);
-    
-    if (!confirmed) return;
-    
-    const email = document.getElementById('email').value.trim();
-    const phone = document.getElementById('phone').value.trim();
-    
-    // Prepare request data
-    const requestData = {
-        orderId: orderId,
-        workOrderId: workOrderId,
-        email: email,
-        phone: phone,
-        action: 'cancel'
-    };
-    
-    console.log('Cancelling work order:', requestData);
-    
-    // Show success notification
-    showNotification('Work order cancelled successfully.', 'success');
-    
-    // TODO: Send actual API request and reload work orders
-    /*
-    fetch('/api/workorder/cancel', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        showNotification('Work order cancelled successfully!', 'success');
-        // Reload work orders to show updated status
-        setTimeout(() => {
-            document.getElementById('workOrderForm').dispatchEvent(new Event('submit'));
-        }, 1500);
-    })
-    .catch(error => {
-        showNotification('Failed to cancel work order. Please try again.', 'error');
-    });
-    */
-}
-
-// Function to show notification messages
-function showNotification(message, type) {
-    const notificationDiv = document.createElement('div');
-    notificationDiv.className = `notification ${type}`;
-    notificationDiv.textContent = message;
-    
-    document.body.appendChild(notificationDiv);
-    
-    // Show notification
-    setTimeout(() => {
-        notificationDiv.classList.add('show');
-    }, 100);
-    
-    // Hide and remove notification after 4 seconds
-    setTimeout(() => {
-        notificationDiv.classList.remove('show');
-        setTimeout(() => {
-            document.body.removeChild(notificationDiv);
-        }, 300);
-    }, 4000);
-}
-
-// Clear error message when user starts typing
-document.getElementById('email').addEventListener('input', clearMessage);
-document.getElementById('phone').addEventListener('input', clearMessage);
-
-function clearMessage() {
-    const messageDiv = document.getElementById('workOrderMessage');
-    if (messageDiv.className === 'error') {
-        messageDiv.style.display = 'none';
-    }
-}

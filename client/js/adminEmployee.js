@@ -193,11 +193,6 @@ function displayEmployees(filter) {
                     </div>
                 ` : ''}
                 
-                <div class="employee-pay">
-                    <span class="pay-label">Pay Rate</span>
-                    <span class="pay-rate">$${emp.payRate.toFixed(2)}/hr</span>
-                </div>
-                
                 <div class="employee-availability">
                     <h4>Availability</h4>
                     <div class="availability-info">
@@ -248,7 +243,6 @@ function editEmployee(id) {
     document.getElementById('phone').value = employee.phone;
     document.getElementById('address').value = employee.address || '';
     document.getElementById('employeeRole').value = employee.role;
-    document.getElementById('payRate').value = employee.payRate;
     document.getElementById('hireDate').value = employee.hireDate;
     document.getElementById('employmentStatus').value = employee.status;
     document.getElementById('certifications').value = employee.certifications || '';
@@ -317,7 +311,6 @@ document.getElementById('employeeForm').addEventListener('submit', function(e) {
         phone: document.getElementById('phone').value,
         address: document.getElementById('address').value,
         role: role,
-        payRate: parseFloat(document.getElementById('payRate').value),
         hireDate: document.getElementById('hireDate').value,
         status: document.getElementById('employmentStatus').value,
         skills: skills,

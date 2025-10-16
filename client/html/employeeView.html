@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+  
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Employee Dashboard</title>
+
+  <!-- Load FullCalendar -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css">
+  <link rel="stylesheet" href="../css/employeeView.css">
+</head>
+
+<body>
+  <!-- Navigation Bar -->
+  <header class="employee-header">
+    <div class="employee-nav-container">
+      <h1 class="employee-logo">Employee Dashboard</h1>
+      <nav class="employee-nav-tabs">
+        <a href="employeeView.html" class="nav-tab active">
+          <span class="tab-icon">📊</span>
+          <span class="tab-text">Dashboard</span>
+        </a>
+        <a href="employeeProfile.html" class="nav-tab">
+          <span class="tab-icon">👤</span>
+          <span class="tab-text">Profile</span>
+        </a>
+        <a href="employeeAvailability.html" class="nav-tab">
+          <span class="tab-icon">📅</span>
+          <span class="tab-text">Submit Availability</span>
+        </a>
+      </nav>
+      <div class="employee-info-nav">
+        <span class="employee-name" id="employeeName">Michael Thompson</span>
+        <span class="employee-role-badge" id="employeeRole">Technician</span>
+        <a href="home.html" class="logout-btn">Log Out</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Dashboard Content -->
+  <div class="dashboard-container">
+    <!-- Stats Cards -->
+    <div class="stats-cards">
+      <div class="stat-card pending">
+        <div class="stat-icon">📋</div>
+        <div class="stat-content">
+          <h3>Pending Jobs</h3>
+          <div class="stat-value" id="pendingCount">0</div>
+        </div>
+      </div>
+
+      <div class="stat-card in-progress">
+        <div class="stat-icon">🔧</div>
+        <div class="stat-content">
+          <h3>In Progress</h3>
+          <div class="stat-value" id="inProgressCount">0</div>
+        </div>
+      </div>
+
+      <div class="stat-card completed">
+        <div class="stat-icon">✅</div>
+        <div class="stat-content">
+          <h3>Completed</h3>
+          <div class="stat-value" id="completedCount">0</div>
+        </div>
+      </div>
+
+      <div class="stat-card hours">
+        <div class="stat-icon">⏱️</div>
+        <div class="stat-content">
+          <h3>Hours This Week</h3>
+          <div class="stat-value" id="hoursCount">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calendar Section -->
+    <div class="calendar-section">
+      <h2>My Schedule</h2>
+      <div id="calendar"></div>
+      <div id="errorBox">Something went wrong — the calendar could not load.</div>
+    </div>
+  </div>
+
+  <!-- Job Details Modal -->
+  <div id="jobModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeJobModal()">&times;</span>
+      <h2>Job Details</h2>
+      
+      <div class="job-details" id="jobDetails">
+        <!-- Job details will be populated here -->
+      </div>
+
+      <div class="status-update-section">
+        <h3>Update Job Status</h3>
+        <div class="status-buttons">
+          <button class="status-btn pending" onclick="updateJobStatus('pending')">
+            <span>📋</span> Pending
+          </button>
+          <button class="status-btn in-progress" onclick="updateJobStatus('in-progress')">
+            <span>🔧</span> In Progress
+          </button>
+          <button class="status-btn completed" onclick="updateJobStatus('completed')">
+            <span>✅</span> Completed
+          </button>
+        </div>
+        <div class="cancel-job-section">
+          <button class="cancel-job-btn" onclick="openCancelModal()">
+            <span>❌</span> Cancel Job
+          </button>
+        </div>
+      </div>
+
+      <div class="notes-section">
+        <h3>Add Work Notes</h3>
+        <textarea id="workNotes" rows="4" placeholder="Add notes about the work performed, issues encountered, materials used, etc."></textarea>
+        <button class="save-notes-btn" onclick="saveWorkNotes()">Save Notes</button>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="close-btn" onclick="closeJobModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cancel Job Modal -->
+  <div id="cancelModal" class="modal">
+    <div class="modal-content cancel-modal">
+      <span class="close-modal" onclick="closeCancelModal()">&times;</span>
+      <h2>Cancel Job</h2>
+      
+      <div class="cancel-warning">
+        <span class="warning-icon">⚠️</span>
+        <p>Are you sure you want to cancel this job? This action cannot be undone.</p>
+      </div>
+
+      <form id="cancelForm">
+        <div class="form-group">
+          <label for="cancelReason">Cancellation Reason *</label>
+          <select id="cancelReason" required>
+            <option value="">Select a reason</option>
+            <option value="customer-request">Customer Requested Cancellation</option>
+            <option value="emergency">Emergency/Urgent Situation</option>
+            <option value="equipment-failure">Equipment/Tool Failure</option>
+            <option value="weather">Weather Conditions</option>
+            <option value="personal-emergency">Personal Emergency</option>
+            <option value="incorrect-parts">Incorrect Parts/Materials</option>
+            <option value="safety-concerns">Safety Concerns</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="cancelDescription">Detailed Description *</label>
+          <textarea id="cancelDescription" rows="5" required placeholder="Please provide detailed information about why this job needs to be cancelled..."></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="close-btn" onclick="closeCancelModal()">Go Back</button>
+          <button type="submit" class="confirm-cancel-btn">Confirm Cancellation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Request Date Availability Modal -->
+  <div id="availabilityModal" class="modal">
+    <div class="modal-content availability-modal-large">
+      <span class="close-modal" onclick="closeAvailabilityModal()">&times;</span>
+      <h2>Request Date Availability</h2>
+      
+      <p class="modal-description">Select dates and specify your availability or time-off requests for the biweekly period.</p>
+
+      <!-- Tab Selection -->
+      <div class="availability-tabs">
+        <button type="button" class="availability-tab active" onclick="switchAvailabilityTab('time-off')">
+          🚫 Request Time Off
+        </button>
+        <button type="button" class="availability-tab" onclick="switchAvailabilityTab('available')">
+          ✅ Update Available Hours
+        </button>
+      </div>
+
+      <form id="availabilityForm">
+        <!-- Time Off Section -->
+        <div id="timeOffSection" class="availability-section active">
+          <div class="form-section">
+            <h3>Request Type</h3>
+            
+            <div class="form-group">
+              <label for="requestType">Type of Request *</label>
+              <select id="requestType" required>
+                <option value="">Select Request Type</option>
+                <option value="time-off">Time Off / Vacation</option>
+                <option value="sick-leave">Sick Leave</option>
+                <option value="personal-day">Personal Day</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Select Dates on Calendar</h3>
+            <p class="helper-text">Click on dates in the calendar below to select the days you need off. Click again to deselect.</p>
+            
+            <!-- Biweekly Calendar -->
+            <div class="biweekly-calendar-controls">
+              <button type="button" class="period-nav-btn" onclick="changeAvailabilityPeriod(-1)">
+                ◀ Previous 2 Weeks
+              </button>
+              <div class="current-period-display" id="availabilityPeriodDisplay">
+                Loading...
+              </div>
+              <button type="button" class="period-nav-btn" onclick="changeAvailabilityPeriod(1)">
+                Next 2 Weeks ▶
+              </button>
+            </div>
+
+            <div id="availabilityCalendar" class="availability-calendar-grid"></div>
+            
+            <div class="selected-dates-summary" id="selectedDatesSummary">
+              <strong>Selected Dates:</strong> <span id="selectedDatesCount">None</span>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Time Details</h3>
+            
+            <div class="form-group">
+              <label>
+                <input type="checkbox" id="fullDay" checked> Full Day (Entire Work Day)
+              </label>
+            </div>
+
+            <div id="timeRangeSection" style="display: none;">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="unavailableStartTime">Start Time</label>
+                  <input type="time" id="unavailableStartTime" value="09:00">
+                </div>
+
+                <div class="form-group">
+                  <label for="unavailableEndTime">End Time</label>
+                  <input type="time" id="unavailableEndTime" value="17:00">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Reason / Notes</h3>
+            
+            <div class="form-group">
+              <label for="requestReason">Please explain your request *</label>
+              <textarea id="requestReason" rows="4" required placeholder="Please provide details about your request..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Available Hours Section -->
+        <div id="availableHoursSection" class="availability-section" style="display: none;">
+          <div class="form-section">
+            <h3>Update Your Available Work Hours</h3>
+            <p class="helper-text">Select dates on the calendar and specify the hours you are available to work.</p>
+            
+            <!-- Biweekly Calendar -->
+            <div class="biweekly-calendar-controls">
+              <button type="button" class="period-nav-btn" onclick="changeAvailabilityPeriod(-1)">
+                ◀ Previous 2 Weeks
+              </button>
+              <div class="current-period-display" id="availabilityPeriodDisplay2">
+                Loading...
+              </div>
+              <button type="button" class="period-nav-btn" onclick="changeAvailabilityPeriod(1)">
+                Next 2 Weeks ▶
+              </button>
+            </div>
+
+            <div id="availabilityCalendar2" class="availability-calendar-grid"></div>
+            
+            <div class="selected-dates-summary" id="selectedDatesSummary2">
+              <strong>Selected Dates:</strong> <span id="selectedDatesCount2">None</span>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Available Time Slots</h3>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="availableStartTime">Available From *</label>
+                <input type="time" id="availableStartTime" value="09:00" required>
+              </div>
+
+              <div class="form-group">
+                <label for="availableEndTime">Available Until *</label>
+                <input type="time" id="availableEndTime" value="17:00" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Additional Notes (Optional)</h3>
+            
+            <div class="form-group">
+              <label for="availableNotes">Notes about your availability</label>
+              <textarea id="availableNotes" rows="3" placeholder="Any additional information about your availability..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="close-btn" onclick="closeAvailabilityModal()">Cancel</button>
+          <button type="submit" class="submit-btn">Submit Request to Admin</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Load FullCalendar js -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+  <script src="../js/employeeView.js"></script>
+</body>
+</html>

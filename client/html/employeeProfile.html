@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Profile - Vargas Home Service</title>
+  <link rel="stylesheet" href="../css/employeeProfile.css">
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <header class="employee-header">
+    <div class="employee-nav-container">
+      <h1 class="employee-logo">Employee Dashboard</h1>
+      <nav class="employee-nav-tabs">
+        <a href="employeeView.html" class="nav-tab">
+          <span class="tab-icon">📊</span>
+          <span class="tab-text">Dashboard</span>
+        </a>
+        <a href="employeeProfile.html" class="nav-tab active">
+          <span class="tab-icon">👤</span>
+          <span class="tab-text">Profile</span>
+        </a>
+        <a href="employeeAvailability.html" class="nav-tab">
+          <span class="tab-icon">📅</span>
+          <span class="tab-text">Submit Availability</span>
+        </a>
+      </nav>
+      <div class="employee-info-nav">
+        <span class="employee-name" id="employeeName">Michael Thompson</span>
+        <span class="employee-role-badge" id="employeeRole">Technician</span>
+        <a href="home.html" class="logout-btn">Log Out</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Profile Content -->
+  <div class="profile-container">
+    <div class="profile-header">
+      <div class="profile-avatar">
+        <span class="avatar-icon">👤</span>
+      </div>
+      <div class="profile-title">
+        <h2 id="profileFullName">Michael Thompson</h2>
+        <p id="profileRole">Senior HVAC Technician</p>
+      </div>
+    </div>
+
+    <div class="profile-sections">
+      <!-- Personal Information Section -->
+      <div class="profile-section">
+        <h3 class="section-title">Personal Information</h3>
+        <div class="profile-grid">
+          <div class="profile-field">
+            <label>Employee ID</label>
+            <div class="field-value" id="employeeId">EMP-001</div>
+          </div>
+          <div class="profile-field">
+            <label>Hire Date</label>
+            <div class="field-value" id="hireDate">January 15, 2020</div>
+          </div>
+          <div class="profile-field">
+            <label>First Name</label>
+            <div class="field-value" id="firstName">Michael</div>
+          </div>
+          <div class="profile-field">
+            <label>Last Name</label>
+            <div class="field-value" id="lastName">Thompson</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Information Section -->
+      <div class="profile-section">
+        <h3 class="section-title">Contact Information</h3>
+        <div class="profile-grid">
+          <div class="profile-field">
+            <label>Email Address</label>
+            <div class="field-value" id="email">michael.thompson@vargashome.com</div>
+          </div>
+          <div class="profile-field">
+            <label>Phone Number</label>
+            <div class="field-value" id="phone">(555) 123-4567</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Address Section -->
+      <div class="profile-section">
+        <h3 class="section-title">Address</h3>
+        <div class="profile-grid">
+          <div class="profile-field full-width">
+            <label>Street Address</label>
+            <div class="field-value" id="street">123 Main Street, Apt 4B</div>
+          </div>
+          <div class="profile-field">
+            <label>City</label>
+            <div class="field-value" id="city">Los Angeles</div>
+          </div>
+          <div class="profile-field">
+            <label>State</label>
+            <div class="field-value" id="state">California</div>
+          </div>
+          <div class="profile-field">
+            <label>Zip Code</label>
+            <div class="field-value" id="zip">90001</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Skillset Section -->
+      <div class="profile-section">
+        <h3 class="section-title">Skillset</h3>
+        <div class="skills-container" id="skillsContainer">
+          <!-- Skills will be populated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Certifications Section -->
+      <div class="profile-section">
+        <h3 class="section-title">Certifications</h3>
+        <div class="certifications-container" id="certificationsContainer">
+          <!-- Certifications will be populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/employeeProfile.js"></script>
+</body>
+</html>
