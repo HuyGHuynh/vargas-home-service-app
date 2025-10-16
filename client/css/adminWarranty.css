@@ -1,0 +1,465 @@
+/* Warranty Container */
+.warranty-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.warranty-header {
+    margin-bottom: 40px;
+}
+
+.warranty-header h1 {
+    color: #333;
+    font-size: 2rem;
+    margin: 0 0 24px 0;
+}
+
+/* Filter Tabs */
+.filter-tabs {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    padding: 10px 24px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: 25px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: transparent;
+}
+
+/* Warranty Grid */
+.warranty-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 24px;
+}
+
+.warranty-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    border-left: 4px solid #667eea;
+}
+
+.warranty-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.warranty-card.pending {
+    border-left-color: #ff9800;
+}
+
+.warranty-card.active {
+    border-left-color: #4caf50;
+}
+
+.warranty-card.expired {
+    border-left-color: #f44336;
+}
+
+.warranty-status {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+.warranty-status.pending {
+    background-color: #fff3e0;
+    color: #f57c00;
+}
+
+.warranty-status.active {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.warranty-status.expired {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.warranty-card h3 {
+    color: #333;
+    font-size: 1.3rem;
+    margin: 0 0 8px 0;
+}
+
+.warranty-service-type {
+    color: #667eea;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 16px;
+}
+
+.warranty-info {
+    margin: 16px 0;
+}
+
+.warranty-info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.9rem;
+}
+
+.warranty-info-item:last-child {
+    border-bottom: none;
+}
+
+.warranty-info-label {
+    color: #666;
+    font-weight: 500;
+}
+
+.warranty-info-value {
+    color: #333;
+    font-weight: 600;
+}
+
+.warranty-request-badge {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+/* Warranty Actions */
+.warranty-actions {
+    display: flex;
+    gap: 12px;
+    padding-top: 16px;
+    margin-top: 16px;
+    border-top: 2px solid #f0f0f0;
+}
+
+.view-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.view-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.view-request-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    color: white;
+}
+
+.view-request-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background-color: white;
+    margin: 80px auto;
+    padding: 40px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 700px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    position: relative;
+    animation: modalSlideIn 0.3s ease;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.close-modal {
+    color: #aaa;
+    position: absolute;
+    right: 25px;
+    top: 25px;
+    font-size: 32px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.close-modal:hover {
+    color: #333;
+}
+
+.modal-content h2 {
+    color: #333;
+    font-size: 1.8rem;
+    margin: 0 0 30px 0;
+}
+
+/* Warranty Details in Modal */
+.warranty-details {
+    margin-bottom: 30px;
+}
+
+.detail-section {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.detail-section:last-child {
+    border-bottom: none;
+}
+
+.detail-section h3 {
+    color: #667eea;
+    font-size: 1.1rem;
+    margin: 0 0 16px 0;
+}
+
+.detail-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 16px;
+    padding: 10px 0;
+    font-size: 0.95rem;
+}
+
+.detail-label {
+    color: #666;
+    font-weight: 600;
+}
+
+.detail-value {
+    color: #333;
+}
+
+.detail-value.highlight {
+    color: #667eea;
+    font-weight: 600;
+}
+
+/* Service Request Details */
+.service-request-details {
+    margin-bottom: 30px;
+}
+
+.urgency-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.urgency-badge.high {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.urgency-badge.medium {
+    background-color: #fff3e0;
+    color: #f57c00;
+}
+
+.urgency-badge.low {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+/* Modal Actions */
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+}
+
+.cancel-btn,
+.accept-btn,
+.reject-btn,
+.schedule-btn {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cancel-btn {
+    background-color: #f5f5f5;
+    color: #666;
+}
+
+.cancel-btn:hover {
+    background-color: #e0e0e0;
+    transform: translateY(-2px);
+}
+
+.accept-btn,
+.schedule-btn {
+    background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+    color: white;
+}
+
+.accept-btn:hover,
+.schedule-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.reject-btn {
+    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+    color: white;
+}
+
+.reject-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: #666;
+    grid-column: 1 / -1;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.3;
+}
+
+.empty-state h3 {
+    color: #333;
+    font-size: 1.5rem;
+    margin-bottom: 12px;
+}
+
+.empty-state p {
+    color: #666;
+    font-size: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .warranty-container {
+        padding: 20px 15px;
+    }
+
+    .warranty-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .warranty-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-content {
+        margin: 20px auto;
+        padding: 30px 20px;
+        width: 95%;
+    }
+
+    .modal-content h2 {
+        font-size: 1.5rem;
+    }
+
+    .detail-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .warranty-actions {
+        flex-direction: column;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 600px) {
+    .filter-tabs {
+        gap: 8px;
+    }
+
+    .tab-btn {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+
+    .warranty-card {
+        padding: 20px;
+    }
+}

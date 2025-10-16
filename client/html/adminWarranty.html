@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Warranty Management</title>
+  <link rel="stylesheet" href="../css/ownerView.css">
+  <link rel="stylesheet" href="../css/adminWarranty.css">
+</head>
+
+<body>
+  <!-- Navigation Bar -->
+  <header class="admin-header">
+    <div class="admin-nav-container">
+      <h1 class="admin-logo">Admin Dashboard</h1>
+      <nav class="admin-nav-links">
+        <a href="ownerView.html">Dashboard</a>
+        <a href="adminService.html">Service</a>
+        <a href="adminWarranty.html" class="active">Warranty</a>
+        <a href="adminFinancial.html">Financial</a>
+        <a href="adminEmployee.html">Manage Employee</a>
+        <a href="home.html" class="logout-btn">Log Out</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Warranty Management Section -->
+  <div class="warranty-container">
+    <div class="warranty-header">
+      <h1>Warranty Management</h1>
+      <div class="filter-tabs">
+        <button class="tab-btn active" onclick="filterWarranties('all')">All Warranties</button>
+        <button class="tab-btn" onclick="filterWarranties('pending')">Pending Requests</button>
+        <button class="tab-btn" onclick="filterWarranties('active')">Active</button>
+        <button class="tab-btn" onclick="filterWarranties('expired')">Expired</button>
+      </div>
+    </div>
+
+    <!-- Warranty Requests Grid -->
+    <div class="warranty-grid" id="warrantyGrid">
+      <!-- Warranty cards will be displayed here -->
+    </div>
+  </div>
+
+  <!-- View Warranty Details Modal -->
+  <div id="warrantyModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeWarrantyModal()">&times;</span>
+      <h2>Warranty Request Details</h2>
+      
+      <div class="warranty-details" id="warrantyDetails">
+        <!-- Details will be populated here -->
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="cancel-btn" onclick="closeWarrantyModal()">Close</button>
+        <button type="button" class="reject-btn" id="rejectBtn" onclick="rejectWarranty()">Reject</button>
+        <button type="button" class="accept-btn" id="acceptBtn" onclick="acceptWarranty()">Accept Request</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Service Request Modal -->
+  <div id="serviceRequestModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeServiceRequestModal()">&times;</span>
+      <h2>Service Request Details</h2>
+      
+      <div class="service-request-details" id="serviceRequestDetails">
+        <!-- Service request details will be populated here -->
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="cancel-btn" onclick="closeServiceRequestModal()">Close</button>
+        <button type="button" class="schedule-btn" onclick="scheduleService()">Schedule Service</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/adminWarranty.js"></script>
+</body>
+</html>

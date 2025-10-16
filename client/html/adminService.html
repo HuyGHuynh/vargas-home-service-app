@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Services</title>
+  <link rel="stylesheet" href="../css/ownerView.css">
+  <link rel="stylesheet" href="../css/adminService.css">
+</head>
+
+<body>
+  <!-- Navigation Bar -->
+  <header class="admin-header">
+    <div class="admin-nav-container">
+      <h1 class="admin-logo">Admin Dashboard</h1>
+      <nav class="admin-nav-links">
+        <a href="ownerView.html">Dashboard</a>
+        <a href="adminService.html" class="active">Service</a>
+        <a href="adminWarranty.html">Warranty</a>
+        <a href="adminFinancial.html">Financial</a>
+        <a href="adminEmployee.html">Manage Employee</a>
+        <a href="home.html" class="logout-btn">Log Out</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Service Management Section -->
+  <div class="service-container">
+    <div class="service-header">
+      <h1>Service Management</h1>
+      <button class="add-service-btn" onclick="openAddServiceModal()">
+        <span>+</span> Add New Service
+      </button>
+    </div>
+
+    <!-- Services Grid -->
+    <div class="services-grid" id="servicesGrid">
+      <!-- Services will be displayed here -->
+    </div>
+  </div>
+
+  <!-- Add/Edit Service Modal -->
+  <div id="serviceModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeServiceModal()">&times;</span>
+      <h2 id="modalTitle">Add New Service</h2>
+      
+      <form id="serviceForm">
+        <input type="hidden" id="serviceId" value="">
+        
+        <div class="form-group">
+          <label for="serviceName">Service Name *</label>
+          <input type="text" id="serviceName" required placeholder="e.g., Plumbing Repair">
+        </div>
+
+        <div class="form-group">
+          <label for="serviceCategory">Category *</label>
+          <select id="serviceCategory" required>
+            <option value="">Select Category</option>
+            <option value="Plumbing">Plumbing</option>
+            <option value="Electrical">Electrical</option>
+            <option value="HVAC">HVAC</option>
+            <option value="Carpentry">Carpentry</option>
+            <option value="Painting">Painting</option>
+            <option value="Flooring">Flooring</option>
+            <option value="Roofing">Roofing</option>
+            <option value="Landscaping">Landscaping</option>
+            <option value="General Repairs">General Repairs</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="servicePrice">Price *</label>
+            <input type="number" id="servicePrice" step="0.01" min="0" required placeholder="0.00">
+          </div>
+
+          <div class="form-group">
+            <label for="serviceDuration">Duration (hours)</label>
+            <input type="number" id="serviceDuration" step="0.5" min="0" placeholder="e.g., 2.5">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="serviceDescription">Description</label>
+          <textarea id="serviceDescription" rows="4" placeholder="Describe the service..."></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="cancel-btn" onclick="closeServiceModal()">Cancel</button>
+          <button type="submit" class="submit-btn">Save Service</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/adminService.js"></script>
+</body>
+</html>

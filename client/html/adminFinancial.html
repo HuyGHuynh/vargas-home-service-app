@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+  
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Financial Reports</title>
+  <link rel="stylesheet" href="../css/ownerView.css">
+  <link rel="stylesheet" href="../css/adminFinancial.css">
+</head>
+
+<body>
+  <!-- Navigation Bar -->
+  <header class="admin-header">
+    <div class="admin-nav-container">
+      <h1 class="admin-logo">Admin Dashboard</h1>
+      <nav class="admin-nav-links">
+        <a href="ownerView.html">Dashboard</a>
+        <a href="adminService.html">Service</a>
+        <a href="adminWarranty.html">Warranty</a>
+        <a href="adminFinancial.html" class="active">Financial</a>
+        <a href="#manage-employee">Manage Employee</a>
+        <a href="home.html" class="logout-btn">Log Out</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Financial Reports Section -->
+  <div class="financial-container">
+    <div class="financial-header">
+      <h1>Financial Reports</h1>
+      <button class="export-csv-btn" onclick="exportToCSV()">
+        <span>📊</span> Export to CSV
+      </button>
+    </div>
+
+    <!-- Report Filters -->
+    <div class="report-filters">
+      <div class="filter-group">
+        <label for="reportType">Report Type:</label>
+        <select id="reportType" onchange="updateReport()">
+          <option value="summary">Summary</option>
+          <option value="revenue">Revenue Details</option>
+          <option value="labor">Labor Costs</option>
+          <option value="work-orders">Work Orders</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="dateRange">Date Range:</label>
+        <select id="dateRange" onchange="updateReport()">
+          <option value="current-month">Current Month</option>
+          <option value="last-month">Last Month</option>
+          <option value="current-quarter">Current Quarter</option>
+          <option value="current-year">Current Year</option>
+          <option value="custom">Custom Range</option>
+        </select>
+      </div>
+
+      <div class="filter-group custom-date-range" id="customDateRange" style="display: none;">
+        <label for="startDate">Start Date:</label>
+        <input type="date" id="startDate" onchange="updateReport()">
+      </div>
+
+      <div class="filter-group custom-date-range" id="customDateRangeEnd" style="display: none;">
+        <label for="endDate">End Date:</label>
+        <input type="date" id="endDate" onchange="updateReport()">
+      </div>
+
+      <button class="refresh-btn" onclick="updateReport()">
+        <span>🔄</span> Refresh
+      </button>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-cards" id="summaryCards">
+      <div class="summary-card revenue">
+        <div class="card-icon">💰</div>
+        <div class="card-content">
+          <h3>Total Revenue</h3>
+          <div class="card-value" id="totalRevenue">$0.00</div>
+          <div class="card-change positive" id="revenueChange">+0%</div>
+        </div>
+      </div>
+
+      <div class="summary-card labor">
+        <div class="card-icon">👷</div>
+        <div class="card-content">
+          <h3>Labor Costs</h3>
+          <div class="card-value" id="totalLabor">$0.00</div>
+          <div class="card-change" id="laborChange">+0%</div>
+        </div>
+      </div>
+
+      <div class="summary-card profit">
+        <div class="card-icon">📈</div>
+        <div class="card-content">
+          <h3>Net Profit</h3>
+          <div class="card-value" id="netProfit">$0.00</div>
+          <div class="card-change positive" id="profitChange">+0%</div>
+        </div>
+      </div>
+
+      <div class="summary-card orders">
+        <div class="card-icon">📋</div>
+        <div class="card-content">
+          <h3>Completed Orders</h3>
+          <div class="card-value" id="completedOrders">0</div>
+          <div class="card-change positive" id="ordersChange">+0%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detailed Report Table -->
+    <div class="report-section">
+      <h2 id="reportTitle">Summary Report</h2>
+      
+      <div class="table-container">
+        <table id="reportTable">
+          <thead id="tableHeader">
+            <!-- Header will be dynamically generated -->
+          </thead>
+          <tbody id="tableBody">
+            <!-- Data will be dynamically generated -->
+          </tbody>
+          <tfoot id="tableFooter">
+            <!-- Footer totals will be dynamically generated -->
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+      <div class="chart-card">
+        <h3>Revenue Trend</h3>
+        <div class="chart-placeholder" id="revenueChart">
+          <canvas id="revenueChartCanvas"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h3>Service Distribution</h3>
+        <div class="chart-placeholder" id="serviceChart">
+          <canvas id="serviceChartCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/adminFinancial.js"></script>
+</body>
+</html>

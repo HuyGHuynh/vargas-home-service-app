@@ -13,9 +13,23 @@
 
   <link rel="stylesheet" href="../css/ownerView.css"> 
 
-<button id="home" onclick= "window.location.href= 'home.html'"> Home </button> <!-- To go home -->
-
 </head>
+
+<body>
+  <!-- Navigation Bar -->
+  <header class="admin-header">
+    <div class="admin-nav-container">
+      <h1 class="admin-logo">Admin Dashboard</h1>
+      <nav class="admin-nav-links">
+        <a href="ownerView.html" class="active">Dashboard</a>
+        <a href="adminService.html">Service</a>
+        <a href="adminWarranty.html">Warranty</a>
+        <a href="adminFinancial.html">Financial</a>
+        <a href="adminEmployee.html">Manage Employee</a>
+        <a href="home.html" class="logout-btn">Log Out</a>
+      </nav>
+    </div>
+  </header>
 
 <!-- Does not work if in a seprate file 
 <style>
@@ -67,9 +81,6 @@ body {
     }
 </style>
 -->
-
-
-<body>
 
   <h1>Service Requests Calendar</h1>
   <div id="calendar"></div>
