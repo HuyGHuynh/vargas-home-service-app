@@ -36,7 +36,15 @@
       text-decoration: none;
     }
     .brand h1 { font-size: 1.15rem; letter-spacing: 0.4px; margin: 0; }
-    .nav-links { display:flex; gap: 16px; align-items:center; }
+    
+    .nav-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+    }
+    
+    .nav-links { display:flex; gap: 16px; align-items:center; margin-left: auto; }
     .nav-links a {
       color: #e6eefc;
       text-decoration: none;

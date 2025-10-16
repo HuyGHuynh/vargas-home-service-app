@@ -1,0 +1,654 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+/* Home Button */
+button[onclick*="home.html"] {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button[onclick*="home.html"]:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Container */
+.container {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    padding: 50px 60px;
+    max-width: 1200px;
+    width: 90%;
+    margin-top: 80px;
+}
+
+h2 {
+    color: #333;
+    text-align: center;
+    font-size: 2em;
+    margin-bottom: 10px;
+}
+
+.description {
+    text-align: center;
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 1em;
+}
+
+/* Form Styles */
+form {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 20px;
+    align-items: start;
+    max-width: 900px;
+    margin: 0 auto 30px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 0.95em;
+}
+
+input[type="email"],
+input[type="tel"] {
+    padding: 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1em;
+    transition: border-color 0.3s ease;
+    width: 100%;
+}
+
+input[type="email"]:focus,
+input[type="tel"]:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+/* Divider */
+.divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 28px;
+}
+
+.divider span {
+    background: white;
+    padding: 0 15px;
+    color: #999;
+    font-weight: 600;
+    font-size: 1.1em;
+}
+
+/* Submit Button */
+.submit-container {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+button[type="submit"] {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 16px 60px;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button[type="submit"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+button[type="submit"]:active {
+    transform: translateY(0);
+}
+
+/* Message Display */
+#warrantyMessage {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+    display: none;
+}
+
+#warrantyMessage.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    display: block;
+}
+
+#warrantyMessage.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    display: block;
+}
+
+/* Warranty Results Display */
+#warrantyResults {
+    margin-top: 40px;
+}
+
+.warranties-container h3 {
+    color: #333;
+    font-size: 1.8em;
+    margin-bottom: 30px;
+    text-align: center;
+    font-weight: 700;
+}
+
+.warranty-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 25px;
+    margin-top: 20px;
+}
+
+.warranty-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 25px;
+    border-left: 5px solid #667eea;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.warranty-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.warranty-card.expired {
+    border-left-color: #dc3545;
+    opacity: 0.8;
+}
+
+.warranty-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.warranty-header h4 {
+    color: #333;
+    font-size: 1.2em;
+    margin: 0;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.expired {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.warranty-details p {
+    margin: 8px 0;
+    color: #555;
+    line-height: 1.6;
+}
+
+.warranty-details strong {
+    color: #333;
+}
+
+.warranty-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 2px solid #e0e0e0;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-icon {
+    font-size: 1.2em;
+}
+
+.email-btn {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+}
+
+.email-btn:hover {
+    background: linear-gradient(135deg, #45a049, #3d8b40);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.help-btn {
+    background: linear-gradient(135deg, #2196F3, #1976D2);
+    color: white;
+}
+
+.help-btn:hover {
+    background: linear-gradient(135deg, #1976D2, #1565C0);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
+.action-btn:active {
+    transform: translateY(0);
+}
+
+/* Notification Styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 16px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    opacity: 0;
+    transform: translateX(400px);
+    transition: all 0.3s ease;
+    max-width: 400px;
+}
+
+.notification.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.notification.success {
+    background: #4CAF50;
+    color: white;
+}
+
+.notification.error {
+    background: #f44336;
+    color: white;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    overflow-y: auto;
+}
+
+.modal-content {
+    background-color: white;
+    margin: 30px auto;
+    padding: 50px;
+    border-radius: 20px;
+    max-width: 700px;
+    width: 90%;
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    position: relative;
+    animation: modalSlideIn 0.3s ease-out;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.close-modal {
+    position: absolute;
+    right: 25px;
+    top: 25px;
+    font-size: 32px;
+    font-weight: bold;
+    color: #999;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    line-height: 1;
+}
+
+.close-modal:hover {
+    color: #333;
+}
+
+.modal-content h2 {
+    color: #1a1a1a;
+    font-size: 2em;
+    margin-bottom: 12px;
+    font-weight: 700;
+}
+
+.modal-description {
+    color: #6b7280;
+    margin-bottom: 35px;
+    font-size: 1.05em;
+    line-height: 1.6;
+}
+
+/* Service Request Form Styling */
+#serviceRequestForm {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+#serviceRequestForm .form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group-full {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+#serviceRequestForm label,
+.form-group-full label {
+    color: #374151;
+    font-weight: 600;
+    margin-bottom: 10px;
+    font-size: 0.95em;
+    letter-spacing: 0.3px;
+}
+
+#serviceRequestForm select,
+.form-group-full textarea {
+    padding: 14px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 1em;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    transition: all 0.3s ease;
+    background-color: #fff;
+    color: #1f2937;
+}
+
+#serviceRequestForm select:focus,
+.form-group-full textarea:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+#serviceRequestForm select:hover,
+.form-group-full textarea:hover {
+    border-color: #d1d5db;
+}
+
+.form-group-full textarea {
+    resize: vertical;
+    min-height: 120px;
+    line-height: 1.6;
+}
+
+.form-group-full textarea::placeholder {
+    color: #9ca3af;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    margin-top: 15px;
+    padding-top: 10px;
+}
+
+.cancel-btn,
+.submit-btn {
+    padding: 14px 32px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    letter-spacing: 0.3px;
+}
+
+.cancel-btn {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+.cancel-btn:hover {
+    background: #e5e7eb;
+    transform: translateY(-1px);
+}
+
+.submit-btn {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.submit-btn:hover {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+}
+
+.submit-btn:active,
+.cancel-btn:active {
+    transform: translateY(0);
+}
+
+.no-warranties {
+    text-align: center;
+    padding: 40px 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 2px dashed #ccc;
+}
+
+.no-warranties p {
+    color: #666;
+    font-size: 1.1em;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .warranty-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    form {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+    
+    .divider {
+        margin: 20px 0;
+        padding-top: 0;
+    }
+    
+    .submit-container {
+        grid-column: 1;
+    }
+    
+    .warranty-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+    
+    .modal-content {
+        margin: 10px auto;
+        padding: 35px 25px;
+        width: 95%;
+        max-height: calc(100vh - 20px);
+        border-radius: 16px;
+    }
+    
+    .modal-content h2 {
+        font-size: 1.6em;
+        margin-right: 30px;
+    }
+    
+    .close-modal {
+        font-size: 28px;
+        right: 20px;
+        top: 20px;
+    }
+    
+    .modal-description {
+        font-size: 0.95em;
+    }
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 30px 20px;
+        margin-top: 60px;
+        width: 95%;
+    }
+
+    h2 {
+        font-size: 1.5em;
+    }
+
+    button[onclick*="home.html"] {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+    
+    .warranty-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .warranty-card {
+        padding: 15px;
+    }
+    
+    button[type="submit"] {
+        padding: 14px 40px;
+        font-size: 1em;
+    }
+    
+    .warranty-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .action-btn {
+        width: 100%;
+    }
+    
+    .notification {
+        right: 10px;
+        left: 10px;
+        max-width: calc(100% - 20px);
+    }
+    
+    .modal-actions {
+        flex-direction: column-reverse;
+        gap: 12px;
+    }
+    
+    .cancel-btn,
+    .submit-btn {
+        width: 100%;
+        padding: 14px 24px;
+    }
+    
+    .modal-content {
+        padding: 30px 20px;
+    }
+    
+    .modal-content h2 {
+        font-size: 1.4em;
+    }
+}
