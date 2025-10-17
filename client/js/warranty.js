@@ -194,15 +194,9 @@ function displayWarranties(warranties) {
                         <button class="action-btn secondary-btn" onclick="requestWarrantyDetails('${warranty.id}', '${warranty.workOrderId}')">
                             Email Details
                         </button>
-                        <button class="action-btn secondary-btn" onclick="printWarranty('${warranty.id}')">
-                            Print
-                        </button>
                     ` : `
                         <button class="action-btn primary-btn" onclick="renewWarranty('${warranty.id}')">
                             Renew Warranty
-                        </button>
-                        <button class="action-btn secondary-btn" onclick="printWarranty('${warranty.id}')">
-                            Print
                         </button>
                     `}
                 </div>
@@ -236,13 +230,6 @@ function renewWarranty(warrantyId) {
         alert('Warranty renewal request submitted! We will contact you within 2 business days.');
         // In production, this would trigger a renewal workflow
     }
-}
-
-// Function to print warranty
-function printWarranty(warrantyId) {
-    alert(`Preparing warranty document for printing...\n\nWarranty ID: ${warrantyId}`);
-    // In production, this would open a print-friendly warranty document
-    window.print();
 }
 
 // Allow Enter key to trigger search
