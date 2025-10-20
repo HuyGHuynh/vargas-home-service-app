@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-  
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin - Services</title>
-  <link rel="stylesheet" href="../css/ownerView.css">
-  <link rel="stylesheet" href="../css/adminService.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ownerView.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/adminService.css') }}">
 </head>
 
 <body>
@@ -15,13 +15,13 @@
     <div class="admin-nav-container">
       <h1 class="admin-logo">Admin Dashboard</h1>
       <nav class="admin-nav-links">
-        <a href="ownerView.html">Dashboard</a>
-        <a href="adminService.html" class="active">Service</a>
-        <a href="adminWarranty.html">Warranty</a>
-        <a href="adminFinancial.html">Financial</a>
-        <a href="adminEmployee.html">Manage Employee</a>
-        <a href="adminTimesheet.html">Timesheet</a>
-        <a href="home.html" class="logout-btn">Log Out</a>
+        <a href="/owner">Dashboard</a>
+        <a href="/admin/service" class="active">Service</a>
+        <a href="/admin/warranty">Warranty</a>
+        <a href="/admin/financial">Financial</a>
+        <a href="/admin/employee">Manage Employee</a>
+        <a href="/admin/timesheet">Timesheet</a>
+        <a href="/" class="logout-btn">Log Out</a>
       </nav>
     </div>
   </header>
@@ -46,10 +46,10 @@
     <div class="modal-content">
       <span class="close-modal" onclick="closeServiceModal()">&times;</span>
       <h2 id="modalTitle">Add New Service</h2>
-      
+
       <form id="serviceForm">
         <input type="hidden" id="serviceId" value="">
-        
+
         <div class="form-group">
           <label for="serviceName">Service Name *</label>
           <input type="text" id="serviceName" required placeholder="e.g., Plumbing Repair">
@@ -97,6 +97,7 @@
     </div>
   </div>
 
-  <script src="../js/adminService.js"></script>
+  <script src="{{ url_for('static', filename='js/adminService.js') }}"></script>
 </body>
+
 </html>

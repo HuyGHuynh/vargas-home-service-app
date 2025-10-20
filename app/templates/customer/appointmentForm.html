@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
-  
+
 <head>
   <meta charset="UTF-8">
   <title>Appointment Request Form</title>
 
-  <link rel="stylesheet" href="../css/appointmentForm.css"> 
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/appointmentForm.css') }}">
 
 </head>
-<button id="home" onclick= "window.location.href= 'home.html'"> Home </button> <!-- To go home -->
+<button id="home" onclick="window.location.href='/'"> Home </button> <!-- To go home -->
 
 <body>
 
@@ -21,8 +21,7 @@
 
       <label for="phone">Phone Number:</label>
       <input type="text" id="phone" name="phone" placeholder=""
-        pattern="^(\+?\d{1,2}[\s-]?)?(\(?\d{3}\)?[\s-]?)?\d{3}[\s-]?\d{4}$" 
-        title="Enter Phone Number" required>
+        pattern="^(\+?\d{1,2}[\s-]?)?(\(?\d{3}\)?[\s-]?)?\d{3}[\s-]?\d{4}$" title="Enter Phone Number" required>
 
       <label for="email">Email:</label>
       <input type="email" id="email" name="email" required>
@@ -67,7 +66,13 @@
           <table id="calendarTable">
             <thead>
               <tr>
-                <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
+                <th>Sun</th>
+                <th>Mon</th>
+                <th>Tue</th>
+                <th>Wed</th>
+                <th>Thu</th>
+                <th>Fri</th>
+                <th>Sat</th>
               </tr>
             </thead>
             <tbody id="calendarBody"></tbody>
@@ -85,7 +90,8 @@
     </form>
   </div>
 
-<script src="/client/js/appointmentForm.js"> </script>
+  <script src="{{ url_for('static', filename='js/appointmentForm.js') }}"> </script>
 
 </body>
+
 </html>

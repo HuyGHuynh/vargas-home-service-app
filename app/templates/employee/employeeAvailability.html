@@ -1,26 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Request Date Availability - Vargas Home Service</title>
-  <link rel="stylesheet" href="../css/employeeAvailability.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/employeeAvailability.css') }}">
 </head>
+
 <body>
   <!-- Navigation Bar -->
   <header class="employee-header">
     <div class="employee-nav-container">
       <h1 class="employee-logo">Employee Dashboard</h1>
       <nav class="employee-nav-tabs">
-        <a href="employeeView.html" class="nav-tab">
+        <a href="/employee/view" class="nav-tab">
           <span class="tab-icon">📊</span>
           <span class="tab-text">Dashboard</span>
         </a>
-        <a href="employeeProfile.html" class="nav-tab">
+        <a href="/employee/profile" class="nav-tab">
           <span class="tab-icon">👤</span>
           <span class="tab-text">Profile</span>
         </a>
-        <a href="employeeAvailability.html" class="nav-tab active">
+        <a href="/employee/availability" class="nav-tab active">
           <span class="tab-icon">📅</span>
           <span class="tab-text">Submit Availability</span>
         </a>
@@ -28,7 +30,7 @@
       <div class="employee-info-nav">
         <span class="employee-name" id="employeeName">Michael Thompson</span>
         <span class="employee-role-badge" id="employeeRole">Technician</span>
-        <a href="home.html" class="logout-btn">Log Out</a>
+        <a href="/" class="logout-btn">Log Out</a>
       </div>
     </div>
   </header>
@@ -37,15 +39,17 @@
   <div class="availability-container">
     <div class="availability-header">
       <h2>Submit Your Availability</h2>
-      <p class="page-description">Select the dates and times you are available to work. Your availability will be displayed on the admin timesheet.</p>
+      <p class="page-description">Select the dates and times you are available to work. Your availability will be
+        displayed on the admin timesheet.</p>
     </div>
 
     <form id="availabilityForm">
       <div class="form-content">
         <div class="form-section">
           <h3>Select Your Available Dates</h3>
-          <p class="helper-text">Click on dates in the calendar to select when you are available to work. Click again to deselect.</p>
-          
+          <p class="helper-text">Click on dates in the calendar to select when you are available to work. Click again to
+            deselect.</p>
+
           <!-- Biweekly Calendar -->
           <div class="biweekly-calendar-controls">
             <button type="button" class="period-nav-btn" onclick="changeAvailabilityPeriod(-1)">
@@ -60,7 +64,7 @@
           </div>
 
           <div id="availabilityCalendar" class="availability-calendar-grid"></div>
-          
+
           <div class="selected-dates-summary" id="selectedDatesSummary">
             <strong>Selected Dates:</strong> <span id="selectedDatesCount">None</span>
           </div>
@@ -68,7 +72,7 @@
 
         <div class="form-section">
           <h3>Available Time Slots</h3>
-          
+
           <div class="form-row">
             <div class="form-group">
               <label for="availableStartTime">Available From *</label>
@@ -84,21 +88,23 @@
 
         <div class="form-section">
           <h3>Additional Notes (Optional)</h3>
-          
+
           <div class="form-group">
             <label for="availableNotes">Notes about your availability</label>
-            <textarea id="availableNotes" rows="3" placeholder="Any additional information about your availability..."></textarea>
+            <textarea id="availableNotes" rows="3"
+              placeholder="Any additional information about your availability..."></textarea>
           </div>
         </div>
       </div>
 
       <div class="form-actions">
-        <button type="button" class="cancel-btn" onclick="window.location.href='employeeView.html'">Cancel</button>
+        <button type="button" class="cancel-btn" onclick="window.location.href='/employee/view'">Cancel</button>
         <button type="submit" class="submit-btn">Submit Availability</button>
       </div>
     </form>
   </div>
 
-  <script src="../js/employeeAvailability.js"></script>
+  <script src="{{ url_for('static', filename='js/employeeAvailability.js') }}"></script>
 </body>
+
 </html>

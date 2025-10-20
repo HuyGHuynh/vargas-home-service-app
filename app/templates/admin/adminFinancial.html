@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-  
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin - Financial Reports</title>
-  <link rel="stylesheet" href="../css/ownerView.css">
-  <link rel="stylesheet" href="../css/adminFinancial.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ownerView.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/adminFinancial.css') }}">
 </head>
 
 <body>
@@ -15,13 +15,13 @@
     <div class="admin-nav-container">
       <h1 class="admin-logo">Admin Dashboard</h1>
       <nav class="admin-nav-links">
-        <a href="ownerView.html">Dashboard</a>
-        <a href="adminService.html">Service</a>
-        <a href="adminWarranty.html">Warranty</a>
-        <a href="adminFinancial.html" class="active">Financial</a>
-        <a href="adminEmployee.html">Manage Employee</a>
-        <a href="adminTimesheet.html">Timesheet</a>
-        <a href="home.html" class="logout-btn">Log Out</a>
+        <a href="/owner">Dashboard</a>
+        <a href="/admin/service">Service</a>
+        <a href="/admin/warranty">Warranty</a>
+        <a href="/admin/financial" class="active">Financial</a>
+        <a href="/admin/employee">Manage Employee</a>
+        <a href="/admin/timesheet">Timesheet</a>
+        <a href="/" class="logout-btn">Log Out</a>
       </nav>
     </div>
   </header>
@@ -115,7 +115,7 @@
     <!-- Detailed Report Table -->
     <div class="report-section">
       <h2 id="reportTitle">Summary Report</h2>
-      
+
       <div class="table-container">
         <table id="reportTable">
           <thead id="tableHeader">
@@ -149,6 +149,7 @@
     </div>
   </div>
 
-  <script src="../js/adminFinancial.js"></script>
+  <script src="{{ url_for('static', filename='js/adminFinancial.js') }}"></script>
 </body>
+
 </html>

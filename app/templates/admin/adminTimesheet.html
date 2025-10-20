@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-  
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,7 +8,7 @@
 
   <!-- Load FullCalendar -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css">
-  <link rel="stylesheet" href="../css/adminTimesheet.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/adminTimesheet.css') }}">
 </head>
 
 <body>
@@ -17,13 +17,13 @@
     <div class="admin-nav-container">
       <h1 class="admin-logo">Admin Dashboard</h1>
       <nav class="admin-nav-links">
-        <a href="ownerView.html">Dashboard</a>
-        <a href="adminService.html">Service</a>
-        <a href="adminWarranty.html">Warranty</a>
-        <a href="adminFinancial.html">Financial</a>
-        <a href="adminEmployee.html">Manage Employee</a>
-        <a href="adminTimesheet.html" class="active">Timesheet</a>
-        <a href="home.html" class="logout-btn">Log Out</a>
+        <a href="/owner">Dashboard</a>
+        <a href="/admin/service">Service</a>
+        <a href="/admin/warranty">Warranty</a>
+        <a href="/admin/financial">Financial</a>
+        <a href="/admin/employee">Manage Employee</a>
+        <a href="/admin/timesheet" class="active">Timesheet</a>
+        <a href="/" class="logout-btn">Log Out</a>
       </nav>
     </div>
   </header>
@@ -98,7 +98,7 @@
     <div class="modal-content">
       <span class="close-modal" onclick="closeAvailabilityModal()">&times;</span>
       <h2>Availability Details</h2>
-      
+
       <div class="detail-section">
         <h3>Technician Information</h3>
         <div class="detail-row">
@@ -155,6 +155,7 @@
 
   <!-- Load FullCalendar js -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-  <script src="../js/adminTimesheet.js"></script>
+  <script src="{{ url_for('static', filename='js/adminTimesheet.js') }}"></script>
 </body>
+
 </html>

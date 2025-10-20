@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vargas’ Home Services</title>
-  <link rel="stylesheet" href="../css/home.css">
+  <title>Vargas' Home Services</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
 </head>
 
 <body>
@@ -14,11 +15,11 @@
       <h1 class="logo-text">Vargas' Home Services</h1>
 
       <nav class="nav-links" id="navLinks">
-        <a href="home.html">Home</a>
-        <a href="warranty.html">Warranty</a>
-        <a href="workOrder.html">Work Order</a>
-        <a href="appointmentForm.html">Schedule</a>
-        <a href="login.html">Login</a>
+        <a href="/">Home</a>
+        <a href="/warranty">Warranty</a>
+        <a href="/workorder">Work Order</a>
+        <a href="/appointment">Schedule</a>
+        <a href="/login">Login</a>
       </nav>
 
       <!-- Hamburger Icon -->
@@ -36,7 +37,8 @@
       <img src="client/images/detective.webp" alt="Vargas Home Services Logo" class="hero-logo">
       <h2>Your trusted partner for all home improvement needs.</h2>
       <p class="phone">Call us today: <strong>(555) 123-4567</strong></p>
-      <button class="appointment-btn" onclick="window.location.href='appointmentForm.html'">Schedule Appointment</button>
+      <button class="appointment-btn" onclick="window.location.href='/appointment'">Schedule
+        Appointment</button>
     </div>
   </section>
 
@@ -101,18 +103,19 @@
   <section class="about" id="about">
     <h2>About Vargas’ Home Services</h2>
     <p>
-      Founded by the Vargas family, we take pride in turning houses into homes.  
-      With years of experience, we provide dependable, top-quality home improvement services with honesty and care.  
+      Founded by the Vargas family, we take pride in turning houses into homes.
+      With years of experience, we provide dependable, top-quality home improvement services with honesty and care.
       Our goal is simple: to help you love where you live.
     </p>
   </section>
 
   <!-- Footer -->
   <footer>
-    <p>&copy; 2025 Vargas’ Home Services | Built with love for our community</p>
+    <p>&copy; 2025 Vargas' Home Services | Built with love for our community</p>
   </footer>
 
- <script src="/client/js/index.js"> </script>
+  <script src="{{ url_for('static', filename='js/index.js') }}"></script>
 
 </body>
+
 </html>
