@@ -39,6 +39,86 @@ class WorkorderRepository(BaseRepository):
             return new_id
     
     @staticmethod
+    def create_with_expanded_data(customer_data, address_data, service_data, request_data, workorder_data):
+        """
+        Create a new workorder record with all related data.
+        Creates customer, address, service, service request, and workorder in sequence.
+        
+        Args:
+            customer_data (dict): Customer info with keys: firstname, lastname, phone, email
+            address_data (dict): Address info with keys: address, city, state, zip_code
+            service_data (dict): Service info with keys: service_id (references existing service)
+            request_data (dict): Service request info with keys: requestdate
+            workorder_data (dict): Workorder info with keys: scheduleddate, iscompleted
+            
+        Returns:
+            dict: Dictionary with created IDs {customer_id, address_id, service_id, request_id, workorder_id}
+            
+        Raises:
+            psycopg2.Error: For any database errors during the transaction
+        """
+        conn = BaseRepository.get_db_connection()
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    # 1. Create customer (customerid auto-increments)
+                    cur.execute("""
+                        INSERT INTO public.customer(firstname, lastname, phone, email)
+                        VALUES (%s, %s, %s, %s)
+                        RETURNING customerid;
+                    """, (customer_data['firstname'], customer_data['lastname'], 
+                          customer_data['phone'], customer_data['email']))
+                    customer_id = cur.fetchone()[0]
+                    
+                    # 2. Create address (address_id auto-increments)
+                    cur.execute("""
+                        INSERT INTO public.addressbook(customer_id, address, city, state, zip_code)
+                        VALUES (%s, %s, %s, %s, %s)
+                        RETURNING address_id;
+                    """, (customer_id, address_data['address'], address_data['city'],
+                          address_data['state'], address_data['zip_code']))
+                    address_id = cur.fetchone()[0]
+                    
+                    # 3. Use existing service (service_id from preset data)
+                    service_id = service_data['service_id']
+                    
+                    # 4. Create service request (requestid auto-increments)
+                    cur.execute("""
+                        INSERT INTO public.servicerequests(customerid, addressid, requestdate, service_id)
+                        VALUES (%s, %s, %s, %s)
+                        RETURNING requestid;
+                    """, (customer_id, address_id, request_data['requestdate'], service_id))
+                    request_id = cur.fetchone()[0]
+                    
+                    # 5. Create workorder (using auto-increment or provided ID)
+                    if 'workorderid' in workorder_data and workorder_data['workorderid']:
+                        cur.execute("""
+                            INSERT INTO workorders (workorderid, requestid, customerid, scheduleddate, iscompleted)
+                            VALUES (%s, %s, %s, %s, %s)
+                            RETURNING workorderid;
+                        """, (workorder_data['workorderid'], request_id, customer_id,
+                              workorder_data['scheduleddate'], workorder_data['iscompleted']))
+                        workorder_id = cur.fetchone()[0]
+                    else:
+                        cur.execute("""
+                            INSERT INTO workorders (requestid, customerid, scheduleddate, iscompleted)
+                            VALUES (%s, %s, %s, %s)
+                            RETURNING workorderid;
+                        """, (request_id, customer_id, workorder_data['scheduleddate'],
+                              workorder_data['iscompleted']))
+                        workorder_id = cur.fetchone()[0]
+                    
+                    return {
+                        'customer_id': customer_id,
+                        'address_id': address_id,
+                        'service_id': service_id,
+                        'request_id': request_id,
+                        'workorder_id': workorder_id
+                    }
+        finally:
+            conn.close()
+    
+    @staticmethod
     def list_all(limit=100):
         """
         List all workorders ordered by ID descending.

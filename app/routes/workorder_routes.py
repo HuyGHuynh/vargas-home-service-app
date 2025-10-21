@@ -39,3 +39,37 @@ def get_workorder(workorder_id):
     """Get a specific workorder by ID."""
     response, status_code = WorkorderService.get_workorder(workorder_id)
     return response, status_code
+
+
+@workorder_bp.post("/expanded")
+def create_workorder_with_expanded_data():
+    """
+    Create a work order with all related data (customer, address, service, request).
+
+    Required JSON:
+    {
+      // Customer info
+      "firstName": "John",           # required (string)
+      "lastName": "Doe",             # required (string)
+      "phone": "555-1234",           # required (string)
+      "email": "john@example.com",   # required (string)
+      
+      // Address info
+      "address": "123 Main St",      # required (string)
+      "city": "Anytown",             # required (string)
+      "state": "CA",                 # required (string)
+      "zipCode": "12345",            # required (string)
+      
+      // Service info
+      "serviceId": 5,                # required (integer, references existing service)
+      
+      // Request/Workorder info
+      "requestDate": "2025-10-21",   # required (YYYY-MM-DD)
+      "scheduledDate": "2025-10-22", # required (YYYY-MM-DD)
+      "isCompleted": false,          # required (boolean)
+      "workorderId": 1001            # optional (int, auto-increments if not provided)
+    }
+    """
+    data = request.get_json(silent=True) or {}
+    response, status_code = WorkorderService.create_workorder_with_expanded_data(data)
+    return response, status_code

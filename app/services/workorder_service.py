@@ -156,3 +156,119 @@ class WorkorderService:
                 return {"ok": False, "error": "Workorder not found"}, 404
         except Exception as e:
             return {"ok": False, "error": str(e)}, 500
+    
+    @staticmethod
+    def create_workorder_with_expanded_data(data):
+        """
+        Create a new workorder with all related data (customer, address, service, request).
+        
+        Args:
+            data (dict): Complete workorder data containing:
+                Customer info:
+                - firstName, lastName, phone, email
+                Address info:
+                - address, city, state, zipCode
+                Service info:
+                - serviceId (int): ID of existing service in services table
+                Request info:
+                - requestDate (str): Date in YYYY-MM-DD format
+                Workorder info:
+                - scheduledDate (str): Date in YYYY-MM-DD format
+                - isCompleted (bool): Completion status
+                - workorderId (int, optional): Specific workorder ID
+                
+        Returns:
+            tuple: (success_dict, status_code) or (error_dict, status_code)
+        """
+        # Validate required customer fields
+        customer_fields = ['firstName', 'lastName', 'phone', 'email']
+        missing_customer = [f for f in customer_fields if not data.get(f)]
+        
+        # Validate required address fields  
+        address_fields = ['address', 'city', 'state', 'zipCode']
+        missing_address = [f for f in address_fields if not data.get(f)]
+        
+        # Validate required service fields
+        service_fields = ['serviceId']
+        missing_service = [f for f in service_fields if not data.get(f)]
+        
+        # Validate required request/workorder fields
+        other_fields = ['requestDate', 'scheduledDate', 'isCompleted']
+        missing_other = [f for f in other_fields if data.get(f) is None]
+        
+        missing_all = missing_customer + missing_address + missing_service + missing_other
+        if missing_all:
+            return {
+                "ok": False,
+                "error": f"Missing required fields: {', '.join(missing_all)}"
+            }, 400
+        
+        # Parse and validate dates
+        try:
+            request_date = WorkorderService.parse_date(data['requestDate'])
+            scheduled_date = WorkorderService.parse_date(data['scheduledDate'])
+        except ValueError as ve:
+            return {"ok": False, "error": str(ve)}, 400
+        
+        # Parse boolean
+        is_completed = WorkorderService.parse_bool(data['isCompleted'], default=False)
+        
+        # Validate serviceId is numeric
+        try:
+            service_id = int(data['serviceId'])
+        except (ValueError, TypeError):
+            return {"ok": False, "error": "serviceId must be a valid integer"}, 400
+        
+        # Prepare data for repository
+        customer_data = {
+            'firstname': data['firstName'],
+            'lastname': data['lastName'],
+            'phone': data['phone'],
+            'email': data['email']
+        }
+        
+        address_data = {
+            'address': data['address'],
+            'city': data['city'],
+            'state': data['state'],
+            'zip_code': data['zipCode']
+        }
+        
+        service_data = {
+            'service_id': service_id
+        }
+        
+        request_data = {
+            'requestdate': request_date
+        }
+        
+        workorder_data = {
+            'scheduleddate': scheduled_date,
+            'iscompleted': is_completed
+        }
+        
+        # Add workorderId if provided
+        if data.get('workorderId'):
+            try:
+                workorder_data['workorderid'] = int(data['workorderId'])
+            except ValueError:
+                return {"ok": False, "error": "workorderId must be an integer"}, 400
+        
+        # Create all records in database transaction
+        try:
+            result = WorkorderRepository.create_with_expanded_data(
+                customer_data, address_data, service_data, request_data, workorder_data
+            )
+            return {
+                "ok": True,
+                "message": "Work order and related data created successfully",
+                "result": result
+            }, 201
+        except psycopg2.errors.UniqueViolation as e:
+            return {"ok": False, "error": f"Duplicate entry: {e.pgerror}"}, 409
+        except psycopg2.errors.ForeignKeyViolation as e:
+            return {"ok": False, "error": f"Foreign key violation: {e.pgerror}"}, 400
+        except psycopg2.Error as e:
+            return {"ok": False, "error": f"Database error: {e.pgerror or str(e)}"}, 500
+        except Exception as e:
+            return {"ok": False, "error": f"Unexpected error: {str(e)}"}, 500
