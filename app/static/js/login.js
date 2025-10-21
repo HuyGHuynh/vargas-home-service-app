@@ -8,20 +8,20 @@ const sampleAccounts = [
         email: 'admin@vargas',
         password: 'admin',
         role: 'admin',
-        redirectTo: 'ownerView.html',
+        redirectTo: '/owner',
         name: 'Admin User'
     },
     {
         email: 'employee@vargas',
         password: 'employee',
         role: 'employee',
-        redirectTo: 'employeeView.html',
+        redirectTo: '/employee/view',
         name: 'Employee User'
     }
 ];
 
 // Function to handle login
-loginForm.addEventListener('submit', async function(event) {
+loginForm.addEventListener('submit', async function (event) {
     event.preventDefault();
 
     const email = document.getElementById('email').value.trim();
@@ -35,7 +35,7 @@ loginForm.addEventListener('submit', async function(event) {
 
     // Check sample accounts
     const account = sampleAccounts.find(acc => acc.email === email && acc.password === password);
-    
+
     if (account) {
         // Store user session info in localStorage
         localStorage.setItem('currentUser', JSON.stringify({
@@ -43,7 +43,7 @@ loginForm.addEventListener('submit', async function(event) {
             role: account.role,
             name: account.name
         }));
-        
+
         loginMessage.textContent = `Login successful! Welcome ${account.name}. Redirecting...`;
         loginMessage.style.color = '#28a745';
         setTimeout(() => {
@@ -66,14 +66,14 @@ loginForm.addEventListener('submit', async function(event) {
             loginMessage.textContent = 'Login successful! Redirecting...';
             loginMessage.style.color = '#28a745';
             setTimeout(() => {
-                window.location.href = 'employeeView.html';
+                window.location.href = '/employee/view';
             }, 1000);
         } else {
             loginMessage.textContent = result.message || 'Invalid email or password.';
             loginMessage.style.color = '#d9534f';
         }
 
-    } catch (error) {                           
+    } catch (error) {
         console.error('Error:', error);
         loginMessage.textContent = 'Server error. Please try again later.';
         loginMessage.style.color = '#d9534f';

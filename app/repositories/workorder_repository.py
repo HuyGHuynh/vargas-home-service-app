@@ -41,9 +41,9 @@ class WorkorderRepository(BaseRepository):
     @staticmethod
     def create_with_expanded_data(customer_data, address_data, service_data, request_data, workorder_data):
         """
-        Create a new service request with all related data.
+        Create a new service request with all related data and auto-assign technician.
         Uses existing customer if email exists, otherwise creates new customer.
-        Creates address, service request with optimized single query.
+        Creates address, service request and automatically assigns technician if available.
         
         Args:
             customer_data (dict): Customer info with keys: firstname, lastname, phone, email
@@ -53,7 +53,7 @@ class WorkorderRepository(BaseRepository):
             workorder_data (dict): Not used in this implementation (for future workorder creation)
             
         Returns:
-            dict: Dictionary with created IDs {request_id, customer_id, address_id, service_id}
+            dict: Dictionary with created IDs and technician info {request_id, customer_id, address_id, service_id, technician}
             
         Raises:
             psycopg2.Error: For any database errors during the transaction
@@ -62,7 +62,7 @@ class WorkorderRepository(BaseRepository):
         try:
             with conn:
                 with conn.cursor() as cur:
-                    # Execute the optimized query that handles existing customers
+                    # Execute the enhanced query with technician auto-assignment and fallback logic
                     cur.execute("""
                         WITH existing_c AS (
                           SELECT c.customerid
@@ -93,14 +93,77 @@ class WorkorderRepository(BaseRepository):
                             (customerid, addressid, service_id, description, preferred_datetime)
                           SELECT c.customerid,
                                  a.address_id,
-                                 %s,              -- service_id from services table
-                                 %s,              -- job description from form
-                                 %s::timestamptz -- preferred date+time picked by user
+                                 %s,   -- service_id
+                                 %s,   -- description
+                                 %s    -- preferred_datetime
                           FROM cust c
                           CROSS JOIN addr a
-                          RETURNING requestid
+                          RETURNING requestid, customerid, addressid, service_id, preferred_datetime
+                        ),
+                        -- lấy assignment mới nhất (nếu đã có) cho request vừa tạo
+                        latest_assign AS (
+                          SELECT DISTINCT ON (wa.requestid)
+                                 wa.requestid, wa.employeeid
+                          FROM work_assignments wa
+                          JOIN req r ON r.requestid = wa.requestid
+                          ORDER BY wa.requestid, wa.assignment_id DESC
+                        ),
+                        
+                        -- Fallback chọn 1 nhân viên nếu chưa được assign
+                        -- Đếm số job của mỗi nhân viên trong CÙNG NGÀY với preferred_datetime của request mới
+                        fallback_candidates AS (
+                          SELECT
+                            e.employeeid, e.firstname, e.lastname, e.phone, e.email,
+                            r.requestid, r.preferred_datetime,
+                            COALESCE(
+                              COUNT(*) FILTER (
+                                WHERE date_trunc('day', sr.preferred_datetime) = date_trunc('day', r.preferred_datetime)
+                              ), 0
+                            ) AS same_day_jobs
+                          FROM employee e
+                          -- tham chiếu toàn bộ assignment hiện có để đếm việc theo ngày
+                          LEFT JOIN work_assignments wa ON wa.employeeid = e.employeeid
+                          LEFT JOIN servicerequests sr ON sr.requestid = wa.requestid
+                          -- CROSS JOIN req để biết ngày của request mới
+                          CROSS JOIN req r
+                          GROUP BY e.employeeid, e.firstname, e.lastname, e.phone, e.email, r.requestid, r.preferred_datetime
+                        ),
+                        -- Chọn 1 người "ít việc nhất trong ngày", nếu hòa thì employeeid nhỏ hơn
+                        fallback_pick AS (
+                          SELECT fc.requestid, fc.employeeid, fc.firstname, fc.lastname, fc.phone, fc.email
+                          FROM fallback_candidates fc
+                          ORDER BY fc.same_day_jobs ASC, fc.employeeid ASC
+                          LIMIT 1
+                        ),
+                        -- Hợp nhất: nếu đã có assignment thì dùng nó; nếu chưa thì dùng fallback
+                        chosen_emp AS (
+                          -- case ĐÃ có assignment
+                          SELECT la.requestid, e.employeeid, e.firstname, e.lastname, e.phone, e.email
+                          FROM latest_assign la
+                          JOIN employee e ON e.employeeid = la.employeeid
+
+                          UNION ALL
+
+                          -- case CHƯA có assignment => dùng fallback_pick
+                          SELECT r.requestid, fp.employeeid, fp.firstname, fp.lastname, fp.phone, fp.email
+                          FROM req r
+                          LEFT JOIN latest_assign la ON la.requestid = r.requestid
+                          JOIN fallback_pick fp ON la.requestid IS NULL
                         )
-                        SELECT requestid FROM req;
+                        
+                        SELECT
+                          r.requestid,
+                          r.customerid,
+                          r.addressid,
+                          r.service_id,
+                          ce.employeeid,
+                          ce.firstname,
+                          ce.lastname,
+                          ce.phone,
+                          ce.email
+                        FROM req r
+                        JOIN chosen_emp ce
+                          ON ce.requestid = r.requestid;
                     """, (
                         customer_data['email'],           # %s - email for lookup
                         customer_data['firstname'],       # %s - first_name
@@ -116,24 +179,37 @@ class WorkorderRepository(BaseRepository):
                         request_data['preferred_datetime'], # %s - preferred_datetime
                     ))
                     
-                    request_id = cur.fetchone()[0]
-                    # Get the customer_id and address_id for the response
-                    # We'll need to fetch these since the query only returns request_id
-                    cur.execute("""
-                        SELECT sr.customerid, sr.addressid, sr.service_id
-                        FROM public.servicerequests sr
-                        WHERE sr.requestid = %s
-                    """, (request_id,))
-                    
                     result = cur.fetchone()
-                    customer_id, address_id, service_id = result
+                    if not result:
+                        raise ValueError("Failed to create service request")
                     
-                    return {
-                        'request_id': request_id,
-                        'customer_id': customer_id,
-                        'address_id': address_id,
-                        'service_id': service_id
+                    # Debug output for technician assignment
+                    if result[4]:  # employeeid exists
+                        print(f"DEBUG: Technician auto-assigned - {result[5]} {result[6]} (ID: {result[4]})")
+                    else:
+                        print("DEBUG: No technician assigned")
+                    
+                    # Build response with technician info
+                    response = {
+                        'request_id': result[0],
+                        'customer_id': result[1],
+                        'address_id': result[2],
+                        'service_id': result[3]
                     }
+                    
+                    # Include technician data if assigned
+                    if result[4]:  # employeeid exists
+                        response['technician'] = {
+                            'employee_id': result[4],
+                            'firstname': result[5],
+                            'lastname': result[6],
+                            'phone': result[7],
+                            'email': result[8]
+                        }
+                    else:
+                        response['technician'] = None
+                    
+                    return response
         finally:
             conn.close()
     

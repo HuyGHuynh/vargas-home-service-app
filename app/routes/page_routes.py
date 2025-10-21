@@ -122,11 +122,24 @@ def confirmation():
             'work_order_id': 'Pending Assignment',
             'request_id': data.get('request_id', 'N/A'),
             'work_order_status': 'Service Request Created',
-            'technician_name': None,  # Will be assigned later
-            'technician_role': None,
-            'technician_phone': None,
-            'technician_specialization': None
         }
+        
+        # Handle technician information if available
+        technician_data = data.get('technician')
+        if technician_data and technician_data.get('employee_id'):
+            template_vars.update({
+                'technician_name': f"{technician_data.get('firstname', '')} {technician_data.get('lastname', '')}".strip(),
+                'technician_role': 'Service Technician',  # Default role
+                'technician_phone': technician_data.get('phone'),
+                'technician_specialization': 'General Service'  # Default specialization
+            })
+        else:
+            template_vars.update({
+                'technician_name': None,
+                'technician_role': None,
+                'technician_phone': None,
+                'technician_specialization': None
+            })
         
         return render_template("customer/confirmation.html", **template_vars)
 
