@@ -1,96 +1,82 @@
-// Sample hardcoded services data
-let services = [
-    {
-        id: 1,
-        name: "Basic Plumbing Repair",
-        category: "Plumbing",
-        price: 125.00,
-        duration: 1.5,
-        description: "Fix leaky faucets, clogged drains, and minor pipe repairs. Includes basic materials and labor."
-    },
-    {
-        id: 2,
-        name: "Electrical Outlet Installation",
-        category: "Electrical",
-        price: 95.00,
-        duration: 1.0,
-        description: "Install new electrical outlets or replace existing ones. Includes wiring and safety inspection."
-    },
-    {
-        id: 3,
-        name: "HVAC Maintenance",
-        category: "HVAC",
-        price: 150.00,
-        duration: 2.0,
-        description: "Complete heating and cooling system inspection, filter replacement, and performance check."
-    },
-    {
-        id: 4,
-        name: "Interior Painting (per room)",
-        category: "Painting",
-        price: 350.00,
-        duration: 6.0,
-        description: "Professional interior painting service for standard-sized rooms. Includes prep work and cleanup."
-    },
-    {
-        id: 5,
-        name: "Drywall Repair",
-        category: "General Repairs",
-        price: 180.00,
-        duration: 3.0,
-        description: "Repair holes, cracks, and damage to drywall. Includes patching, sanding, and painting to match."
-    },
-    {
-        id: 6,
-        name: "Kitchen Faucet Replacement",
-        category: "Plumbing",
-        price: 200.00,
-        duration: 2.0,
-        description: "Remove old faucet and install new one. Faucet not included in price."
-    },
-    {
-        id: 7,
-        name: "Ceiling Fan Installation",
-        category: "Electrical",
-        price: 175.00,
-        duration: 2.5,
-        description: "Install new ceiling fan with light fixture. Fan not included in price."
-    },
-    {
-        id: 8,
-        name: "Gutter Cleaning",
-        category: "Landscaping",
-        price: 120.00,
-        duration: 2.0,
-        description: "Complete gutter cleaning and debris removal for average-sized home."
-    },
-    {
-        id: 9,
-        name: "Door Lock Replacement",
-        category: "General Repairs",
-        price: 85.00,
-        duration: 0.5,
-        description: "Replace existing door locks with new hardware. Lock not included in price."
-    },
-    {
-        id: 10,
-        name: "Water Heater Inspection",
-        category: "Plumbing",
-        price: 110.00,
-        duration: 1.0,
-        description: "Comprehensive water heater inspection and maintenance check."
-    }
-];
+// Services data from database
+let services = [];
+let serviceTypes = [];
 
 // Load services on page load
-document.addEventListener('DOMContentLoaded', function() {
-    displayServices();
+document.addEventListener('DOMContentLoaded', function () {
+    loadServices();
+    loadServiceTypes();
 });
+
+// Fetch services from API
+async function loadServices() {
+    try {
+        const response = await fetch('/api/services');
+        const result = await response.json();
+
+        if (result.success) {
+            // Transform database fields to match frontend format
+            services = result.data.map(service => ({
+                id: service.service_id,
+                name: service.job_name,
+                category: service.category,
+                price: parseFloat(service.service_price),
+                duration: service.duration_hours ? parseFloat(service.duration_hours) : null,
+                description: service.job_desc || ''
+            }));
+            displayServices();
+        } else {
+            showNotification('Failed to load services: ' + result.error, 'error');
+            displayServices(); // Show empty state
+        }
+    } catch (error) {
+        console.error('Error loading services:', error);
+        showNotification('Failed to load services from server', 'error');
+        displayServices(); // Show empty state
+    }
+}
+
+// Fetch service types from API
+async function loadServiceTypes() {
+    try {
+        const response = await fetch('/api/service-types');
+        const result = await response.json();
+
+        if (result.success) {
+            serviceTypes = result.data;
+            // Update the category dropdown if it exists
+            updateCategoryDropdown();
+        }
+    } catch (error) {
+        console.error('Error loading service types:', error);
+    }
+}
+
+// Update category dropdown with service types from database
+function updateCategoryDropdown() {
+    const categorySelect = document.getElementById('serviceCategory');
+    if (categorySelect && serviceTypes.length > 0) {
+        // Keep the first "Select Category" option
+        const firstOption = categorySelect.options[0];
+        categorySelect.innerHTML = '';
+        categorySelect.appendChild(firstOption);
+
+        // Add service types from database
+        serviceTypes.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type.service_type_name;
+            option.textContent = type.service_type_name;
+            categorySelect.appendChild(option);
+        });
+    }
+}
 
 // Display all services
 function displayServices() {
     const grid = document.getElementById('servicesGrid');
-    
+
+    if (!grid) return;
+
     if (services.length === 0) {
         grid.innerHTML = `
             <div class="empty-state">
@@ -101,20 +87,25 @@ function displayServices() {
         `;
         return;
     }
-    
-    grid.innerHTML = services.map(service => `
-        <div class="service-card">
-            <span class="service-category">${service.category}</span>
-            <h3>${service.name}</h3>
-            <div class="service-price">$${service.price.toFixed(2)}</div>
-            ${service.duration ? `<div class="service-duration">${service.duration} hours</div>` : ''}
-            <div class="service-description">${service.description || 'No description available.'}</div>
-            <div class="service-actions">
-                <button class="edit-btn" onclick="editService(${service.id})">Edit</button>
-                <button class="delete-btn" onclick="deleteService(${service.id})">Delete</button>
+
+    grid.innerHTML = services.map(service => {
+        const price = typeof service.price === 'number' ? service.price : 0;
+        const duration = service.duration ? parseFloat(service.duration) : null;
+
+        return `
+            <div class="service-card">
+                <span class="service-category">${service.category || 'Uncategorized'}</span>
+                <h3>${service.name || 'Unnamed Service'}</h3>
+                <div class="service-price">$${price.toFixed(2)}</div>
+                ${duration ? `<div class="service-duration">${duration} hours</div>` : ''}
+                <div class="service-description">${service.description || 'No description available.'}</div>
+                <div class="service-actions">
+                    <button class="edit-btn" onclick="editService(${service.id})">Edit</button>
+                    <button class="delete-btn" onclick="deleteService(${service.id})">Delete</button>
+                </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 // Open modal for adding new service
@@ -129,7 +120,7 @@ function openAddServiceModal() {
 function editService(id) {
     const service = services.find(s => s.id === id);
     if (!service) return;
-    
+
     document.getElementById('modalTitle').textContent = 'Edit Service';
     document.getElementById('serviceId').value = service.id;
     document.getElementById('serviceName').value = service.name;
@@ -137,7 +128,7 @@ function editService(id) {
     document.getElementById('servicePrice').value = service.price;
     document.getElementById('serviceDuration').value = service.duration || '';
     document.getElementById('serviceDescription').value = service.description || '';
-    
+
     document.getElementById('serviceModal').style.display = 'block';
 }
 
@@ -148,7 +139,7 @@ function closeServiceModal() {
 }
 
 // Close modal when clicking outside
-window.onclick = function(event) {
+window.onclick = function (event) {
     const modal = document.getElementById('serviceModal');
     if (event.target === modal) {
         closeServiceModal();
@@ -156,52 +147,73 @@ window.onclick = function(event) {
 }
 
 // Handle form submission
-document.getElementById('serviceForm').addEventListener('submit', function(e) {
+document.getElementById('serviceForm').addEventListener('submit', async function (e) {
     e.preventDefault();
-    
+
     const serviceId = document.getElementById('serviceId').value;
     const serviceData = {
         name: document.getElementById('serviceName').value,
         category: document.getElementById('serviceCategory').value,
         price: parseFloat(document.getElementById('servicePrice').value),
-        duration: parseFloat(document.getElementById('serviceDuration').value) || null,
+        duration: document.getElementById('serviceDuration').value ? parseFloat(document.getElementById('serviceDuration').value) : null,
         description: document.getElementById('serviceDescription').value
     };
-    
-    if (serviceId) {
-        // Edit existing service
-        const index = services.findIndex(s => s.id === parseInt(serviceId));
-        if (index !== -1) {
-            services[index] = { ...services[index], ...serviceData };
-            showNotification('Service updated successfully!', 'success');
+
+    try {
+        let response;
+        if (serviceId) {
+            // Edit existing service
+            response = await fetch(`/api/services/${serviceId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(serviceData)
+            });
+        } else {
+            // Add new service
+            response = await fetch('/api/services', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(serviceData)
+            });
         }
-    } else {
-        // Add new service
-        const newId = services.length > 0 ? Math.max(...services.map(s => s.id)) + 1 : 1;
-        services.push({ id: newId, ...serviceData });
-        showNotification('Service added successfully!', 'success');
+
+        const result = await response.json();
+
+        if (result.success) {
+            showNotification(result.message || (serviceId ? 'Service updated successfully!' : 'Service added successfully!'), 'success');
+            closeServiceModal();
+            // Reload services from database
+            await loadServices();
+        } else {
+            showNotification('Error: ' + result.error, 'error');
+        }
+    } catch (error) {
+        console.error('Error saving service:', error);
+        showNotification('Failed to save service', 'error');
     }
-    
-    displayServices();
-    closeServiceModal();
-    
-    // TODO: Send data to backend
-    // fetch('/api/services', {
-    //     method: serviceId ? 'PUT' : 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify(serviceData)
-    // });
 });
 
 // Delete service
-function deleteService(id) {
+async function deleteService(id) {
     if (confirm('Are you sure you want to delete this service?')) {
-        services = services.filter(s => s.id !== id);
-        displayServices();
-        showNotification('Service deleted successfully!', 'success');
-        
-        // TODO: Send delete request to backend
-        // fetch(`/api/services/${id}`, { method: 'DELETE' });
+        try {
+            const response = await fetch(`/api/services/${id}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showNotification(result.message || 'Service deleted successfully!', 'success');
+                // Reload services from database
+                await loadServices();
+            } else {
+                showNotification('Error: ' + result.error, 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting service:', error);
+            showNotification('Failed to delete service', 'error');
+        }
     }
 }
 
@@ -224,9 +236,9 @@ function showNotification(message, type = 'success') {
         font-weight: 600;
         animation: slideInRight 0.3s ease;
     `;
-    
+
     document.body.appendChild(notification);
-    
+
     // Remove after 3 seconds
     setTimeout(() => {
         notification.style.animation = 'slideOutRight 0.3s ease';
