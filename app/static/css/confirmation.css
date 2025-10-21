@@ -1,0 +1,346 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.container {
+    max-width: 900px;
+    width: 100%;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    padding: 40px;
+    animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.success-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    color: #10b981;
+    animation: scaleIn 0.6s ease-out;
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0);
+    }
+
+    to {
+        transform: scale(1);
+    }
+}
+
+.success-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+h1 {
+    text-align: center;
+    color: #1f2937;
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #6b7280;
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+}
+
+.confirmation-details {
+    margin-top: 30px;
+}
+
+.detail-section {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    border-left: 4px solid #667eea;
+}
+
+.detail-section h2 {
+    color: #374151;
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.detail-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.label {
+    font-weight: 600;
+    color: #6b7280;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.value {
+    color: #1f2937;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.value.highlight {
+    color: #667eea;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.value.service-type {
+    text-transform: capitalize;
+    color: #059669;
+    font-weight: 600;
+}
+
+.value.description {
+    line-height: 1.6;
+    color: #4b5563;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    background: #fef3c7;
+    color: #92400e;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: capitalize;
+}
+
+/* Technician Information Styles */
+.technician-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.technician-avatar {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+}
+
+.technician-avatar svg {
+    width: 50px;
+    height: 50px;
+}
+
+.technician-details h3 {
+    color: #1f2937;
+    font-size: 1.4rem;
+    margin-bottom: 4px;
+}
+
+.technician-role {
+    color: #667eea;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.technician-contact,
+.technician-specialization {
+    color: #6b7280;
+    font-size: 0.95rem;
+    margin: 4px 0;
+}
+
+.pending-note {
+    color: #6b7280;
+    font-style: italic;
+    padding: 16px;
+    background: white;
+    border-radius: 8px;
+    text-align: center;
+}
+
+/* Next Steps Section */
+.next-steps {
+    border-left-color: #10b981;
+}
+
+.next-steps ul {
+    list-style: none;
+    padding: 0;
+}
+
+.next-steps li {
+    padding: 12px 0;
+    padding-left: 32px;
+    position: relative;
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+.next-steps li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #10b981;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 30px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 14px 28px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: white;
+    color: #667eea;
+    border: 2px solid #667eea;
+}
+
+.btn-secondary:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Contact Info */
+.contact-info {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px dashed #e5e7eb;
+    color: #6b7280;
+}
+
+.contact-info p {
+    margin: 6px 0;
+}
+
+.contact-info strong {
+    color: #374151;
+}
+
+/* Print Styles */
+@media print {
+    body {
+        background: white;
+        padding: 0;
+    }
+
+    .container {
+        box-shadow: none;
+        padding: 20px;
+    }
+
+    .action-buttons {
+        display: none;
+    }
+
+    .detail-section {
+        page-break-inside: avoid;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .technician-info {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+    }
+}

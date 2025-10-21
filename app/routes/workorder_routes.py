@@ -44,7 +44,8 @@ def get_workorder(workorder_id):
 @workorder_bp.post("/expanded")
 def create_workorder_with_expanded_data():
     """
-    Create a work order with all related data (customer, address, service, request).
+    Create a service request with all related data (customer, address, service request).
+    Handles existing customers by email lookup and creates comprehensive service request.
 
     Required JSON:
     {
@@ -62,13 +63,16 @@ def create_workorder_with_expanded_data():
       
       // Service info
       "serviceId": 5,                # required (integer, references existing service)
+      "description": "Job details",  # optional (string, job description)
       
-      // Request/Workorder info
+      // Scheduling info
       "requestDate": "2025-10-21",   # required (YYYY-MM-DD)
       "scheduledDate": "2025-10-22", # required (YYYY-MM-DD)
-      "isCompleted": false,          # required (boolean)
-      "workorderId": 1001            # optional (int, auto-increments if not provided)
+      "scheduledTime": "2:30 PM",    # required (string, time format)
+      "isCompleted": false           # required (boolean)
     }
+    
+    Returns service request ID and related IDs for confirmation.
     """
     data = request.get_json(silent=True) or {}
     response, status_code = WorkorderService.create_workorder_with_expanded_data(data)

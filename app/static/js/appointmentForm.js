@@ -1,112 +1,204 @@
- // Calendar generation
-    const monthYear = document.getElementById('monthYear');
-    const calendarBody = document.getElementById('calendarBody');
-    let currentDate = new Date();
+// Calendar generation
+const monthYear = document.getElementById('monthYear');
+const calendarBody = document.getElementById('calendarBody');
+let currentDate = new Date();
 
-    function generateCalendar(date) {
-      calendarBody.innerHTML = '';
-      const year = date.getFullYear();
-      const month = date.getMonth();
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
-      const startDay = firstDay.getDay();
+function generateCalendar(date) {
+  calendarBody.innerHTML = '';
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const startDay = firstDay.getDay();
 
-      monthYear.textContent = date.toLocaleDateString('default', { month: 'long', year: 'numeric' });
+  monthYear.textContent = date.toLocaleDateString('default', { month: 'long', year: 'numeric' });
 
-      let row = document.createElement('tr');
-      for (let i = 0; i < startDay; i++) {
-        row.appendChild(document.createElement('td'));
-      }
+  let row = document.createElement('tr');
+  for (let i = 0; i < startDay; i++) {
+    row.appendChild(document.createElement('td'));
+  }
 
-      for (let d = 1; d <= lastDay.getDate(); d++) {
-        const cell = document.createElement('td');
-        cell.textContent = d;
-        cell.onclick = () => selectDate(new Date(year, month, d), cell);
-        row.appendChild(cell);
-        if ((startDay + d) % 7 === 0) {
-          calendarBody.appendChild(row);
-          row = document.createElement('tr');
-        }
-      }
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const cell = document.createElement('td');
+    cell.textContent = d;
+    cell.onclick = () => selectDate(new Date(year, month, d), cell);
+    row.appendChild(cell);
+    if ((startDay + d) % 7 === 0) {
       calendarBody.appendChild(row);
+      row = document.createElement('tr');
     }
+  }
+  calendarBody.appendChild(row);
+}
 
-    document.getElementById('prevMonth').onclick = () => {
-      currentDate.setMonth(currentDate.getMonth() - 1);
-      generateCalendar(currentDate);
-    };
+document.getElementById('prevMonth').onclick = () => {
+  currentDate.setMonth(currentDate.getMonth() - 1);
+  generateCalendar(currentDate);
+};
 
-    document.getElementById('nextMonth').onclick = () => {
-      currentDate.setMonth(currentDate.getMonth() + 1);
-      generateCalendar(currentDate);
-    };
+document.getElementById('nextMonth').onclick = () => {
+  currentDate.setMonth(currentDate.getMonth() + 1);
+  generateCalendar(currentDate);
+};
 
-    let selectedDate = null;
-    let selectedTime = null;
-    const confirmText = document.getElementById('confirmText');
+let selectedDate = null;
+let selectedTime = null;
+const confirmText = document.getElementById('confirmText');
 
-    function selectDate(date, cell) {
-      document.querySelectorAll('.calendar td').forEach(td => td.classList.remove('selected'));
-      cell.classList.add('selected');
-      selectedDate = date.toDateString();
-      updateConfirm();
-    }
+function selectDate(date, cell) {
+  document.querySelectorAll('.calendar td').forEach(td => td.classList.remove('selected'));
+  cell.classList.add('selected');
+  selectedDate = date.toDateString();
+  updateConfirm();
+}
 
-    function updateConfirm() {
-      if (selectedDate && selectedTime) {
-        confirmText.textContent = `Selected: ${selectedDate} at ${selectedTime}`;
-      } else if (selectedDate) {
-        confirmText.textContent = `Selected date: ${selectedDate}`;
-      } else if (selectedTime) {
-        confirmText.textContent = `Selected time: ${selectedTime}`;
+function updateConfirm() {
+  if (selectedDate && selectedTime) {
+    confirmText.textContent = `Selected: ${selectedDate} at ${selectedTime}`;
+  } else if (selectedDate) {
+    confirmText.textContent = `Selected date: ${selectedDate}`;
+  } else if (selectedTime) {
+    confirmText.textContent = `Selected time: ${selectedTime}`;
+  } else {
+    confirmText.textContent = "No date/time selected yet";
+  }
+}
+
+// Time slots generation
+const timeSlotsContainer = document.getElementById("timeSlots");
+const startHour = 9;
+const endHour = 18.5; // 6:30 PM
+const slotIncrement = 30; // minutes
+
+function formatTime(hour, minute) {
+  const date = new Date();
+  date.setHours(hour);
+  date.setMinutes(minute);
+  return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+for (let time = startHour * 60; time <= endHour * 60; time += slotIncrement) {
+  const hour = Math.floor(time / 60);
+  const minute = time % 60;
+  const timeLabel = formatTime(hour, minute);
+  const div = document.createElement("div");
+  div.classList.add("time-slot");
+  div.textContent = timeLabel;
+  div.onclick = () => {
+    document.querySelectorAll(".time-slot").forEach(s => s.classList.remove("selected"));
+    div.classList.add("selected");
+    selectedTime = timeLabel;
+    updateConfirm();
+  };
+  timeSlotsContainer.appendChild(div);
+}
+
+generateCalendar(currentDate);
+
+// Form submission
+document.getElementById("appointmentForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  if (!selectedDate || !selectedTime) {
+    alert("Please select both a date and time before submitting.");
+    return;
+  }
+
+  // Set the current date as request date
+  const today = new Date();
+  const requestDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+  document.getElementById('requestDate').value = requestDate;
+
+  // Convert selected date to YYYY-MM-DD format
+  const selectedDateObj = new Date(selectedDate);
+  const scheduledDate = selectedDateObj.toISOString().split('T')[0];
+  document.getElementById('scheduledDate').value = scheduledDate;
+
+  // Collect form data
+  const formData = new FormData(this);
+
+  // Map service type and job type to serviceId
+  const serviceType = formData.get('service');
+  const jobType = formData.get('job');
+  let serviceId = 1; // Default fallback
+
+  // Simple mapping logic (you can modify this later)
+  if (serviceType === 'plumbing' && jobType === 'repair') serviceId = 1;
+  else if (serviceType === 'plumbing' && jobType === 'install') serviceId = 2;
+  else if (serviceType === 'electrician' && jobType === 'repair') serviceId = 3;
+  else if (serviceType === 'electrician' && jobType === 'install') serviceId = 4;
+  else if (serviceType === 'plumbing' && jobType === 'quote') serviceId = 5;
+  else if (serviceType === 'electrician' && jobType === 'quote') serviceId = 6;
+  else if (serviceType === 'other' && jobType === 'repair') serviceId = 7;
+  else if (serviceType === 'other' && jobType === 'install') serviceId = 8;
+  else serviceId = 1; // Default to service 1 if no match
+
+  const appointmentData = {
+    firstName: formData.get('firstName'),
+    lastName: formData.get('lastName'),
+    phone: formData.get('phone'),
+    email: formData.get('email'),
+    address: formData.get('address'),
+    city: formData.get('city'),
+    state: formData.get('state'),
+    zipCode: formData.get('zipCode'),
+    serviceId: serviceId,
+    requestDate: formData.get('requestDate'),
+    scheduledDate: formData.get('scheduledDate'),
+    scheduledTime: selectedTime,
+    description: formData.get('description'),
+    isCompleted: formData.get('isCompleted') === 'true'
+  };
+
+  // Submit to backend
+  fetch('/workorders/expanded', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(appointmentData)
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.ok) {
+        // Prepare confirmation data with original form values
+        const confirmationData = {
+          firstName: formData.get('firstName'),
+          lastName: formData.get('lastName'),
+          phone: formData.get('phone'),
+          email: formData.get('email'),
+          address: formData.get('address'),
+          city: formData.get('city'),
+          state: formData.get('state'),
+          zipCode: formData.get('zipCode'),
+          service_type: serviceType,
+          job_type: jobType,
+          scheduled_date: selectedDate,
+          scheduled_time: selectedTime,
+          description: formData.get('description'),
+          request_id: data.result.request_id
+        };
+
+        // Send data to confirmation page
+        fetch('/confirmation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(confirmationData)
+        })
+          .then(response => response.json())
+          .then(confirmResponse => {
+            if (confirmResponse.redirect) {
+              window.location.href = confirmResponse.redirect;
+            }
+          });
       } else {
-        confirmText.textContent = "No date/time selected yet";
+        alert(`Error submitting appointment: ${data.error}`);
       }
-    }
-
-    // Time slots generation
-    const timeSlotsContainer = document.getElementById("timeSlots");
-    const startHour = 9;
-    const endHour = 18.5; // 6:30 PM
-    const slotIncrement = 30; // minutes
-
-    function formatTime(hour, minute) {
-      const date = new Date();
-      date.setHours(hour);
-      date.setMinutes(minute);
-      return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-    }
-
-    for (let time = startHour * 60; time <= endHour * 60; time += slotIncrement) {
-      const hour = Math.floor(time / 60);
-      const minute = time % 60;
-      const timeLabel = formatTime(hour, minute);
-      const div = document.createElement("div");
-      div.classList.add("time-slot");
-      div.textContent = timeLabel;
-      div.onclick = () => {
-        document.querySelectorAll(".time-slot").forEach(s => s.classList.remove("selected"));
-        div.classList.add("selected");
-        selectedTime = timeLabel;
-        updateConfirm();
-      };
-      timeSlotsContainer.appendChild(div);
-    }
-
-    generateCalendar(currentDate);
-
-    // Form submission
-    document.getElementById("appointmentForm").addEventListener("submit", function(e) {
-      e.preventDefault();
-      if (!selectedDate || !selectedTime) {
-        alert("Please select both a date and time before submitting.");
-        return;
-      }
-      alert(`Appointment submitted!\n\nDate: ${selectedDate}\nTime: ${selectedTime}`);
-      this.reset();
-      confirmText.textContent = "No date/time selected yet";
-      document.querySelectorAll(".time-slot").forEach(s => s.classList.remove("selected"));
-      document.querySelectorAll(".calendar td").forEach(td => td.classList.remove("selected"));
-      selectedDate = null;
-      selectedTime = null;
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while submitting the appointment. Please try again.');
     });
+});

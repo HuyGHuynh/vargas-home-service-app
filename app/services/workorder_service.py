@@ -207,6 +207,23 @@ class WorkorderService:
         try:
             request_date = WorkorderService.parse_date(data['requestDate'])
             scheduled_date = WorkorderService.parse_date(data['scheduledDate'])
+            
+            # Combine scheduled date and time for preferred_datetime
+            scheduled_time = data.get('scheduledTime', '09:00')  # Default to 9 AM if no time
+            if isinstance(scheduled_time, str):
+                # Parse time like "2:30 PM" and combine with date
+                try:
+                    # Convert "2:30 PM" format to 24-hour format
+                    from datetime import datetime
+                    time_obj = datetime.strptime(scheduled_time, "%I:%M %p")
+                    preferred_datetime = datetime.combine(scheduled_date, time_obj.time())
+                except ValueError:
+                    # If parsing fails, use noon as default
+                    preferred_datetime = datetime.combine(scheduled_date, datetime.strptime("12:00", "%H:%M").time())
+            else:
+                # Default to noon if no valid time
+                preferred_datetime = datetime.combine(scheduled_date, datetime.strptime("12:00", "%H:%M").time())
+            
         except ValueError as ve:
             return {"ok": False, "error": str(ve)}, 400
         
@@ -239,7 +256,9 @@ class WorkorderService:
         }
         
         request_data = {
-            'requestdate': request_date
+            'description': data.get('description', ''),
+            'preferred_datetime': preferred_datetime,
+            'photo_path': data.get('photo_path')  # Will be None if not provided
         }
         
         workorder_data = {
@@ -261,7 +280,7 @@ class WorkorderService:
             )
             return {
                 "ok": True,
-                "message": "Work order and related data created successfully",
+                "message": "Service request created successfully",
                 "result": result
             }, 201
         except psycopg2.errors.UniqueViolation as e:

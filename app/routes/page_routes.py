@@ -2,7 +2,7 @@
 Routes for serving HTML pages (frontend views).
 These routes render templates for the user interface.
 """
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request, session
 
 page_bp = Blueprint('pages', __name__)
 
@@ -86,6 +86,49 @@ def employee_view():
 def appointment():
     """Appointment form page."""
     return render_template("customer/appointmentForm.html")
+
+
+@page_bp.route("/confirmation", methods=["GET", "POST"])
+def confirmation():
+    """Appointment confirmation page."""
+    if request.method == "POST":
+        # Get data from POST request (from form submission)
+        data = request.get_json()
+        
+        # Store data in session for potential refresh
+        session['confirmation_data'] = data
+        
+        # Return redirect response
+        return {"redirect": "/confirmation"}, 200
+    else:
+        # GET request - render the page with data from session
+        data = session.get('confirmation_data', {})
+        
+        # Clear session data after use
+        session.pop('confirmation_data', None)
+        
+        # Prepare template variables with defaults
+        template_vars = {
+            'customer_name': f"{data.get('firstName', '')} {data.get('lastName', '')}".strip() or "N/A",
+            'customer_phone': data.get('phone', 'N/A'),
+            'customer_email': data.get('email', 'N/A'),
+            'customer_address': f"{data.get('address', '')}, {data.get('city', '')}, {data.get('state', '')} {data.get('zipCode', '')}".strip(', '),
+            'customer_zip': data.get('zipCode', 'N/A'),
+            'service_type': data.get('service_type', 'N/A'),
+            'job_type': data.get('job_type', 'N/A'),
+            'scheduled_date': data.get('scheduled_date', 'N/A'),
+            'scheduled_time': data.get('scheduled_time', 'N/A'),
+            'job_description': data.get('description', ''),
+            'work_order_id': 'Pending Assignment',
+            'request_id': data.get('request_id', 'N/A'),
+            'work_order_status': 'Service Request Created',
+            'technician_name': None,  # Will be assigned later
+            'technician_role': None,
+            'technician_phone': None,
+            'technician_specialization': None
+        }
+        
+        return render_template("customer/confirmation.html", **template_vars)
 
 
 @page_bp.get("/warranty")

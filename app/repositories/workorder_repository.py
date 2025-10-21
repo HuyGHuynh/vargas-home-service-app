@@ -41,18 +41,19 @@ class WorkorderRepository(BaseRepository):
     @staticmethod
     def create_with_expanded_data(customer_data, address_data, service_data, request_data, workorder_data):
         """
-        Create a new workorder record with all related data.
-        Creates customer, address, service, service request, and workorder in sequence.
+        Create a new service request with all related data.
+        Uses existing customer if email exists, otherwise creates new customer.
+        Creates address, service request with optimized single query.
         
         Args:
             customer_data (dict): Customer info with keys: firstname, lastname, phone, email
             address_data (dict): Address info with keys: address, city, state, zip_code
             service_data (dict): Service info with keys: service_id (references existing service)
-            request_data (dict): Service request info with keys: requestdate
-            workorder_data (dict): Workorder info with keys: scheduleddate, iscompleted
+            request_data (dict): Service request info with keys: description, preferred_datetime
+            workorder_data (dict): Not used in this implementation (for future workorder creation)
             
         Returns:
-            dict: Dictionary with created IDs {customer_id, address_id, service_id, request_id, workorder_id}
+            dict: Dictionary with created IDs {request_id, customer_id, address_id, service_id}
             
         Raises:
             psycopg2.Error: For any database errors during the transaction
@@ -61,59 +62,77 @@ class WorkorderRepository(BaseRepository):
         try:
             with conn:
                 with conn.cursor() as cur:
-                    # 1. Create customer (customerid auto-increments)
+                    # Execute the optimized query that handles existing customers
                     cur.execute("""
-                        INSERT INTO public.customer(firstname, lastname, phone, email)
-                        VALUES (%s, %s, %s, %s)
-                        RETURNING customerid;
-                    """, (customer_data['firstname'], customer_data['lastname'], 
-                          customer_data['phone'], customer_data['email']))
-                    customer_id = cur.fetchone()[0]
+                        WITH existing_c AS (
+                          SELECT c.customerid
+                          FROM public.customer c
+                          WHERE c.email = %s
+                          LIMIT 1
+                        ),
+                        ins_c AS (
+                          INSERT INTO public.customer (firstname, lastname, phone, email)
+                          SELECT %s, %s, %s, %s
+                          WHERE NOT EXISTS (SELECT 1 FROM existing_c)
+                          RETURNING customerid
+                        ),
+                        cust AS (
+                          SELECT customerid FROM ins_c
+                          UNION ALL
+                          SELECT customerid FROM existing_c
+                          LIMIT 1
+                        ),
+                        addr AS (
+                          INSERT INTO public.addressbook (customer_id, address, city, state, zip_code)
+                          SELECT customerid, %s, %s, %s, %s
+                          FROM cust
+                          RETURNING address_id
+                        ),
+                        req AS (
+                          INSERT INTO public.servicerequests
+                            (customerid, addressid, service_id, description, preferred_datetime)
+                          SELECT c.customerid,
+                                 a.address_id,
+                                 %s,              -- service_id from services table
+                                 %s,              -- job description from form
+                                 %s::timestamptz -- preferred date+time picked by user
+                          FROM cust c
+                          CROSS JOIN addr a
+                          RETURNING requestid
+                        )
+                        SELECT requestid FROM req;
+                    """, (
+                        customer_data['email'],           # %s - email for lookup
+                        customer_data['firstname'],       # %s - first_name
+                        customer_data['lastname'],        # %s - last_name
+                        customer_data['phone'],           # %s - phone
+                        customer_data['email'],           # %s - email for insert
+                        address_data['address'],          # %s - address
+                        address_data['city'],             # %s - city
+                        address_data['state'],            # %s - state
+                        address_data['zip_code'],         # %s - zip_code
+                        service_data['service_id'],       # %s - service_id
+                        request_data['description'],      # %s - description
+                        request_data['preferred_datetime'], # %s - preferred_datetime
+                    ))
                     
-                    # 2. Create address (address_id auto-increments)
-                    cur.execute("""
-                        INSERT INTO public.addressbook(customer_id, address, city, state, zip_code)
-                        VALUES (%s, %s, %s, %s, %s)
-                        RETURNING address_id;
-                    """, (customer_id, address_data['address'], address_data['city'],
-                          address_data['state'], address_data['zip_code']))
-                    address_id = cur.fetchone()[0]
-                    
-                    # 3. Use existing service (service_id from preset data)
-                    service_id = service_data['service_id']
-                    
-                    # 4. Create service request (requestid auto-increments)
-                    cur.execute("""
-                        INSERT INTO public.servicerequests(customerid, addressid, requestdate, service_id)
-                        VALUES (%s, %s, %s, %s)
-                        RETURNING requestid;
-                    """, (customer_id, address_id, request_data['requestdate'], service_id))
                     request_id = cur.fetchone()[0]
+                    # Get the customer_id and address_id for the response
+                    # We'll need to fetch these since the query only returns request_id
+                    cur.execute("""
+                        SELECT sr.customerid, sr.addressid, sr.service_id
+                        FROM public.servicerequests sr
+                        WHERE sr.requestid = %s
+                    """, (request_id,))
                     
-                    # 5. Create workorder (using auto-increment or provided ID)
-                    if 'workorderid' in workorder_data and workorder_data['workorderid']:
-                        cur.execute("""
-                            INSERT INTO workorders (workorderid, requestid, customerid, scheduleddate, iscompleted)
-                            VALUES (%s, %s, %s, %s, %s)
-                            RETURNING workorderid;
-                        """, (workorder_data['workorderid'], request_id, customer_id,
-                              workorder_data['scheduleddate'], workorder_data['iscompleted']))
-                        workorder_id = cur.fetchone()[0]
-                    else:
-                        cur.execute("""
-                            INSERT INTO workorders (requestid, customerid, scheduleddate, iscompleted)
-                            VALUES (%s, %s, %s, %s)
-                            RETURNING workorderid;
-                        """, (request_id, customer_id, workorder_data['scheduleddate'],
-                              workorder_data['iscompleted']))
-                        workorder_id = cur.fetchone()[0]
+                    result = cur.fetchone()
+                    customer_id, address_id, service_id = result
                     
                     return {
+                        'request_id': request_id,
                         'customer_id': customer_id,
                         'address_id': address_id,
-                        'service_id': service_id,
-                        'request_id': request_id,
-                        'workorder_id': workorder_id
+                        'service_id': service_id
                     }
         finally:
             conn.close()
