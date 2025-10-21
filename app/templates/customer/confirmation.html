@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Appointment Confirmation</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/confirmation.css') }}">
+</head>
+
+<body>
+  <div class="container">
+    <div class="success-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+    </div>
+
+    <h1>Appointment Confirmed!</h1>
+    <p class="subtitle">Thank you for scheduling with Vargas Home Service. We've received your appointment request.</p>
+
+    <div class="confirmation-details">
+      <!-- Customer Information Section -->
+      <div class="detail-section">
+        <h2>Customer Information</h2>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">Full Name:</span>
+            <span class="value">{{ customer_name }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Phone Number:</span>
+            <span class="value">{{ customer_phone }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Email:</span>
+            <span class="value">{{ customer_email }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Address:</span>
+            <span class="value">{{ customer_address }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">ZIP Code:</span>
+            <span class="value">{{ customer_zip }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appointment Details Section -->
+      <div class="detail-section">
+        <h2>Appointment Details</h2>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">Service Type:</span>
+            <span class="value service-type">{{ service_type }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Job Type:</span>
+            <span class="value">{{ job_type }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Scheduled Date:</span>
+            <span class="value highlight">{{ scheduled_date }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Scheduled Time:</span>
+            <span class="value highlight">{{ scheduled_time }}</span>
+          </div>
+          {% if job_description %}
+          <div class="detail-item full-width">
+            <span class="label">Job Description:</span>
+            <span class="value description">{{ job_description }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Work Order Information Section -->
+      <div class="detail-section">
+        <h2>Work Order Information</h2>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">Work Order ID:</span>
+            <span class="value">{{ work_order_id }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Request ID:</span>
+            <span class="value">{{ request_id }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Status:</span>
+            <span class="value status-badge">{{ work_order_status }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Technician Information Section -->
+      {% if technician_name %}
+      <div class="detail-section">
+        <h2>Assigned Technician</h2>
+        <div class="technician-info">
+          <div class="technician-avatar">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div class="technician-details">
+            <h3>{{ technician_name }}</h3>
+            <p class="technician-role">{{ technician_role }}</p>
+            {% if technician_phone %}
+            <p class="technician-contact">📞 {{ technician_phone }}</p>
+            {% endif %}
+            {% if technician_specialization %}
+            <p class="technician-specialization">Specialization: {{ technician_specialization }}</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="detail-section">
+        <h2>Assigned Technician</h2>
+        <p class="pending-note">A technician will be assigned to your work order shortly. You will receive a notification once assigned.</p>
+      </div>
+      {% endif %}
+
+      <!-- Next Steps Section -->
+      <div class="detail-section next-steps">
+        <h2>What Happens Next?</h2>
+        <ul>
+          <li>You will receive a confirmation email at <strong>{{ customer_email }}</strong></li>
+          <li>Our team will review your request and assign a technician</li>
+          <li>You'll get a call or text 24 hours before your appointment</li>
+          <li>The technician will arrive during your scheduled time slot</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="action-buttons">
+      <button class="btn btn-primary" onclick="window.print()">Print Confirmation</button>
+      <button class="btn btn-secondary" onclick="window.location.href='/'">Return to Home</button>
+      <button class="btn btn-secondary" onclick="window.location.href='/appointment'">Schedule Another</button>
+    </div>
+
+    <div class="contact-info">
+      <p>Questions about your appointment? Contact us at:</p>
+      <p><strong>Phone:</strong> (555) 123-4567 | <strong>Email:</strong> support@vargashomeservice.com</p>
+    </div>
+  </div>
+</body>
+
+</html>

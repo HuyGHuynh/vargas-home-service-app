@@ -102,11 +102,50 @@
         alert("Please select both a date and time before submitting.");
         return;
       }
-      alert(`Appointment submitted!\n\nDate: ${selectedDate}\nTime: ${selectedTime}`);
-      this.reset();
-      confirmText.textContent = "No date/time selected yet";
-      document.querySelectorAll(".time-slot").forEach(s => s.classList.remove("selected"));
-      document.querySelectorAll(".calendar td").forEach(td => td.classList.remove("selected"));
-      selectedDate = null;
-      selectedTime = null;
+      
+      // Show loading state
+      const submitButton = this.querySelector('button[type="submit"]');
+      const originalText = submitButton.textContent;
+      submitButton.textContent = 'Processing...';
+      submitButton.disabled = true;
+      
+      // Create a hidden form to submit via POST (smoother navigation)
+      const hiddenForm = document.createElement('form');
+      hiddenForm.method = 'POST';
+      hiddenForm.action = '/appointment/confirmation';
+      hiddenForm.style.display = 'none';
+      
+      // Add all form fields
+      const fields = {
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        address: document.getElementById('address').value,
+        zip: document.getElementById('zip').value,
+        service: document.getElementById('service').value,
+        job: document.getElementById('job').value,
+        description: document.getElementById('description').value,
+        selectedDate: selectedDate,
+        selectedTime: selectedTime
+      };
+      
+      // Create hidden input fields
+      for (const [key, value] of Object.entries(fields)) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        hiddenForm.appendChild(input);
+      }
+      
+      // Append form to body
+      document.body.appendChild(hiddenForm);
+      
+      // Add fade-out effect before navigation
+      document.body.classList.add('fade-out');
+      
+      // Submit after fade animation completes
+      setTimeout(() => {
+        hiddenForm.submit();
+      }, 300);
     });
