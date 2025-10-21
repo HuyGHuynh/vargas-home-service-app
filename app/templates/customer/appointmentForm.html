@@ -43,20 +43,17 @@
 
       <label for="service">Type of Service:</label>
       <select id="service" name="service" required>
-        <option value="">--Select Service--</option>
-        <option value="plumbing">Plumbing</option>
-        <option value="electrician">Electrician</option>
-        <option value="other">Other</option>
+        <option value="">--Select Service Type--</option>
+        <!-- Service types will be loaded dynamically from database -->
       </select>
 
       <label for="job">Job Type:</label>
-      <select id="job" name="job" required>
-        <option value="">--Select Job Type--</option>
-        <option value="repair">Repair</option>
-        <option value="install">Install</option>
-        <option value="quote">Quote</option>
-        <option value="other">Other</option>
+      <select id="job" name="job" required disabled>
+        <option value="">--Select Service Type First--</option>
+        <!-- Job types will be loaded based on selected service type -->
       </select>
+
+      <input type="hidden" id="serviceId" name="serviceId">
 
       <label for="description">Job Description:</label>
       <textarea id="description" name="description" placeholder="Describe the issue or job details..."></textarea>

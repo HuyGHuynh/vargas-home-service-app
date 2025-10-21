@@ -48,6 +48,27 @@ class ServiceRepository(BaseRepository):
             return cur.fetchall()
     
     @staticmethod
+    def get_services_by_type(service_type_name):
+        """Get all services for a specific service type."""
+        query = """
+        SELECT 
+            s.service_id,
+            s.job_name,
+            s.service_price,
+            s.duration_hours,
+            st.service_type_name AS category
+        FROM services s
+        JOIN service_types st 
+            ON s.service_type_id = st.service_type_id
+        WHERE st.service_type_name = %s
+        ORDER BY s.job_name;
+        """
+        
+        with BaseRepository.get_dict_cursor() as cur:
+            cur.execute(query, (service_type_name,))
+            return cur.fetchall()
+    
+    @staticmethod
     def get_service_by_id(service_id):
         """Get a specific service by ID with its category."""
         query = """

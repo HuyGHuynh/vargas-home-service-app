@@ -179,3 +179,13 @@ def get_service_types():
         return {"success": True, "data": service_types}, 200
     except Exception as e:
         return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.get("/services/by-type/<service_type_name>")
+def get_services_by_type(service_type_name):
+    """Get all services for a specific service type."""
+    try:
+        services = ServiceRepository.get_services_by_type(service_type_name)
+        return {"success": True, "data": services}, 200
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
