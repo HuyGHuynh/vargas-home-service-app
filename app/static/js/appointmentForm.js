@@ -10,6 +10,10 @@ function generateCalendar(date) {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   const startDay = firstDay.getDay();
+  
+  // Get today's date (without time) for comparison
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   monthYear.textContent = date.toLocaleDateString('default', { month: 'long', year: 'numeric' });
 
@@ -21,7 +25,22 @@ function generateCalendar(date) {
   for (let d = 1; d <= lastDay.getDate(); d++) {
     const cell = document.createElement('td');
     cell.textContent = d;
-    cell.onclick = () => selectDate(new Date(year, month, d), cell);
+    
+    // Create date object for this day
+    const cellDate = new Date(year, month, d);
+    cellDate.setHours(0, 0, 0, 0);
+    
+    // Check if date is in the past
+    if (cellDate < today) {
+      cell.classList.add('past-date');
+      cell.style.cursor = 'not-allowed';
+      cell.style.opacity = '0.4';
+      cell.style.textDecoration = 'line-through';
+      // Don't add onclick for past dates
+    } else {
+      cell.onclick = () => selectDate(new Date(year, month, d), cell);
+    }
+    
     row.appendChild(cell);
     if ((startDay + d) % 7 === 0) {
       calendarBody.appendChild(row);
@@ -49,6 +68,13 @@ function selectDate(date, cell) {
   document.querySelectorAll('.calendar td').forEach(td => td.classList.remove('selected'));
   cell.classList.add('selected');
   selectedDate = date.toDateString();
+  
+  // Reset selected time when changing dates
+  selectedTime = null;
+  
+  // Regenerate time slots when date is selected
+  generateTimeSlots(date);
+  
   updateConfirm();
 }
 
@@ -64,10 +90,11 @@ function updateConfirm() {
   }
 }
 
-// Time slots generation
-const timeSlotsContainer = document.getElementById("timeSlots");
+// Time slots generation - Grouped grid layout
+const morningSlots = document.getElementById("morningSlots");
+const afternoonSlots = document.getElementById("afternoonSlots");
 const startHour = 9;
-const endHour = 18.5; // 6:30 PM
+const endHour = 18; // 6:00 PM
 const slotIncrement = 30; // minutes
 
 function formatTime(hour, minute) {
@@ -77,21 +104,70 @@ function formatTime(hour, minute) {
   return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
-for (let time = startHour * 60; time <= endHour * 60; time += slotIncrement) {
-  const hour = Math.floor(time / 60);
-  const minute = time % 60;
-  const timeLabel = formatTime(hour, minute);
-  const div = document.createElement("div");
-  div.classList.add("time-slot");
-  div.textContent = timeLabel;
-  div.onclick = () => {
-    document.querySelectorAll(".time-slot").forEach(s => s.classList.remove("selected"));
-    div.classList.add("selected");
-    selectedTime = timeLabel;
-    updateConfirm();
-  };
-  timeSlotsContainer.appendChild(div);
+function generateTimeSlots(selectedDate) {
+  // Clear existing slots
+  morningSlots.innerHTML = '';
+  afternoonSlots.innerHTML = '';
+  
+  // Get current time
+  const now = new Date();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  // Check if selected date is today
+  const selected = new Date(selectedDate);
+  selected.setHours(0, 0, 0, 0);
+  const isToday = selected.getTime() === today.getTime();
+  
+  // Generate time slots and group them
+  for (let time = startHour * 60; time <= endHour * 60; time += slotIncrement) {
+    const hour = Math.floor(time / 60);
+    const minute = time % 60;
+    
+    // Skip 6:30 PM and beyond - only go up to 6:00 PM
+    if (hour >= 18 && minute > 0) continue;
+    
+    // Check if this time slot has passed (only for today)
+    let isPastTime = false;
+    if (isToday) {
+      const slotTime = new Date();
+      slotTime.setHours(hour, minute, 0, 0);
+      isPastTime = slotTime < now;
+    }
+    
+    const timeLabel = formatTime(hour, minute);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.classList.add("time-slot");
+    button.textContent = timeLabel;
+    
+    // Disable past time slots for today
+    if (isPastTime) {
+      button.classList.add("past-time");
+      button.disabled = true;
+      button.style.cursor = "not-allowed";
+      button.style.opacity = "0.4";
+      button.style.textDecoration = "line-through";
+    } else {
+      button.onclick = () => {
+        document.querySelectorAll(".time-slot").forEach(s => s.classList.remove("selected"));
+        button.classList.add("selected");
+        selectedTime = timeLabel;
+        updateConfirm();
+      };
+    }
+    
+    // Determine if morning (9:00 AM - 11:59 AM) or afternoon (12:00 PM - 6:00 PM)
+    if (hour < 12) {
+      morningSlots.appendChild(button);
+    } else {
+      afternoonSlots.appendChild(button);
+    }
+  }
 }
+
+// Initial generation with no date selected (all times available)
+generateTimeSlots(new Date());
 
 generateCalendar(currentDate);
 
@@ -315,7 +391,6 @@ phoneError.style.display = 'none';
 phoneInput.parentNode.insertBefore(phoneError, phoneInput.nextSibling);
 
 // Real-time validation and formatting
-<<<<<<< HEAD
 phoneInput.addEventListener('input', function(e) {
   let value = e.target.value;
   const hasNonDigits = /[^0-9]/.test(value.replace(/[\s\-()]/g, '')); // Check for non-digits excluding formatting chars
@@ -323,26 +398,13 @@ phoneInput.addEventListener('input', function(e) {
   // Remove all non-digit characters first
   let digitsOnly = value.replace(/[^0-9]/g, '');
   
-=======
-phoneInput.addEventListener('input', function (e) {
-  let value = e.target.value;
-  const hasNonDigits = /[^0-9]/.test(value.replace(/[\s\-()]/g, '')); // Check for non-digits excluding formatting chars
-
-  // Remove all non-digit characters first
-  let digitsOnly = value.replace(/[^0-9]/g, '');
-
->>>>>>> c6aa2d0f1bc13bd12eba94586305982a3c003e09
   // Show error if user tried to enter invalid characters
   if (hasNonDigits && value.replace(/[^0-9\s\-()]/g, '').length !== value.length) {
     phoneError.textContent = 'Only digits (0-9) are allowed.';
     phoneError.style.display = 'block';
     phoneInput.style.borderColor = 'red';
     phoneInput.style.backgroundColor = '#fff5f5';
-<<<<<<< HEAD
     
-=======
-
->>>>>>> c6aa2d0f1bc13bd12eba94586305982a3c003e09
     // Hide error after 2 seconds
     setTimeout(() => {
       phoneError.style.display = 'none';
@@ -354,20 +416,12 @@ phoneInput.addEventListener('input', function (e) {
     phoneInput.style.borderColor = '';
     phoneInput.style.backgroundColor = '';
   }
-<<<<<<< HEAD
   
-=======
-
->>>>>>> c6aa2d0f1bc13bd12eba94586305982a3c003e09
   // Limit to 10 digits
   if (digitsOnly.length > 10) {
     digitsOnly = digitsOnly.substring(0, 10);
   }
-<<<<<<< HEAD
   
-=======
-
->>>>>>> c6aa2d0f1bc13bd12eba94586305982a3c003e09
   // Format as (XXX) XXX-XXXX
   let formattedValue = '';
   if (digitsOnly.length > 0) {
@@ -379,11 +433,7 @@ phoneInput.addEventListener('input', function (e) {
       formattedValue = '(' + digitsOnly.substring(0, 3) + ') ' + digitsOnly.substring(3, 6) + '-' + digitsOnly.substring(6);
     }
   }
-<<<<<<< HEAD
   
-=======
-
->>>>>>> c6aa2d0f1bc13bd12eba94586305982a3c003e09
   e.target.value = formattedValue;
 });
 
@@ -391,19 +441,11 @@ phoneInput.addEventListener('input', function (e) {
 document.getElementById("appointmentForm").addEventListener("submit", function (e) {
   const phoneValue = phoneInput.value;
   const digitsOnly = phoneValue.replace(/[^0-9]/g, '');
-<<<<<<< HEAD
   
   if (digitsOnly.length !== 10) {
     e.preventDefault();
     e.stopPropagation();
     
-=======
-
-  if (digitsOnly.length !== 10) {
-    e.preventDefault();
-    e.stopPropagation();
-
->>>>>>> c6aa2d0f1bc13bd12eba94586305982a3c003e09
     phoneError.textContent = 'Phone number must be exactly 10 digits.';
     phoneError.style.display = 'block';
     phoneInput.style.borderColor = 'red';

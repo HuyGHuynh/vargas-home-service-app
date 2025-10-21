@@ -141,34 +141,103 @@
    font-weight: bold;
  }
 
+ .calendar td.past-date {
+   color: #9ca3af;
+   background-color: #f3f4f6;
+   cursor: not-allowed !important;
+   opacity: 0.5;
+   text-decoration: line-through;
+ }
+
+ .calendar td.past-date:hover {
+   background-color: #f3f4f6 !important;
+   color: #9ca3af !important;
+   transform: none;
+ }
+
  .time-section {
    flex: 1;
    display: flex;
    flex-direction: column;
-   gap: 10px;
+   gap: 20px;
    overflow-y: auto;
-   max-height: 350px;
+   max-height: 500px;
+ }
+
+ .time-group {
+   margin-bottom: 20px;
+ }
+
+ .time-group-title {
+   font-size: 1.1rem;
+   font-weight: 600;
+   color: #374151;
+   margin-bottom: 15px;
+   padding-bottom: 8px;
+   border-bottom: 2px solid #e5e7eb;
+ }
+
+ .time-grid {
+   display: grid;
+   grid-template-columns: repeat(3, 1fr);
+   gap: 12px;
+ }
+
+ @media (max-width: 768px) {
+   .time-grid {
+     grid-template-columns: repeat(2, 1fr);
+   }
  }
 
  .time-slot {
-   background: #f0f2f5;
-   border: 1px solid #ccc;
-   padding: 10px;
-   border-radius: 6px;
+   background: #f9fafb;
+   border: 2px solid #e5e7eb;
+   padding: 12px 16px;
+   border-radius: 8px;
    text-align: center;
    cursor: pointer;
-   transition: 0.2s;
+   transition: all 0.2s ease;
+   font-weight: 500;
+   color: #374151;
+   font-size: 0.95rem;
  }
 
  .time-slot:hover {
-   background: #007bff;
-   color: white;
+   background: #eff6ff;
+   border-color: #3b82f6;
+   color: #1d4ed8;
+   transform: translateY(-2px);
+   box-shadow: 0 4px 6px rgba(59, 130, 246, 0.1);
  }
 
  .time-slot.selected {
-   background: #007bff;
+   background: #3b82f6;
+   border-color: #3b82f6;
    color: white;
-   font-weight: bold;
+   font-weight: 600;
+   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+ }
+
+ .time-slot.past-time {
+   background: #f3f4f6;
+   border-color: #e5e7eb;
+   color: #9ca3af;
+   cursor: not-allowed !important;
+   opacity: 0.5;
+   text-decoration: line-through;
+ }
+
+ .time-slot.past-time:hover {
+   background: #f3f4f6 !important;
+   border-color: #e5e7eb !important;
+   color: #9ca3af !important;
+   transform: none !important;
+   box-shadow: none !important;
+ }
+
+ .time-slot:disabled {
+   cursor: not-allowed;
+   pointer-events: none;
  }
 
  .confirm {
