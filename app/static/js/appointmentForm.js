@@ -202,3 +202,81 @@ document.getElementById("appointmentForm").addEventListener("submit", function (
       alert('An error occurred while submitting the appointment. Please try again.');
     });
 });
+
+// Phone number validation - only allow digits, auto-format to (XXX) XXX-XXXX
+const phoneInput = document.getElementById('phone');
+const phoneError = document.createElement('div');
+phoneError.id = 'phoneError';
+phoneError.style.color = 'red';
+phoneError.style.fontSize = '0.9rem';
+phoneError.style.marginTop = '5px';
+phoneError.style.display = 'none';
+
+// Insert error message after phone input
+phoneInput.parentNode.insertBefore(phoneError, phoneInput.nextSibling);
+
+// Real-time validation and formatting
+phoneInput.addEventListener('input', function(e) {
+  let value = e.target.value;
+  const hasNonDigits = /[^0-9]/.test(value.replace(/[\s\-()]/g, '')); // Check for non-digits excluding formatting chars
+  
+  // Remove all non-digit characters first
+  let digitsOnly = value.replace(/[^0-9]/g, '');
+  
+  // Show error if user tried to enter invalid characters
+  if (hasNonDigits && value.replace(/[^0-9\s\-()]/g, '').length !== value.length) {
+    phoneError.textContent = 'Only digits (0-9) are allowed.';
+    phoneError.style.display = 'block';
+    phoneInput.style.borderColor = 'red';
+    phoneInput.style.backgroundColor = '#fff5f5';
+    
+    // Hide error after 2 seconds
+    setTimeout(() => {
+      phoneError.style.display = 'none';
+      phoneInput.style.borderColor = '';
+      phoneInput.style.backgroundColor = '';
+    }, 2000);
+  } else {
+    phoneError.style.display = 'none';
+    phoneInput.style.borderColor = '';
+    phoneInput.style.backgroundColor = '';
+  }
+  
+  // Limit to 10 digits
+  if (digitsOnly.length > 10) {
+    digitsOnly = digitsOnly.substring(0, 10);
+  }
+  
+  // Format as (XXX) XXX-XXXX
+  let formattedValue = '';
+  if (digitsOnly.length > 0) {
+    if (digitsOnly.length <= 3) {
+      formattedValue = '(' + digitsOnly;
+    } else if (digitsOnly.length <= 6) {
+      formattedValue = '(' + digitsOnly.substring(0, 3) + ') ' + digitsOnly.substring(3);
+    } else {
+      formattedValue = '(' + digitsOnly.substring(0, 3) + ') ' + digitsOnly.substring(3, 6) + '-' + digitsOnly.substring(6);
+    }
+  }
+  
+  e.target.value = formattedValue;
+});
+
+// Additional validation on form submit
+document.getElementById("appointmentForm").addEventListener("submit", function (e) {
+  const phoneValue = phoneInput.value;
+  const digitsOnly = phoneValue.replace(/[^0-9]/g, '');
+  
+  if (digitsOnly.length !== 10) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    phoneError.textContent = 'Phone number must be exactly 10 digits.';
+    phoneError.style.display = 'block';
+    phoneInput.style.borderColor = 'red';
+    phoneInput.style.backgroundColor = '#fff5f5';
+    phoneInput.focus();
+    alert('Please enter a valid 10-digit phone number.');
+    return false;
+  }
+}, true); // Use capture phase to run before the other submit handler
