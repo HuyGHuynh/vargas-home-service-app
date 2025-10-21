@@ -95,6 +95,105 @@ for (let time = startHour * 60; time <= endHour * 60; time += slotIncrement) {
 
 generateCalendar(currentDate);
 
+// Preload all service data for instant dropdown population
+let serviceTypes = [];
+let allServices = [];
+let servicesByType = {}; // Cached services organized by type
+
+// Preload all data once when page loads
+async function preloadAllData() {
+  try {
+    const serviceSelect = document.getElementById('service');
+    const jobSelect = document.getElementById('job');
+
+    // Show loading state
+    serviceSelect.disabled = true;
+    jobSelect.disabled = true;
+    serviceSelect.innerHTML = '<option value="">Loading...</option>';
+
+    // Fetch both service types and all services in parallel - ONLY ONCE!
+    const [typesResponse, servicesResponse] = await Promise.all([
+      fetch('/api/service-types'),
+      fetch('/api/services')
+    ]);
+
+    const typesResult = await typesResponse.json();
+    const servicesResult = await servicesResponse.json();
+
+    if (typesResult.success && servicesResult.success) {
+      serviceTypes = typesResult.data;
+      allServices = servicesResult.data;
+
+      // Organize services by type in memory for INSTANT lookup
+      servicesByType = {};
+      allServices.forEach(service => {
+        const typeName = service.category;
+        if (!servicesByType[typeName]) {
+          servicesByType[typeName] = [];
+        }
+        servicesByType[typeName].push(service);
+      });
+
+      // Populate service type dropdown
+      serviceSelect.innerHTML = '<option value="">--Select Service Type--</option>';
+      serviceTypes.forEach(type => {
+        const option = document.createElement('option');
+        option.value = type.service_type_name;
+        option.textContent = type.service_type_name;
+        serviceSelect.appendChild(option);
+      });
+
+      serviceSelect.disabled = false;
+    } else {
+      throw new Error('Failed to load service data');
+    }
+  } catch (error) {
+    console.error('Error preloading data:', error);
+    const serviceSelect = document.getElementById('service');
+    serviceSelect.innerHTML = '<option value="">Error loading services</option>';
+  }
+}
+
+// INSTANT job loading from cached data - NO API CALL!
+document.getElementById('service').addEventListener('change', function () {
+  const serviceTypeName = this.value;
+  const jobSelect = document.getElementById('job');
+  const serviceIdInput = document.getElementById('serviceId');
+
+  // Reset job dropdown
+  jobSelect.innerHTML = '<option value="">--Select Job Type--</option>';
+  jobSelect.disabled = true;
+  serviceIdInput.value = '';
+
+  if (!serviceTypeName) {
+    return;
+  }
+
+  // Get services from CACHED DATA - INSTANT, no network delay!
+  const services = servicesByType[serviceTypeName] || [];
+
+  if (services.length > 0) {
+    services.forEach(service => {
+      const option = document.createElement('option');
+      option.value = service.service_id;
+      option.textContent = service.job_name;
+      jobSelect.appendChild(option);
+    });
+    jobSelect.disabled = false;
+  } else {
+    jobSelect.innerHTML = '<option value="">No jobs available for this service type</option>';
+  }
+});
+
+// Update serviceId when job is selected
+document.getElementById('job').addEventListener('change', function () {
+  const serviceIdInput = document.getElementById('serviceId');
+  serviceIdInput.value = this.value;
+});
+
+// Preload all data when page loads
+preloadAllData();
+
 // Form submission
 document.getElementById("appointmentForm").addEventListener("submit", function (e) {
   e.preventDefault();
@@ -117,21 +216,17 @@ document.getElementById("appointmentForm").addEventListener("submit", function (
   // Collect form data
   const formData = new FormData(this);
 
-  // Map service type and job type to serviceId
+  // Get service type and job selections
   const serviceType = formData.get('service');
-  const jobType = formData.get('job');
-  let serviceId = 1; // Default fallback
+  const serviceId = formData.get('serviceId');
+  const jobSelect = document.getElementById('job');
+  const selectedJobText = jobSelect.options[jobSelect.selectedIndex].text;
 
-  // Simple mapping logic (you can modify this later)
-  if (serviceType === 'plumbing' && jobType === 'repair') serviceId = 1;
-  else if (serviceType === 'plumbing' && jobType === 'install') serviceId = 2;
-  else if (serviceType === 'electrician' && jobType === 'repair') serviceId = 3;
-  else if (serviceType === 'electrician' && jobType === 'install') serviceId = 4;
-  else if (serviceType === 'plumbing' && jobType === 'quote') serviceId = 5;
-  else if (serviceType === 'electrician' && jobType === 'quote') serviceId = 6;
-  else if (serviceType === 'other' && jobType === 'repair') serviceId = 7;
-  else if (serviceType === 'other' && jobType === 'install') serviceId = 8;
-  else serviceId = 1; // Default to service 1 if no match
+  // Validate that a service was selected
+  if (!serviceId) {
+    alert("Please select both a service type and job type.");
+    return;
+  }
 
   const appointmentData = {
     firstName: formData.get('firstName'),
@@ -142,7 +237,7 @@ document.getElementById("appointmentForm").addEventListener("submit", function (
     city: formData.get('city'),
     state: formData.get('state'),
     zipCode: formData.get('zipCode'),
-    serviceId: serviceId,
+    serviceId: parseInt(serviceId),
     requestDate: formData.get('requestDate'),
     scheduledDate: formData.get('scheduledDate'),
     scheduledTime: selectedTime,
@@ -172,7 +267,7 @@ document.getElementById("appointmentForm").addEventListener("submit", function (
           state: formData.get('state'),
           zipCode: formData.get('zipCode'),
           service_type: serviceType,
-          job_type: jobType,
+          job_type: selectedJobText,
           scheduled_date: selectedDate,
           scheduled_time: selectedTime,
           description: formData.get('description'),
@@ -220,6 +315,7 @@ phoneError.style.display = 'none';
 phoneInput.parentNode.insertBefore(phoneError, phoneInput.nextSibling);
 
 // Real-time validation and formatting
+<<<<<<< HEAD
 phoneInput.addEventListener('input', function(e) {
   let value = e.target.value;
   const hasNonDigits = /[^0-9]/.test(value.replace(/[\s\-()]/g, '')); // Check for non-digits excluding formatting chars
@@ -227,13 +323,26 @@ phoneInput.addEventListener('input', function(e) {
   // Remove all non-digit characters first
   let digitsOnly = value.replace(/[^0-9]/g, '');
   
+=======
+phoneInput.addEventListener('input', function (e) {
+  let value = e.target.value;
+  const hasNonDigits = /[^0-9]/.test(value.replace(/[\s\-()]/g, '')); // Check for non-digits excluding formatting chars
+
+  // Remove all non-digit characters first
+  let digitsOnly = value.replace(/[^0-9]/g, '');
+
+>>>>>>> c6aa2d0f1bc13bd12eba94586305982a3c003e09
   // Show error if user tried to enter invalid characters
   if (hasNonDigits && value.replace(/[^0-9\s\-()]/g, '').length !== value.length) {
     phoneError.textContent = 'Only digits (0-9) are allowed.';
     phoneError.style.display = 'block';
     phoneInput.style.borderColor = 'red';
     phoneInput.style.backgroundColor = '#fff5f5';
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> c6aa2d0f1bc13bd12eba94586305982a3c003e09
     // Hide error after 2 seconds
     setTimeout(() => {
       phoneError.style.display = 'none';
@@ -245,12 +354,20 @@ phoneInput.addEventListener('input', function(e) {
     phoneInput.style.borderColor = '';
     phoneInput.style.backgroundColor = '';
   }
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> c6aa2d0f1bc13bd12eba94586305982a3c003e09
   // Limit to 10 digits
   if (digitsOnly.length > 10) {
     digitsOnly = digitsOnly.substring(0, 10);
   }
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> c6aa2d0f1bc13bd12eba94586305982a3c003e09
   // Format as (XXX) XXX-XXXX
   let formattedValue = '';
   if (digitsOnly.length > 0) {
@@ -262,7 +379,11 @@ phoneInput.addEventListener('input', function(e) {
       formattedValue = '(' + digitsOnly.substring(0, 3) + ') ' + digitsOnly.substring(3, 6) + '-' + digitsOnly.substring(6);
     }
   }
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> c6aa2d0f1bc13bd12eba94586305982a3c003e09
   e.target.value = formattedValue;
 });
 
@@ -270,11 +391,19 @@ phoneInput.addEventListener('input', function(e) {
 document.getElementById("appointmentForm").addEventListener("submit", function (e) {
   const phoneValue = phoneInput.value;
   const digitsOnly = phoneValue.replace(/[^0-9]/g, '');
+<<<<<<< HEAD
   
   if (digitsOnly.length !== 10) {
     e.preventDefault();
     e.stopPropagation();
     
+=======
+
+  if (digitsOnly.length !== 10) {
+    e.preventDefault();
+    e.stopPropagation();
+
+>>>>>>> c6aa2d0f1bc13bd12eba94586305982a3c003e09
     phoneError.textContent = 'Phone number must be exactly 10 digits.';
     phoneError.style.display = 'block';
     phoneInput.style.borderColor = 'red';

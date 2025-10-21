@@ -3,8 +3,9 @@ Utility API routes (health check, database check, etc.).
 """
 from flask import Blueprint, request, jsonify
 from repositories.base_repository import BaseRepository
+from repositories.service_repository import ServiceRepository
 
-api_bp = Blueprint('api', __name__)
+api_bp = Blueprint('api', __name__, url_prefix='/api')
 
 
 @api_bp.get("/")
@@ -48,3 +49,143 @@ def login():
         
     except Exception as e:
         return {"success": False, "message": f"Server error: {str(e)}"}, 500
+
+
+# ==================== Service API Routes ====================
+
+@api_bp.get("/services")
+def get_services():
+    """Get all services with their categories."""
+    try:
+        services = ServiceRepository.get_all_services()
+        return {"success": True, "data": services}, 200
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.get("/services/<int:service_id>")
+def get_service(service_id):
+    """Get a specific service by ID."""
+    try:
+        service = ServiceRepository.get_service_by_id(service_id)
+        if service:
+            return {"success": True, "data": service}, 200
+        else:
+            return {"success": False, "error": "Service not found"}, 404
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.post("/services")
+def create_service():
+    """Create a new service."""
+    try:
+        data = request.get_json()
+        if not data:
+            return {"success": False, "error": "No data provided"}, 400
+        
+        # Validate required fields
+        required_fields = ['name', 'category', 'price']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return {"success": False, "error": f"Missing required field: {field}"}, 400
+        
+        # Create service
+        service_id = ServiceRepository.create_service(
+            job_name=data['name'],
+            service_type_name=data['category'],
+            service_price=float(data['price']),
+            duration_hours=float(data['duration']) if data.get('duration') else None,
+            job_desc=data.get('description')
+        )
+        
+        # Return the created service
+        service = ServiceRepository.get_service_by_id(service_id)
+        return {"success": True, "data": service, "message": "Service created successfully"}, 201
+        
+    except ValueError as e:
+        return {"success": False, "error": str(e)}, 400
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.put("/services/<int:service_id>")
+def update_service(service_id):
+    """Update an existing service."""
+    try:
+        data = request.get_json()
+        if not data:
+            return {"success": False, "error": "No data provided"}, 400
+        
+        # Check if service exists
+        existing_service = ServiceRepository.get_service_by_id(service_id)
+        if not existing_service:
+            return {"success": False, "error": "Service not found"}, 404
+        
+        # Validate required fields
+        required_fields = ['name', 'category', 'price']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return {"success": False, "error": f"Missing required field: {field}"}, 400
+        
+        # Update service
+        success = ServiceRepository.update_service(
+            service_id=service_id,
+            job_name=data['name'],
+            service_type_name=data['category'],
+            service_price=float(data['price']),
+            duration_hours=float(data['duration']) if data.get('duration') else None,
+            job_desc=data.get('description')
+        )
+        
+        if success:
+            # Return updated service
+            service = ServiceRepository.get_service_by_id(service_id)
+            return {"success": True, "data": service, "message": "Service updated successfully"}, 200
+        else:
+            return {"success": False, "error": "Failed to update service"}, 500
+            
+    except ValueError as e:
+        return {"success": False, "error": str(e)}, 400
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.delete("/services/<int:service_id>")
+def delete_service(service_id):
+    """Delete a service."""
+    try:
+        # Check if service exists
+        existing_service = ServiceRepository.get_service_by_id(service_id)
+        if not existing_service:
+            return {"success": False, "error": "Service not found"}, 404
+        
+        # Delete service
+        success = ServiceRepository.delete_service(service_id)
+        if success:
+            return {"success": True, "message": "Service deleted successfully"}, 200
+        else:
+            return {"success": False, "error": "Failed to delete service"}, 500
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.get("/service-types")
+def get_service_types():
+    """Get all service types for dropdown options."""
+    try:
+        service_types = ServiceRepository.get_service_types()
+        return {"success": True, "data": service_types}, 200
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.get("/services/by-type/<service_type_name>")
+def get_services_by_type(service_type_name):
+    """Get all services for a specific service type."""
+    try:
+        services = ServiceRepository.get_services_by_type(service_type_name)
+        return {"success": True, "data": services}, 200
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
