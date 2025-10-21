@@ -161,7 +161,7 @@ document.getElementById("appointmentForm").addEventListener("submit", function (
     .then(response => response.json())
     .then(data => {
       if (data.ok) {
-        // Prepare confirmation data with original form values
+        // Prepare confirmation data with original form values and technician info
         const confirmationData = {
           firstName: formData.get('firstName'),
           lastName: formData.get('lastName'),
@@ -176,8 +176,12 @@ document.getElementById("appointmentForm").addEventListener("submit", function (
           scheduled_date: selectedDate,
           scheduled_time: selectedTime,
           description: formData.get('description'),
-          request_id: data.result.request_id
+          request_id: data.result.request_id,
+          // Include technician data if available
+          technician: data.result.technician
         };
+
+        console.log('Technician data received:', data.result.technician);
 
         // Send data to confirmation page
         fetch('/confirmation', {
