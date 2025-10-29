@@ -1,9 +1,10 @@
 """
 Utility API routes (health check, database check, etc.).
 """
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 from repositories.base_repository import BaseRepository
 from repositories.service_repository import ServiceRepository
+from repositories.employee_repository import EmployeeRepository
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -28,27 +29,77 @@ def db_check():
 
 @api_bp.post("/login")
 def login():
-    """Basic login endpoint for authentication."""
+    """Database-integrated login endpoint for authentication."""
     try:
+        # Get the JSON data from the request
         data = request.get_json()
         if not data:
             return {"success": False, "message": "No data provided"}, 400
         
+        # Extract email and password from the request
         email = data.get('email', '').strip()
         password = data.get('password', '')
         
+        # Validate that both email and password are provided
         if not email or not password:
             return {"success": False, "message": "Email and password are required"}, 400
         
-        # For now, return a basic response since we don't have user authentication in DB
-        # This can be expanded later with actual database user verification
-        return {
-            "success": False, 
-            "message": "Database authentication not implemented yet. Please use sample accounts."
-        }, 401
+        # Try to authenticate the user using the database
+        employee = EmployeeRepository.authenticate_user(email, password)
+        
+        if employee:
+            # Authentication successful - store user info in session
+            session['user_id'] = employee['employeeid']
+            session['user_email'] = employee['email']
+            session['user_name'] = f"{employee['firstname']} {employee['lastname']}"
+            session['is_admin'] = employee['isadmin']
+            
+            # Determine redirect URL based on admin status
+            if employee['isadmin']:
+                redirect_url = "/owner"
+            else:
+                # Route to specific employee view with their ID
+                redirect_url = f"/employee/{employee['employeeid']}/view"
+            
+            return {
+                "success": True,
+                "message": "Login successful",
+                "user": {
+                    "employeeid": employee['employeeid'],
+                    "name": f"{employee['firstname']} {employee['lastname']}",
+                    "email": employee['email'],
+                    "isadmin": employee['isadmin']
+                },
+                "redirect_url": redirect_url
+            }, 200
+        else:
+            # Authentication failed - invalid credentials
+            return {
+                "success": False,
+                "message": "Invalid email or password"
+            }, 401
         
     except Exception as e:
-        return {"success": False, "message": f"Server error: {str(e)}"}, 500
+        # Handle any server errors
+        print(f"Login error: {e}")
+        return {"success": False, "message": "Server error occurred"}, 500
+
+
+@api_bp.post("/logout")
+def logout():
+    """Logout endpoint - clears user session."""
+    try:
+        # Clear all session data
+        session.clear()
+        
+        return {
+            "success": True,
+            "message": "Logged out successfully"
+        }, 200
+        
+    except Exception as e:
+        print(f"Logout error: {e}")
+        return {"success": False, "message": "Server error occurred"}, 500
 
 
 # ==================== Service API Routes ====================

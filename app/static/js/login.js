@@ -2,80 +2,69 @@
 const loginForm = document.getElementById('login');
 const loginMessage = document.getElementById('loginMessage');
 
-// Sample accounts for testing
-const sampleAccounts = [
-    {
-        email: 'admin@vargas',
-        password: 'admin',
-        role: 'admin',
-        redirectTo: '/owner',
-        name: 'Admin User'
-    },
-    {
-        email: 'employee@vargas',
-        password: 'employee',
-        role: 'employee',
-        redirectTo: '/employee/view',
-        name: 'Employee User'
-    }
-];
-
-// Function to handle login
+// Function to handle login - now using only database authentication
 loginForm.addEventListener('submit', async function (event) {
     event.preventDefault();
 
+    // Get email and password from form
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
 
+    // Validate that both fields are filled
     if (!email || !password) {
         loginMessage.textContent = 'Please enter both email and password.';
         loginMessage.style.color = '#d9534f';
         return;
     }
 
-    // Check sample accounts
-    const account = sampleAccounts.find(acc => acc.email === email && acc.password === password);
+    // Show loading message
+    loginMessage.textContent = 'Authenticating...';
+    loginMessage.style.color = '#007bff';
 
-    if (account) {
-        // Store user session info in localStorage
-        localStorage.setItem('currentUser', JSON.stringify({
-            email: account.email,
-            role: account.role,
-            name: account.name
-        }));
-
-        loginMessage.textContent = `Login successful! Welcome ${account.name}. Redirecting...`;
-        loginMessage.style.color = '#28a745';
-        setTimeout(() => {
-            window.location.href = account.redirectTo;
-        }, 1000);
-        return;
-    }
-
-    // If no sample account match, try backend API
     try {
+        // Send login request to backend API
         const response = await fetch('/api/login', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: email,
+                password: password
+            })
         });
 
+        // Parse the response
         const result = await response.json();
 
         if (result.success) {
-            loginMessage.textContent = 'Login successful! Redirecting...';
+            // Login successful - store user info and redirect
+            localStorage.setItem('currentUser', JSON.stringify({
+                employeeid: result.user.employeeid,
+                name: result.user.name,
+                email: result.user.email,
+                isadmin: result.user.isadmin
+            }));
+
+            // Show success message
+            loginMessage.textContent = `Login successful! Welcome ${result.user.name}. Redirecting...`;
             loginMessage.style.color = '#28a745';
+
+            // Redirect after a short delay
             setTimeout(() => {
-                window.location.href = '/employee/view';
+                window.location.href = result.redirect_url;
             }, 1000);
+
         } else {
+            // Login failed - show error message
             loginMessage.textContent = result.message || 'Invalid email or password.';
             loginMessage.style.color = '#d9534f';
         }
 
     } catch (error) {
-        console.error('Error:', error);
-        loginMessage.textContent = 'Server error. Please try again later.';
+        // Handle network or server errors
+        console.error('Login error:', error);
+        loginMessage.textContent = 'Unable to connect to server. Please try again later.';
         loginMessage.style.color = '#d9534f';
-    } //will happen becausse no DB
+    }
 });

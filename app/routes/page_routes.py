@@ -2,7 +2,8 @@
 Routes for serving HTML pages (frontend views).
 These routes render templates for the user interface.
 """
-from flask import Blueprint, render_template, request, session
+from flask import Blueprint, render_template, request, session, redirect, url_for
+from repositories.employee_repository import EmployeeRepository
 
 page_bp = Blueprint('pages', __name__)
 
@@ -62,22 +63,91 @@ def admin_warranty():
 
 # ==================== Employee Pages ====================
 
+def check_employee_access(employee_id):
+    """
+    Helper function to check if user has access to employee pages.
+    Returns employee data if authorized, redirects to login if not.
+    """
+    # Check if user is logged in
+    if 'user_id' not in session:
+        return redirect(url_for('pages.login'))
+    
+    # Admin users can access any employee page
+    if session.get('is_admin'):
+        employee = EmployeeRepository.get_employee_by_id(employee_id)
+        if not employee:
+            return redirect(url_for('pages.home'))
+        return employee
+    
+    # Regular employees can only access their own pages
+    if session.get('user_id') != employee_id:
+        return redirect(url_for('pages.home'))
+    
+    # Get and return employee data
+    employee = EmployeeRepository.get_employee_by_id(employee_id)
+    if not employee:
+        return redirect(url_for('pages.login'))
+    
+    return employee
+
+
+@page_bp.get("/employee/<int:employee_id>/availability")
+def employee_availability(employee_id):
+    """Employee availability page for specific employee."""
+    employee = check_employee_access(employee_id)
+    if not isinstance(employee, dict):  # It's a redirect response
+        return employee
+    
+    return render_template("employee/employeeAvailability.html", 
+                         employee=employee)
+
+
+@page_bp.get("/employee/<int:employee_id>/profile")
+def employee_profile(employee_id):
+    """Employee profile page for specific employee."""
+    employee = check_employee_access(employee_id)
+    if not isinstance(employee, dict):  # It's a redirect response
+        return employee
+    
+    return render_template("employee/employeeProfile.html", 
+                         employee=employee)
+
+
+@page_bp.get("/employee/<int:employee_id>/view")
+def employee_view(employee_id):
+    """Employee dashboard page for specific employee."""
+    employee = check_employee_access(employee_id)
+    if not isinstance(employee, dict):  # It's a redirect response
+        return employee
+    
+    return render_template("employee/employeeView.html", 
+                         employee=employee)
+
+
+# ==================== Legacy Employee Routes (for backward compatibility) ====================
+
 @page_bp.get("/employee/availability")
-def employee_availability():
-    """Employee availability page."""
-    return render_template("employee/employeeAvailability.html")
+def employee_availability_legacy():
+    """Legacy employee availability page - redirects to specific employee."""
+    if 'user_id' not in session:
+        return redirect(url_for('pages.login'))
+    return redirect(url_for('pages.employee_availability', employee_id=session['user_id']))
 
 
 @page_bp.get("/employee/profile")
-def employee_profile():
-    """Employee profile page."""
-    return render_template("employee/employeeProfile.html")
+def employee_profile_legacy():
+    """Legacy employee profile page - redirects to specific employee."""
+    if 'user_id' not in session:
+        return redirect(url_for('pages.login'))
+    return redirect(url_for('pages.employee_profile', employee_id=session['user_id']))
 
 
 @page_bp.get("/employee/view")
-def employee_view():
-    """Employee view page."""
-    return render_template("employee/employeeView.html")
+def employee_view_legacy():
+    """Legacy employee view page - redirects to specific employee."""
+    if 'user_id' not in session:
+        return redirect(url_for('pages.login'))
+    return redirect(url_for('pages.employee_view', employee_id=session['user_id']))
 
 
 # ==================== Customer Pages ====================
