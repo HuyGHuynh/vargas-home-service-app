@@ -14,6 +14,20 @@
     <div class="employee-nav-container">
       <h1 class="employee-logo">Employee Dashboard</h1>
       <nav class="employee-nav-tabs">
+        {% if employee %}
+        <a href="/employee/{{ employee.employeeid }}/view" class="nav-tab">
+          <span class="tab-icon">📊</span>
+          <span class="tab-text">Dashboard</span>
+        </a>
+        <a href="/employee/{{ employee.employeeid }}/profile" class="nav-tab">
+          <span class="tab-icon">👤</span>
+          <span class="tab-text">Profile</span>
+        </a>
+        <a href="/employee/{{ employee.employeeid }}/availability" class="nav-tab active">
+          <span class="tab-icon">📅</span>
+          <span class="tab-text">Submit Availability</span>
+        </a>
+        {% else %}
         <a href="/employee/view" class="nav-tab">
           <span class="tab-icon">📊</span>
           <span class="tab-text">Dashboard</span>
@@ -26,10 +40,17 @@
           <span class="tab-icon">📅</span>
           <span class="tab-text">Submit Availability</span>
         </a>
+        {% endif %}
       </nav>
       <div class="employee-info-nav">
-        <span class="employee-name" id="employeeName">Michael Thompson</span>
-        <span class="employee-role-badge" id="employeeRole">Technician</span>
+        {% if employee %}
+        <span class="employee-name" id="employeeName">{{ employee.firstname }} {{ employee.lastname }}</span>
+        <span class="employee-role-badge" id="employeeRole">{{ 'Administrator' if employee.isadmin else 'Employee'
+          }}</span>
+        {% else %}
+        <span class="employee-name" id="employeeName">Employee</span>
+        <span class="employee-role-badge" id="employeeRole">Employee</span>
+        {% endif %}
         <a href="/" class="logout-btn">Log Out</a>
       </div>
     </div>
@@ -98,7 +119,12 @@
       </div>
 
       <div class="form-actions">
+        {% if employee %}
+        <button type="button" class="cancel-btn"
+          onclick="window.location.href='/employee/{{ employee.employeeid }}/view'">Cancel</button>
+        {% else %}
         <button type="button" class="cancel-btn" onclick="window.location.href='/employee/view'">Cancel</button>
+        {% endif %}
         <button type="submit" class="submit-btn">Submit Availability</button>
       </div>
     </form>

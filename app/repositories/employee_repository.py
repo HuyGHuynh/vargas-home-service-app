@@ -163,3 +163,182 @@ class EmployeeRepository:
         except Exception as e:
             print(f"Error updating password: {e}")
             return False
+
+    @staticmethod
+    def create_availability(employee_id, avail_date, start_time, end_time):
+        """
+        Create a new availability record for an employee.
+        
+        Args:
+            employee_id (int): The employee's ID
+            avail_date (str): Date in YYYY-MM-DD format
+            start_time (str): Start time in HH:MM format
+            end_time (str): End time in HH:MM format
+            
+        Returns:
+            int or None: availability_id if successful, None otherwise
+        """
+        try:
+            with BaseRepository.get_cursor() as cur:
+                # Check if employee exists first
+                employee_check_query = """
+                    SELECT employeeid FROM employee WHERE employeeid = %s
+                """
+                cur.execute(employee_check_query, (employee_id,))
+                if not cur.fetchone():
+                    print(f"Employee with ID {employee_id} not found")
+                    return None
+                
+                # Insert availability record
+                insert_query = """
+                    INSERT INTO empavailability (employee_id, availdate, starttime, endtime)
+                    VALUES (%s, %s, %s, %s)
+                    RETURNING availability_id
+                """
+                
+                cur.execute(insert_query, (employee_id, avail_date, start_time, end_time))
+                result = cur.fetchone()
+                
+                if result:
+                    availability_id = result[0]
+                    print(f"Created availability record with ID: {availability_id}")
+                    return availability_id
+                
+                return None
+                
+        except Exception as e:
+            print(f"Error creating availability: {e}")
+            return None
+
+    @staticmethod
+    def get_employee_availability(employee_id, start_date=None, end_date=None):
+        """
+        Get availability records for an employee.
+        
+        Args:
+            employee_id (int): The employee's ID
+            start_date (str, optional): Start date filter in YYYY-MM-DD format
+            end_date (str, optional): End date filter in YYYY-MM-DD format
+            
+        Returns:
+            list: List of availability records
+        """
+        try:
+            with BaseRepository.get_cursor() as cur:
+                # Build query with optional date filters
+                base_query = """
+                    SELECT ea.availability_id, ea.employee_id, ea.availdate, 
+                           ea.starttime, ea.endtime,
+                           e.firstname, e.lastname, e.email
+                    FROM empavailability ea
+                    JOIN employee e ON ea.employee_id = e.employeeid
+                    WHERE ea.employee_id = %s
+                """
+                
+                params = [employee_id]
+                
+                if start_date:
+                    base_query += " AND ea.availdate >= %s"
+                    params.append(start_date)
+                
+                if end_date:
+                    base_query += " AND ea.availdate <= %s"
+                    params.append(end_date)
+                    
+                base_query += " ORDER BY ea.availdate, ea.starttime"
+                
+                cur.execute(base_query, params)
+                results = cur.fetchall()
+                
+                availability_records = []
+                for result in results:
+                    record = {
+                        'availability_id': result[0],
+                        'employee_id': result[1],
+                        'availdate': result[2].strftime('%Y-%m-%d') if result[2] else None,
+                        'starttime': str(result[3]) if result[3] else None,
+                        'endtime': str(result[4]) if result[4] else None,
+                        'employee_name': f"{result[5]} {result[6]}",
+                        'employee_email': result[7]
+                    }
+                    availability_records.append(record)
+                
+                return availability_records
+                
+        except Exception as e:
+            print(f"Error getting employee availability: {e}")
+            return []
+
+    @staticmethod
+    def update_availability(availability_id, avail_date=None, start_time=None, end_time=None):
+        """
+        Update an existing availability record.
+        
+        Args:
+            availability_id (int): The availability record ID
+            avail_date (str, optional): New date in YYYY-MM-DD format
+            start_time (str, optional): New start time in HH:MM format
+            end_time (str, optional): New end time in HH:MM format
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            with BaseRepository.get_cursor() as cur:
+                # Build dynamic update query
+                update_fields = []
+                params = []
+                
+                if avail_date is not None:
+                    update_fields.append("availdate = %s")
+                    params.append(avail_date)
+                
+                if start_time is not None:
+                    update_fields.append("starttime = %s")
+                    params.append(start_time)
+                
+                if end_time is not None:
+                    update_fields.append("endtime = %s")
+                    params.append(end_time)
+                
+                if not update_fields:
+                    return False
+                
+                query = f"""
+                    UPDATE empavailability 
+                    SET {', '.join(update_fields)}
+                    WHERE availability_id = %s
+                """
+                params.append(availability_id)
+                
+                cur.execute(query, params)
+                return cur.rowcount > 0
+                
+        except Exception as e:
+            print(f"Error updating availability: {e}")
+            return False
+
+    @staticmethod
+    def delete_availability(availability_id):
+        """
+        Delete an availability record.
+        
+        Args:
+            availability_id (int): The availability record ID
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            with BaseRepository.get_cursor() as cur:
+                query = """
+                    DELETE FROM empavailability 
+                    WHERE availability_id = %s
+                """
+                
+                cur.execute(query, (availability_id,))
+                return cur.rowcount > 0
+                
+        except Exception as e:
+            print(f"Error deleting availability: {e}")
+            return False

@@ -102,6 +102,134 @@ def logout():
         return {"success": False, "message": "Server error occurred"}, 500
 
 
+# ==================== Employee Availability API Routes ====================
+
+@api_bp.post("/employee/availability")
+def submit_employee_availability():
+    """Submit employee availability."""
+    try:
+        # Check if user is logged in
+        if 'user_id' not in session:
+            return {"success": False, "message": "Authentication required"}, 401
+        
+        # Get request data
+        data = request.get_json()
+        if not data:
+            return {"success": False, "message": "No data provided"}, 400
+        
+        # Extract required fields
+        employee_id = session.get('user_id')  # Use logged-in user's ID
+        avail_date = data.get('date')
+        start_time = data.get('startTime')
+        end_time = data.get('endTime')
+        
+        # Validate required fields
+        if not all([avail_date, start_time, end_time]):
+            return {"success": False, "message": "Date, start time, and end time are required"}, 400
+        
+        # Use employee service to handle the submission
+        from services.employee_service import EmployeeService
+        result = EmployeeService.submit_availability(employee_id, avail_date, start_time, end_time)
+        
+        if result["success"]:
+            return result, 201
+        else:
+            return result, 400
+            
+    except Exception as e:
+        print(f"Error submitting availability: {e}")
+        return {"success": False, "message": "Server error occurred"}, 500
+
+
+@api_bp.get("/employee/<int:employee_id>/availability")
+def get_employee_availability(employee_id):
+    """Get employee availability records."""
+    try:
+        # Check if user is logged in and authorized
+        if 'user_id' not in session:
+            return {"success": False, "message": "Authentication required"}, 401
+        
+        # Only allow access to own data unless admin
+        if not session.get('is_admin') and session.get('user_id') != employee_id:
+            return {"success": False, "message": "Access denied"}, 403
+        
+        # Get date range from query parameters
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        
+        # Get availability records
+        availability_records = EmployeeRepository.get_employee_availability(
+            employee_id, start_date, end_date
+        )
+        
+        return {
+            "success": True,
+            "data": availability_records
+        }, 200
+        
+    except Exception as e:
+        print(f"Error getting availability: {e}")
+        return {"success": False, "message": "Server error occurred"}, 500
+
+
+@api_bp.put("/employee/availability/<int:availability_id>")
+def update_employee_availability(availability_id):
+    """Update employee availability record."""
+    try:
+        # Check if user is logged in
+        if 'user_id' not in session:
+            return {"success": False, "message": "Authentication required"}, 401
+        
+        # Get request data
+        data = request.get_json()
+        if not data:
+            return {"success": False, "message": "No data provided"}, 400
+        
+        employee_id = session.get('user_id')
+        avail_date = data.get('date')
+        start_time = data.get('startTime')
+        end_time = data.get('endTime')
+        
+        # Use employee service to handle the update
+        from services.employee_service import EmployeeService
+        result = EmployeeService.update_employee_availability(
+            availability_id, employee_id, avail_date, start_time, end_time
+        )
+        
+        if result["success"]:
+            return result, 200
+        else:
+            return result, 400
+            
+    except Exception as e:
+        print(f"Error updating availability: {e}")
+        return {"success": False, "message": "Server error occurred"}, 500
+
+
+@api_bp.delete("/employee/availability/<int:availability_id>")
+def delete_employee_availability(availability_id):
+    """Delete employee availability record."""
+    try:
+        # Check if user is logged in
+        if 'user_id' not in session:
+            return {"success": False, "message": "Authentication required"}, 401
+        
+        employee_id = session.get('user_id')
+        
+        # Use employee service to handle the deletion
+        from services.employee_service import EmployeeService
+        result = EmployeeService.delete_employee_availability(availability_id, employee_id)
+        
+        if result["success"]:
+            return result, 200
+        else:
+            return result, 400
+            
+    except Exception as e:
+        print(f"Error deleting availability: {e}")
+        return {"success": False, "message": "Server error occurred"}, 500
+
+
 # ==================== Service API Routes ====================
 
 @api_bp.get("/services")
