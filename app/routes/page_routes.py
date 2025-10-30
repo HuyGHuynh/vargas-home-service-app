@@ -196,12 +196,19 @@ def confirmation():
         
         # Handle technician information if available
         technician_data = data.get('technician')
-        if technician_data and technician_data.get('employee_id'):
+        
+        if technician_data and (technician_data.get('employeeid') or technician_data.get('employee_id') or technician_data.get('name')):
+            # Handle both 'name' (from auto-assignment) and 'firstname'/'lastname' (from legacy)
+            if technician_data.get('name'):
+                technician_name = technician_data.get('name')
+            else:
+                technician_name = f"{technician_data.get('firstname', '')} {technician_data.get('lastname', '')}".strip()
+            
             template_vars.update({
-                'technician_name': f"{technician_data.get('firstname', '')} {technician_data.get('lastname', '')}".strip(),
-                'technician_role': 'Service Technician',  # Default role
+                'technician_name': technician_name or 'Assigned Technician',
+                'technician_role': 'Service Technician',
                 'technician_phone': technician_data.get('phone'),
-                'technician_specialization': 'General Service'  # Default specialization
+                'technician_specialization': 'General Service'
             })
         else:
             template_vars.update({

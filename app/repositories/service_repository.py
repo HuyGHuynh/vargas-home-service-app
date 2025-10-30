@@ -156,6 +156,57 @@ class ServiceRepository(BaseRepository):
             return cur.rowcount > 0
     
     @staticmethod
+    def get_service_cost_calculation(service_id):
+        """
+        Get service cost calculation details by service ID.
+        
+        This method calculates the estimated cost based on:
+        duration_hours * service_price
+        
+        Args:
+            service_id (int): The service ID
+            
+        Returns:
+            dict or None: Service cost details if found, None otherwise
+            Contains: service_id, job_name, service_price, duration_hours, estimated_cost
+        """
+        query = """
+        SELECT 
+            s.service_id,
+            s.job_name,
+            s.service_price,
+            s.duration_hours,
+            st.service_type_name AS category,
+            -- Calculate estimated cost (duration * price)
+            CASE 
+                WHEN s.duration_hours IS NOT NULL AND s.service_price IS NOT NULL 
+                THEN s.duration_hours * s.service_price
+                ELSE s.service_price
+            END AS estimated_cost
+        FROM services s
+        JOIN service_types st 
+            ON s.service_type_id = st.service_type_id
+        WHERE s.service_id = %s;
+        """
+        
+        with BaseRepository.get_dict_cursor() as cur:
+            cur.execute(query, (service_id,))
+            result = cur.fetchone()
+            
+            if result:
+                # Ensure numeric values are properly formatted
+                return {
+                    'service_id': result['service_id'],
+                    'job_name': result['job_name'],
+                    'category': result['category'],
+                    'service_price': float(result['service_price']) if result['service_price'] else 0.0,
+                    'duration_hours': float(result['duration_hours']) if result['duration_hours'] else 1.0,
+                    'estimated_cost': float(result['estimated_cost']) if result['estimated_cost'] else 0.0
+                }
+            
+            return None
+
+    @staticmethod
     def list_all():
         """Legacy method - use get_all_services instead."""
         return ServiceRepository.get_all_services()

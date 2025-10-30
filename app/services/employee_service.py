@@ -276,3 +276,87 @@ class EmployeeService:
                 "success": False,
                 "message": "An error occurred while deleting availability"
             }
+
+    @staticmethod
+    def auto_assign_employee_to_request(request_id, preferred_date, preferred_time):
+        """
+        Automatically assign an available employee to a service request.
+        
+        Args:
+            request_id (int): The service request ID
+            preferred_date (str): Date in YYYY-MM-DD format
+            preferred_time (str): Time in HH:MM format
+            
+        Returns:
+            dict: Result with assignment details
+        """
+        try:
+            # Find available employees for the requested date/time
+            available_employees = EmployeeRepository.get_available_employees_for_datetime(
+                preferred_date, preferred_time
+            )
+            
+            if not available_employees:
+                return {
+                    "success": False,
+                    "message": f"No employees available for {preferred_date} at {preferred_time}"
+                }
+            
+            # Select the first available employee (you could implement more sophisticated logic here)
+            selected_employee = available_employees[0]
+            
+            # Create work assignment
+            assignment_id = EmployeeRepository.create_work_assignment(
+                request_id, selected_employee['employeeid']
+            )
+            
+            if assignment_id:
+                return {
+                    "success": True,
+                    "message": "Employee assigned successfully",
+                    "assignment_id": assignment_id,
+                    "assigned_employee": {
+                        "employeeid": selected_employee['employeeid'],
+                        "name": selected_employee['full_name'],
+                        "email": selected_employee['email'],
+                        "phone": selected_employee['phone']
+                    }
+                }
+            else:
+                return {
+                    "success": False,
+                    "message": "Failed to create work assignment"
+                }
+                
+        except Exception as e:
+            print(f"Error in auto_assign_employee_to_request: {e}")
+            return {
+                "success": False,
+                "message": "An error occurred while assigning employee"
+            }
+
+    @staticmethod
+    def get_employee_assignments(employee_id):
+        """
+        Get all work assignments for an employee.
+        
+        Args:
+            employee_id (int): The employee ID
+            
+        Returns:
+            dict: Result with assignments list
+        """
+        try:
+            assignments = EmployeeRepository.get_work_assignments_by_employee(employee_id)
+            
+            return {
+                "success": True,
+                "assignments": assignments
+            }
+            
+        except Exception as e:
+            print(f"Error getting employee assignments: {e}")
+            return {
+                "success": False,
+                "message": "Error retrieving assignments"
+            }

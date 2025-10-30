@@ -230,6 +230,116 @@ def delete_employee_availability(availability_id):
         return {"success": False, "message": "Server error occurred"}, 500
 
 
+@api_bp.get("/availability/date/<date_str>")
+def get_availability_for_date(date_str):
+    """Get all available time slots for a specific date."""
+    try:
+        # Validate date format
+        from datetime import datetime
+        try:
+            datetime.strptime(date_str, '%Y-%m-%d')
+        except ValueError:
+            return {"success": False, "message": "Invalid date format. Use YYYY-MM-DD"}, 400
+        
+        # Get availability time slots from employee repository
+        time_slots = EmployeeRepository.get_availability_time_slots_for_date(date_str)
+        
+        return {
+            "success": True,
+            "date": date_str,
+            "time_slots": time_slots
+        }, 200
+        
+    except Exception as e:
+        print(f"Error getting availability for date: {e}")
+        return {"success": False, "message": "Server error occurred"}, 500
+
+
+@api_bp.get("/availability/employees")
+def get_available_employees():
+    """Get available employees for a specific date and time."""
+    try:
+        # Get query parameters
+        date_str = request.args.get('date')
+        time_str = request.args.get('time')
+        
+        if not date_str or not time_str:
+            return {"success": False, "message": "Date and time parameters are required"}, 400
+        
+        # Validate formats
+        from datetime import datetime
+        try:
+            datetime.strptime(date_str, '%Y-%m-%d')
+            datetime.strptime(time_str, '%H:%M')
+        except ValueError:
+            return {"success": False, "message": "Invalid date or time format"}, 400
+        
+        # Get available employees
+        available_employees = EmployeeRepository.get_available_employees_for_datetime(date_str, time_str)
+        
+        return {
+            "success": True,
+            "date": date_str,
+            "time": time_str,
+            "available_employees": available_employees
+        }, 200
+        
+    except Exception as e:
+        print(f"Error getting available employees: {e}")
+        return {"success": False, "message": "Server error occurred"}, 500
+
+
+@api_bp.get("/availability/month/<int:year>/<int:month>")
+def get_availability_for_month(year, month):
+    """Get all dates in a month that have employee availability."""
+    try:
+        # Validate month and year
+        if month < 1 or month > 12:
+            return {"success": False, "message": "Month must be between 1 and 12"}, 400
+        
+        if year < 2020 or year > 2030:
+            return {"success": False, "message": "Year must be between 2020 and 2030"}, 400
+        
+        # Get all availability for the month
+        from datetime import date, timedelta
+        import calendar
+        
+        # Get first and last day of month, but not earlier than today
+        first_day = max(date(year, month, 1), date.today())
+        last_day_num = calendar.monthrange(year, month)[1]
+        last_day = date(year, month, last_day_num)
+        
+        # Get all dates with availability in this month (future dates only)
+        with BaseRepository.get_cursor() as cur:
+            query = """
+                SELECT DISTINCT availdate
+                FROM empavailability ea
+                JOIN employee e ON ea.employee_id = e.employeeid
+                WHERE availdate >= %s 
+                  AND availdate <= %s
+                  AND availdate >= CURRENT_DATE
+                  AND e.isadmin = FALSE
+                ORDER BY availdate;
+            """
+            
+            cur.execute(query, (first_day, last_day))
+            results = cur.fetchall()
+            
+            # Convert to list of date strings
+            available_dates = [result[0].strftime('%Y-%m-%d') for result in results]
+        
+        return {
+            "success": True,
+            "year": year,
+            "month": month,
+            "available_dates": available_dates
+        }, 200
+        
+    except Exception as e:
+        print(f"Error getting month availability: {e}")
+        return {"success": False, "message": "Server error occurred"}, 500
+
+
 # ==================== Service API Routes ====================
 
 @api_bp.get("/services")
@@ -366,5 +476,18 @@ def get_services_by_type(service_type_name):
     try:
         services = ServiceRepository.get_services_by_type(service_type_name)
         return {"success": True, "data": services}, 200
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.get("/services/<int:service_id>/cost")
+def get_service_cost(service_id):
+    """Get service cost calculation for a specific service."""
+    try:
+        cost_details = ServiceRepository.get_service_cost_calculation(service_id)
+        if cost_details:
+            return {"success": True, "data": cost_details}, 200
+        else:
+            return {"success": False, "error": "Service not found"}, 404
     except Exception as e:
         return {"success": False, "error": str(e)}, 500

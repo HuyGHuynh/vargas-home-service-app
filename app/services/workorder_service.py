@@ -278,6 +278,34 @@ class WorkorderService:
             result = WorkorderRepository.create_with_expanded_data(
                 customer_data, address_data, service_data, request_data, workorder_data
             )
+            
+            # Auto-assign employee if requested and time data is available
+            if data.get('autoAssignEmployee') and data.get('scheduledTime24'):
+                try:
+                    from services.employee_service import EmployeeService
+                    
+                    # Get request ID from result
+                    request_id = result.get('request_id')
+                    if request_id:
+                        # Auto-assign employee based on availability
+                        assignment_result = EmployeeService.auto_assign_employee_to_request(
+                            request_id, 
+                            data['scheduledDate'],  # YYYY-MM-DD format
+                            data['scheduledTime24']  # HH:MM format
+                        )
+                        
+                        if assignment_result['success']:
+                            # Add employee assignment info to result
+                            result['technician'] = assignment_result['assigned_employee']
+                            result['assignment_id'] = assignment_result['assignment_id']
+                        else:
+                            # Log warning but don't fail the entire request
+                            print(f"Warning: Could not auto-assign employee: {assignment_result['message']}")
+                            
+                except Exception as assign_error:
+                    # Log error but don't fail the entire request creation
+                    print(f"Error during auto-assignment: {assign_error}")
+            
             return {
                 "ok": True,
                 "message": "Service request created successfully",

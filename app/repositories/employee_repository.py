@@ -342,3 +342,199 @@ class EmployeeRepository:
         except Exception as e:
             print(f"Error deleting availability: {e}")
             return False
+
+    @staticmethod
+    def get_available_employees_for_datetime(date_str, time_str):
+        """
+        Get all employees available for a specific date and time.
+        
+        Args:
+            date_str (str): Date in YYYY-MM-DD format
+            time_str (str): Time in HH:MM format
+            
+        Returns:
+            list: List of available employees with their details
+        """
+        try:
+            with BaseRepository.get_cursor() as cur:
+                # Find employees who have availability for the specified date and time
+                query = """
+                    SELECT DISTINCT
+                        e.employeeid,
+                        e.firstname,
+                        e.lastname,
+                        e.email,
+                        e.phone,
+                        ea.availability_id,
+                        ea.starttime,
+                        ea.endtime
+                    FROM employee e
+                    JOIN empavailability ea ON e.employeeid = ea.employee_id
+                    WHERE ea.availdate = %s
+                      AND ea.starttime <= %s
+                      AND ea.endtime > %s
+                      AND e.isadmin = FALSE
+                    ORDER BY e.lastname, e.firstname;
+                """
+                
+                cur.execute(query, (date_str, time_str, time_str))
+                results = cur.fetchall()
+                
+                available_employees = []
+                for result in results:
+                    employee_data = {
+                        'employeeid': result[0],
+                        'firstname': result[1],
+                        'lastname': result[2],
+                        'email': result[3],
+                        'phone': result[4],
+                        'availability_id': result[5],
+                        'starttime': str(result[6]) if result[6] else None,
+                        'endtime': str(result[7]) if result[7] else None,
+                        'full_name': f"{result[1]} {result[2]}"
+                    }
+                    available_employees.append(employee_data)
+                
+                return available_employees
+                
+        except Exception as e:
+            print(f"Error getting available employees: {e}")
+            return []
+
+    @staticmethod
+    def get_availability_time_slots_for_date(date_str):
+        """
+        Get all available time slots for a specific date from employee availability.
+        
+        Args:
+            date_str (str): Date in YYYY-MM-DD format
+            
+        Returns:
+            list: List of time slots with employee information
+        """
+        try:
+            with BaseRepository.get_cursor() as cur:
+                # Get all availability slots for the date with employee info
+                query = """
+                    SELECT 
+                        ea.availability_id,
+                        ea.employee_id,
+                        ea.starttime,
+                        ea.endtime,
+                        e.firstname,
+                        e.lastname
+                    FROM empavailability ea
+                    JOIN employee e ON ea.employee_id = e.employeeid
+                    WHERE ea.availdate = %s
+                      AND e.isadmin = FALSE
+                    ORDER BY ea.starttime, e.lastname, e.firstname;
+                """
+                
+                cur.execute(query, (date_str,))
+                results = cur.fetchall()
+                
+                time_slots = []
+                for result in results:
+                    slot_data = {
+                        'availability_id': result[0],
+                        'employee_id': result[1],
+                        'starttime': str(result[2]) if result[2] else None,
+                        'endtime': str(result[3]) if result[3] else None,
+                        'employee_name': f"{result[4]} {result[5]}",
+                        'employee_firstname': result[4],
+                        'employee_lastname': result[5]
+                    }
+                    time_slots.append(slot_data)
+                
+                return time_slots
+                
+        except Exception as e:
+            print(f"Error getting time slots for date: {e}")
+            return []
+
+    @staticmethod
+    def create_work_assignment(request_id, employee_id):
+        """
+        Create a work assignment for a service request.
+        
+        Args:
+            request_id (int): The service request ID
+            employee_id (int): The employee ID to assign
+            
+        Returns:
+            int or None: assignment_id if successful, None otherwise
+        """
+        try:
+            with BaseRepository.get_cursor() as cur:
+                # Insert work assignment
+                query = """
+                    INSERT INTO work_assignments (requestid, employeeid)
+                    VALUES (%s, %s)
+                    RETURNING assignment_id;
+                """
+                
+                cur.execute(query, (request_id, employee_id))
+                result = cur.fetchone()
+                
+                if result:
+                    assignment_id = result[0]
+                    print(f"Created work assignment with ID: {assignment_id}")
+                    return assignment_id
+                
+                return None
+                
+        except Exception as e:
+            print(f"Error creating work assignment: {e}")
+            return None
+
+    @staticmethod
+    def get_work_assignments_by_employee(employee_id):
+        """
+        Get all work assignments for a specific employee.
+        
+        Args:
+            employee_id (int): The employee ID
+            
+        Returns:
+            list: List of work assignments with request details
+        """
+        try:
+            with BaseRepository.get_cursor() as cur:
+                query = """
+                    SELECT 
+                        wa.assignment_id,
+                        wa.requestid,
+                        wa.employeeid,
+                        sr.preferred_datetime,
+                        sr.description,
+                        s.job_name,
+                        st.service_type_name
+                    FROM work_assignments wa
+                    JOIN servicerequests sr ON wa.requestid = sr.requestid
+                    LEFT JOIN services s ON sr.service_id = s.service_id
+                    LEFT JOIN service_types st ON s.service_type_id = st.service_type_id
+                    WHERE wa.employeeid = %s
+                    ORDER BY sr.preferred_datetime;
+                """
+                
+                cur.execute(query, (employee_id,))
+                results = cur.fetchall()
+                
+                assignments = []
+                for result in results:
+                    assignment_data = {
+                        'assignment_id': result[0],
+                        'requestid': result[1],
+                        'employeeid': result[2],
+                        'preferred_datetime': result[3],
+                        'description': result[4],
+                        'job_name': result[5],
+                        'service_type': result[6]
+                    }
+                    assignments.append(assignment_data)
+                
+                return assignments
+                
+        except Exception as e:
+            print(f"Error getting work assignments: {e}")
+            return []
