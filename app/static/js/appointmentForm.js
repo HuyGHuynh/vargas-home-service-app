@@ -110,3 +110,28 @@
       selectedDate = null;
       selectedTime = null;
     });
+
+    //Test below for email after subbmiting form
+
+    async function submitForm() {
+  const formData = {
+    name: document.getElementById("name").value,
+    email: document.getElementById("email").value,
+    phone: document.getElementById("phone").value,
+    date: document.getElementById("date").value,
+    date: document.getElementById("time").value,
+    message: document.getElementById("message").value,
+  };
+
+  const res = await fetch("/api/appointment", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(formData),
+  });
+
+  if (res.ok) {
+    alert("Appointment submitted!");
+  } else {
+    alert("Error submitting form.");
+  }
+}

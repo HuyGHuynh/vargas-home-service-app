@@ -11,6 +11,16 @@ load_dotenv(dotenv_path=os.getenv("DOTENV_PATH", ".env"))
 
 
 class Config:
+
+    #Replace User, pass, host&DB
+    #In postgrsql type postgresql://USER:PASSWORD@HOST:PORT/DATABASE
+    SQLALCHEMY_DATABASE_URI = os.getenv(
+        "DATABASE_URL",
+        "postgresql://postgres:password@localhost:5432/vargas_db"
+    )
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+
     """Base configuration class."""
     
     # Flask settings
