@@ -85,8 +85,8 @@ function lookupWorkOrders() {
     }
 
     // Search for work orders matching the input
-    const foundOrders = sampleWorkOrders.filter(order => 
-        order.customerPhone.includes(searchInput) || 
+    const foundOrders = sampleWorkOrders.filter(order =>
+        order.customerPhone.includes(searchInput) ||
         order.customerEmail.toLowerCase().includes(searchInput.toLowerCase())
     );
 
@@ -108,7 +108,7 @@ function lookupWorkOrders() {
 // Display work orders in list format
 function displayWorkOrders(orders) {
     const resultsContainer = document.getElementById('resultsContainer');
-    
+
     let html = `
         <div class="results-header">
             <h2>Your Work Orders</h2>
@@ -121,7 +121,7 @@ function displayWorkOrders(orders) {
         const dateRequested = new Date(order.dateRequested).toLocaleDateString();
         const dateScheduled = order.dateScheduled ? new Date(order.dateScheduled).toLocaleDateString() : 'Not scheduled';
         const dateCompleted = order.dateCompleted ? new Date(order.dateCompleted).toLocaleDateString() : 'N/A';
-        
+
         const statusClass = order.status.toLowerCase().replace(' ', '-');
 
         html += `
@@ -133,7 +133,6 @@ function displayWorkOrders(orders) {
                     </div>
                     <div class="order-header-right">
                         <span class="status-badge ${statusClass}">${order.status}</span>
-                        <span class="priority-badge priority-${order.priority.toLowerCase()}">${order.priority}</span>
                     </div>
                 </div>
 
@@ -152,10 +151,6 @@ function displayWorkOrders(orders) {
                             <span class="detail-value">${order.technician}</span>
                         </div>
                         <div class="detail-item">
-                            <span class="detail-label">Date Requested</span>
-                            <span class="detail-value">${dateRequested}</span>
-                        </div>
-                        <div class="detail-item">
                             <span class="detail-label">Date Scheduled</span>
                             <span class="detail-value">${dateScheduled}</span>
                         </div>
@@ -169,19 +164,11 @@ function displayWorkOrders(orders) {
                             <span class="detail-label">Estimated Cost</span>
                             <span class="detail-value">${order.estimatedCost}</span>
                         </div>
-                        ${order.actualCost ? `
-                            <div class="detail-item">
-                                <span class="detail-label">Actual Cost</span>
-                                <span class="detail-value">${order.actualCost}</span>
-                            </div>
-                        ` : ''}
-                    </div>
-
-                    ${order.notes ? `
-                        <div class="order-notes">
-                            <p><strong>Notes:</strong> ${order.notes}</p>
+                        <div class="detail-item">
+                            <span class="detail-label">Actual Cost</span>
+                            <span class="detail-value">${order.actualCost || 'TBD'}</span>
                         </div>
-                    ` : ''}
+                    </div>
                 </div>
             </div>
         `;
@@ -192,10 +179,10 @@ function displayWorkOrders(orders) {
 }
 
 // Allow Enter key to trigger search
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
-        searchInput.addEventListener('keypress', function(event) {
+        searchInput.addEventListener('keypress', function (event) {
             if (event.key === 'Enter') {
                 lookupWorkOrders();
             }
