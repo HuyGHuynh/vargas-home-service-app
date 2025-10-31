@@ -402,6 +402,85 @@ class EmployeeRepository:
             return []
 
     @staticmethod
+    def get_booked_time_ranges_for_date(date_str):
+        """
+        Utility function to get all booked time ranges for a specific date.
+        Returns time ranges that should be crossed out/unavailable for new bookings.
+        
+        Args:
+            date_str (str): Date in YYYY-MM-DD format
+            
+        Returns:
+            dict: Dictionary with employee_id as keys and list of booked time ranges as values
+                  Format: {employee_id: [{'start_time': 'HH:MM', 'end_time': 'HH:MM', 'service_name': '...'}]}
+        """
+        try:
+            with BaseRepository.get_cursor() as cur:
+                # Debug: Let's first check what records exist
+                debug_query = """
+                    SELECT 
+                        sr.requestid,
+                        sr.preferred_datetime,
+                        DATE(sr.preferred_datetime) as date_part,
+                        sr.service_id,
+                        s.duration_hours
+                    FROM servicerequests sr
+                    LEFT JOIN services s ON sr.service_id = s.service_id
+                    WHERE DATE(sr.preferred_datetime) = %s
+                    ORDER BY sr.preferred_datetime;
+                """
+                
+                cur.execute(debug_query, (date_str,))
+                debug_results = cur.fetchall()
+                print(f"DEBUG: Found {len(debug_results)} service requests for {date_str}:")
+                for debug_result in debug_results:
+                    print(f"  - Request {debug_result[0]}: {debug_result[1]}, service_id={debug_result[2]}, duration={debug_result[4]}h")
+                
+                # Main query with better timezone handling
+                query = """
+                    SELECT 
+                        wa.employeeid,
+                        EXTRACT(HOUR FROM sr.preferred_datetime)::text || ':' || 
+                        LPAD(EXTRACT(MINUTE FROM sr.preferred_datetime)::text, 2, '0') as start_time,
+                        EXTRACT(HOUR FROM (sr.preferred_datetime + INTERVAL '1 hour' * COALESCE(s.duration_hours, 1)))::text || ':' || 
+                        LPAD(EXTRACT(MINUTE FROM (sr.preferred_datetime + INTERVAL '1 hour' * COALESCE(s.duration_hours, 1)))::text, 2, '0') as end_time,
+                        COALESCE(s.duration_hours, 1) as duration_hours,
+                        s.job_name as service_name,
+                        sr.requestid,
+                        CONCAT(e.firstname, ' ', e.lastname) as employee_name
+                    FROM work_assignments wa
+                    JOIN servicerequests sr ON wa.requestid = sr.requestid
+                    JOIN employee e ON wa.employeeid = e.employeeid
+                    LEFT JOIN services s ON sr.service_id = s.service_id
+                    WHERE DATE(sr.preferred_datetime) = %s
+                    ORDER BY wa.employeeid, sr.preferred_datetime;
+                """
+                
+                cur.execute(query, (date_str,))
+                results = cur.fetchall()
+                
+                booked_ranges = {}
+                for result in results:
+                    employee_id = result[0]
+                    if employee_id not in booked_ranges:
+                        booked_ranges[employee_id] = []
+                    
+                    booked_ranges[employee_id].append({
+                        'start_time': str(result[1]),
+                        'end_time': str(result[2]),
+                        'duration_hours': float(result[3]),
+                        'service_name': result[4] or 'Unknown Service',
+                        'request_id': result[5],
+                        'employee_name': result[6]
+                    })
+                
+                return booked_ranges
+                
+        except Exception as e:
+            print(f"Error getting booked time ranges: {e}")
+            return {}
+
+    @staticmethod
     def get_availability_time_slots_for_date(date_str):
         """
         Get all available time slots for a specific date from employee availability.
@@ -433,16 +512,22 @@ class EmployeeRepository:
                 cur.execute(query, (date_str,))
                 results = cur.fetchall()
                 
+                # Get booked time ranges for this date using our utility function
+                booked_ranges = EmployeeRepository.get_booked_time_ranges_for_date(date_str)
                 time_slots = []
                 for result in results:
+                    employee_id = result[1]
+                    employee_booked_ranges = booked_ranges.get(employee_id, [])
+                    
                     slot_data = {
                         'availability_id': result[0],
-                        'employee_id': result[1],
+                        'employee_id': employee_id,
                         'starttime': str(result[2]) if result[2] else None,
                         'endtime': str(result[3]) if result[3] else None,
                         'employee_name': f"{result[4]} {result[5]}",
                         'employee_firstname': result[4],
-                        'employee_lastname': result[5]
+                        'employee_lastname': result[5],
+                        'booked_ranges': employee_booked_ranges  # Include booked ranges for this employee
                     }
                     time_slots.append(slot_data)
                 

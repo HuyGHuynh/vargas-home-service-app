@@ -185,17 +185,23 @@ async function generateTimeSlots(selectedDate) {
     afternoonSlots.innerHTML = '';
 
     if (result.success && result.time_slots && result.time_slots.length > 0) {
-      // Group and generate time slots based on actual employee availability
-      const processedSlots = new Set(); // Avoid duplicate time slots
+      // Sort employees by ID for consistent precedence (lower ID = higher precedence)
+      const sortedSlots = result.time_slots.sort((a, b) => a.employee_id - b.employee_id);
 
-      result.time_slots.forEach(slot => {
-        // Parse start time
+      // Group time slots by time period to handle multiple employees for same slot
+      const timeSlotAvailability = new Map(); // Map<timeStr, {employees: [], anyAvailable: boolean}>
+
+      // First pass: collect all employee availability for each time slot
+      sortedSlots.forEach(slot => {
         const startTime = slot.starttime;
         const endTime = slot.endtime;
+        const bookedRanges = slot.booked_ranges || [];
 
-        // Generate 30-minute slots within each employee's availability window
-        generateSlotsInRange(startTime, endTime, slot.employee_name, isToday, now, processedSlots);
+        collectEmployeeAvailability(startTime, endTime, slot, bookedRanges, timeSlotAvailability, isToday, now);
       });
+
+      // Second pass: generate time slot buttons based on aggregated availability
+      generateTimeSlotButtons(timeSlotAvailability, isToday, now);
 
       // If no slots were generated, show message
       if (morningSlots.children.length === 0 && afternoonSlots.children.length === 0) {
@@ -220,7 +226,138 @@ async function generateTimeSlots(selectedDate) {
   }
 }
 
-function generateSlotsInRange(startTime, endTime, employeeName, isToday, now, processedSlots) {
+// Collect employee availability for each time slot (handles multiple employees)
+function collectEmployeeAvailability(startTime, endTime, slot, bookedRanges, timeSlotAvailability, isToday, now) {
+  const [startHour, startMinute] = startTime.split(':').map(Number);
+  const [endHour, endMinute] = endTime.split(':').map(Number);
+  const startMinutes = startHour * 60 + startMinute;
+  const endMinutes = endHour * 60 + endMinute;
+
+  // Generate 30-minute slots within this employee's availability window
+  for (let minutes = startMinutes; minutes < endMinutes; minutes += 30) {
+    const hour = Math.floor(minutes / 60);
+    const minute = minutes % 60;
+    const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+
+    // Check if this time slot has passed (only for today)
+    let isPastTime = false;
+    if (isToday) {
+      const slotTime = new Date();
+      slotTime.setHours(hour, minute, 0, 0);
+      isPastTime = slotTime < now;
+    }
+
+    // Check if this employee is booked for this time slot
+    const isEmployeeBooked = isTimeSlotBooked(timeStr, bookedRanges);
+
+    // Initialize time slot tracking if not exists
+    if (!timeSlotAvailability.has(timeStr)) {
+      timeSlotAvailability.set(timeStr, {
+        employees: [],
+        anyAvailable: false,
+        isPastTime: isPastTime
+      });
+    }
+
+    // Add this employee's availability info
+    const slotInfo = timeSlotAvailability.get(timeStr);
+    slotInfo.employees.push({
+      employee_id: slot.employee_id,
+      employee_name: slot.employee_name,
+      isBooked: isEmployeeBooked
+    });
+
+    // Mark as available if ANY employee is available (not booked and not past time)
+    if (!isEmployeeBooked && !isPastTime) {
+      slotInfo.anyAvailable = true;
+    }
+  }
+}
+
+// Generate time slot buttons based on aggregated availability
+function generateTimeSlotButtons(timeSlotAvailability, isToday, now) {
+  const processedSlots = new Set();
+
+  for (const [timeStr, slotInfo] of timeSlotAvailability) {
+    if (processedSlots.has(timeStr)) continue;
+    processedSlots.add(timeStr);
+
+    const [hour, minute] = timeStr.split(':').map(Number);
+    const timeLabel = formatTime(hour, minute);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.classList.add("time-slot");
+    button.textContent = timeLabel;
+    button.dataset.time24 = timeStr;
+
+    // Determine button state based on aggregated availability
+    if (slotInfo.isPastTime) {
+      // Past time slots
+      button.classList.add("past-time");
+      button.disabled = true;
+      button.style.cursor = "not-allowed";
+      button.style.opacity = "0.4";
+      button.style.textDecoration = "line-through";
+      button.title = "Time has passed";
+    } else if (!slotInfo.anyAvailable) {
+      // All employees are booked for this slot
+      button.classList.add("booked-time");
+      button.disabled = true;
+      button.style.cursor = "not-allowed";
+      button.style.opacity = "0.6";
+      button.style.textDecoration = "line-through";
+      button.style.backgroundColor = "#ffebee";
+      button.style.color = "#d32f2f";
+      button.title = "All employees are booked for this time";
+    } else {
+      // At least one employee is available
+      // Show available employee with highest precedence (lowest ID)
+      const availableEmployee = slotInfo.employees
+        .filter(emp => !emp.isBooked)
+        .sort((a, b) => a.employee_id - b.employee_id)[0];
+
+      button.title = `Available with ${availableEmployee.employee_name}`;
+      button.onclick = () => {
+        document.querySelectorAll(".time-slot").forEach(s => s.classList.remove("selected"));
+        button.classList.add("selected");
+        selectedTime = timeLabel;
+        selectedTime24 = timeStr;
+        updateConfirm();
+      };
+    }
+
+    // Add to appropriate time section
+    if (hour < 12) {
+      morningSlots.appendChild(button);
+    } else {
+      afternoonSlots.appendChild(button);
+    }
+  }
+}
+
+// Utility function to check if a time slot overlaps with booked ranges
+function isTimeSlotBooked(timeStr, bookedRanges) {
+  const [slotHour, slotMinute] = timeStr.split(':').map(Number);
+  const slotMinutes = slotHour * 60 + slotMinute;
+  const slotEndMinutes = slotMinutes + 30; // 30-minute slot duration
+
+  for (const bookedRange of bookedRanges) {
+    const [bookedStartHour, bookedStartMinute] = bookedRange.start_time.split(':').map(Number);
+    const [bookedEndHour, bookedEndMinute] = bookedRange.end_time.split(':').map(Number);
+
+    const bookedStartMinutes = bookedStartHour * 60 + bookedStartMinute;
+    const bookedEndMinutes = bookedEndHour * 60 + bookedEndMinute;
+
+    // Check if slot overlaps with booked range
+    if (slotMinutes < bookedEndMinutes && slotEndMinutes > bookedStartMinutes) {
+      return true; // Overlap found - this slot is booked
+    }
+  }
+
+  return false; // No overlap - slot is available
+}
+
+function generateSlotsInRange(startTime, endTime, employeeName, isToday, now, processedSlots, bookedRanges = []) {
   // Parse times
   const [startHour, startMinute] = startTime.split(':').map(Number);
   const [endHour, endMinute] = endTime.split(':').map(Number);
@@ -251,24 +388,41 @@ function generateSlotsInRange(startTime, endTime, employeeName, isToday, now, pr
       isPastTime = slotTime < now;
     }
 
+    // Check if this time slot is booked (overlaps with existing service)
+    const isBooked = isTimeSlotBooked(timeStr, bookedRanges);
+
+
     const timeLabel = formatTime(hour, minute);
     const button = document.createElement("button");
     button.type = "button";
     button.classList.add("time-slot");
     button.textContent = timeLabel;
-    button.title = `Available with ${employeeName}`;
 
     // Store the time in 24-hour format for backend
     button.dataset.time24 = timeStr;
 
-    // Disable past time slots for today
+    // Handle different slot states
     if (isPastTime) {
+      // Past time slots
       button.classList.add("past-time");
       button.disabled = true;
       button.style.cursor = "not-allowed";
       button.style.opacity = "0.4";
       button.style.textDecoration = "line-through";
+      button.title = "Time has passed";
+    } else if (isBooked) {
+      // Booked time slots - crossed out but visible
+      button.classList.add("booked-time");
+      button.disabled = true;
+      button.style.cursor = "not-allowed";
+      button.style.opacity = "0.6";
+      button.style.textDecoration = "line-through";
+      button.style.backgroundColor = "#ffebee";
+      button.style.color = "#d32f2f";
+      button.title = "Time slot already booked";
     } else {
+      // Available time slots
+      button.title = `Available with ${employeeName}`;
       button.onclick = () => {
         document.querySelectorAll(".time-slot").forEach(s => s.classList.remove("selected"));
         button.classList.add("selected");
