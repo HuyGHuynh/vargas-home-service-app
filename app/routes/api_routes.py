@@ -309,22 +309,58 @@ def get_availability_for_month(year, month):
         last_day_num = calendar.monthrange(year, month)[1]
         last_day = date(year, month, last_day_num)
         
-        # Get all dates with availability in this month (future dates only)
+        # Optionally filter by service_type (frontend can pass ?service_type=HVAC etc.)
+        service_type = request.args.get('service_type')
+
+        # If a service_type filter is provided, get qualifying employees and restrict dates
+        employee_filter_ids = None
+        if service_type:
+            try:
+                qualified = EmployeeRepository.get_employees_by_service_type(service_type)
+                employee_filter_ids = [e['employeeid'] for e in qualified]
+            except Exception as e:
+                print(f"Error retrieving employees for service_type filter: {e}")
+                employee_filter_ids = []
+
+        # Get all dates with availability in this month (future dates only), optionally filtered
         with BaseRepository.get_cursor() as cur:
-            query = """
-                SELECT DISTINCT availdate
-                FROM empavailability ea
-                JOIN employee e ON ea.employee_id = e.employeeid
-                WHERE availdate >= %s 
-                  AND availdate <= %s
-                  AND availdate >= CURRENT_DATE
-                  AND e.isadmin = FALSE
-                ORDER BY availdate;
-            """
-            
-            cur.execute(query, (first_day, last_day))
+            if employee_filter_ids is not None:
+                # If no qualified employees, return empty list early
+                if len(employee_filter_ids) == 0:
+                    return {
+                        "success": True,
+                        "year": year,
+                        "month": month,
+                        "available_dates": []
+                    }, 200
+
+                query = """
+                    SELECT DISTINCT availdate
+                    FROM empavailability ea
+                    JOIN employee e ON ea.employee_id = e.employeeid
+                    WHERE availdate >= %s 
+                      AND availdate <= %s
+                      AND availdate >= CURRENT_DATE
+                      AND e.isadmin = FALSE
+                      AND e.employeeid = ANY(%s)
+                    ORDER BY availdate;
+                """
+                cur.execute(query, (first_day, last_day, employee_filter_ids))
+            else:
+                query = """
+                    SELECT DISTINCT availdate
+                    FROM empavailability ea
+                    JOIN employee e ON ea.employee_id = e.employeeid
+                    WHERE availdate >= %s 
+                      AND availdate <= %s
+                      AND availdate >= CURRENT_DATE
+                      AND e.isadmin = FALSE
+                    ORDER BY availdate;
+                """
+                cur.execute(query, (first_day, last_day))
+
             results = cur.fetchall()
-            
+
             # Convert to list of date strings
             available_dates = [result[0].strftime('%Y-%m-%d') for result in results]
         
@@ -460,6 +496,164 @@ def delete_service(service_id):
         return {"success": False, "error": str(e)}, 500
 
 
+# ==================== Employee Management API Routes ====================
+
+@api_bp.get("/employees")
+def get_all_employees():
+    """Get all employees with their specialties."""
+    try:
+        # Check if user is admin
+        if not session.get('is_admin'):
+            return {"success": False, "message": "Admin access required"}, 403
+        
+        employees = EmployeeRepository.get_all_employees_with_specialties()
+        return {"success": True, "data": employees}, 200
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.get("/employees/<int:employee_id>")
+def get_employee(employee_id):
+    """Get a specific employee by ID with specialties."""
+    try:
+        # Check authorization - admin or own profile
+        if not session.get('is_admin') and session.get('user_id') != employee_id:
+            return {"success": False, "message": "Access denied"}, 403
+        
+        employee = EmployeeRepository.get_employee_with_specialties(employee_id)
+        if employee:
+            return {"success": True, "data": employee}, 200
+        else:
+            return {"success": False, "error": "Employee not found"}, 404
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.post("/employees")
+def create_employee():
+    """Create a new employee."""
+    try:
+        # Check if user is admin
+        if not session.get('is_admin'):
+            return {"success": False, "message": "Admin access required"}, 403
+        
+        data = request.get_json()
+        if not data:
+            return {"success": False, "error": "No data provided"}, 400
+        
+        # Validate required fields
+        required_fields = ['firstName', 'lastName', 'email', 'phone', 'password', 'role']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return {"success": False, "error": f"Missing required field: {field}"}, 400
+        
+        # Create employee
+        employee_id = EmployeeRepository.create_employee(
+            firstname=data['firstName'],
+            lastname=data['lastName'],
+            phone=data['phone'],
+            email=data['email'],
+            password=data['password'],
+            isadmin=(data['role'] == 'admin'),
+            hiredate=data.get('hireDate'),
+            status=data.get('status', 'Active')
+        )
+        
+        if employee_id:
+            # Add specialties if provided
+            specialties = data.get('specialties', [])
+            if specialties:
+                EmployeeRepository.update_employee_specialties(employee_id, specialties)
+            
+            # Return the created employee
+            employee = EmployeeRepository.get_employee_with_specialties(employee_id)
+            return {"success": True, "data": employee, "message": "Employee created successfully"}, 201
+        else:
+            return {"success": False, "error": "Failed to create employee"}, 500
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.put("/employees/<int:employee_id>")
+def update_employee(employee_id):
+    """Update an existing employee."""
+    try:
+        # Check if user is admin
+        if not session.get('is_admin'):
+            return {"success": False, "message": "Admin access required"}, 403
+        
+        data = request.get_json()
+        if not data:
+            return {"success": False, "error": "No data provided"}, 400
+        
+        # Check if employee exists
+        existing_employee = EmployeeRepository.get_employee_by_id(employee_id)
+        if not existing_employee:
+            return {"success": False, "error": "Employee not found"}, 404
+        
+        # Update employee
+        success = EmployeeRepository.update_employee(
+            employee_id=employee_id,
+            firstname=data.get('firstName'),
+            lastname=data.get('lastName'),
+            phone=data.get('phone'),
+            email=data.get('email'),
+            password=data.get('password'),
+            isadmin=(data.get('role') == 'admin'),
+            hiredate=data.get('hireDate'),
+            status=data.get('status')
+        )
+        
+        if success:
+            # Update specialties if provided
+            specialties = data.get('specialties', [])
+            EmployeeRepository.update_employee_specialties(employee_id, specialties)
+            
+            # Return updated employee
+            employee = EmployeeRepository.get_employee_with_specialties(employee_id)
+            return {"success": True, "data": employee, "message": "Employee updated successfully"}, 200
+        else:
+            return {"success": False, "error": "Failed to update employee"}, 500
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.delete("/employees/<int:employee_id>")
+def delete_employee(employee_id):
+    """Delete an employee."""
+    try:
+        # Check if user is admin
+        if not session.get('is_admin'):
+            return {"success": False, "message": "Admin access required"}, 403
+        
+        # Check if employee exists
+        existing_employee = EmployeeRepository.get_employee_by_id(employee_id)
+        if not existing_employee:
+            return {"success": False, "error": "Employee not found"}, 404
+        
+        # Delete employee
+        success = EmployeeRepository.delete_employee(employee_id)
+        if success:
+            return {"success": True, "message": "Employee deleted successfully"}, 200
+        else:
+            return {"success": False, "error": "Failed to delete employee"}, 500
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.get("/specialties")
+def get_specialties():
+    """Get all available specialties."""
+    try:
+        specialties = EmployeeRepository.get_all_specialties()
+        return {"success": True, "data": specialties}, 200
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
 @api_bp.get("/service-types")
 def get_service_types():
     """Get all service types for dropdown options."""
@@ -489,5 +683,25 @@ def get_service_cost(service_id):
             return {"success": True, "data": cost_details}, 200
         else:
             return {"success": False, "error": "Service not found"}, 404
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.get("/employees/by-specialty/<specialty_name>")
+def get_employees_by_specialty(specialty_name):
+    """Get all employees who have a specific specialty."""
+    try:
+        employees = EmployeeRepository.get_employees_by_specialty(specialty_name)
+        return {"success": True, "data": employees}, 200
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.get("/employees/by-service-type/<service_type_name>")
+def get_employees_by_service_type(service_type_name):
+    """Get all employees who can perform a specific service type."""
+    try:
+        employees = EmployeeRepository.get_employees_by_service_type(service_type_name)
+        return {"success": True, "data": employees}, 200
     except Exception as e:
         return {"success": False, "error": str(e)}, 500

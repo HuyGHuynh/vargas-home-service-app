@@ -35,6 +35,13 @@ async function generateCalendar(date) {
     // Clear loading state
     calendarBody.innerHTML = '';
 
+    // Check if both service type and job type are selected
+    const serviceTypeSelect = document.getElementById('service');
+    const jobSelect = document.getElementById('job');
+    const selectedServiceType = serviceTypeSelect.value;
+    const selectedJobType = jobSelect.value;
+    const incompleteSelection = !selectedServiceType || !selectedJobType;
+
     let row = document.createElement('tr');
     for (let i = 0; i < startDay; i++) {
       row.appendChild(document.createElement('td'));
@@ -59,13 +66,24 @@ async function generateCalendar(date) {
         cell.style.cursor = 'not-allowed';
         cell.style.opacity = '0.4';
         cell.style.textDecoration = 'line-through';
+      } else if (incompleteSelection) {
+        // Service type or job type not selected - show all future dates as unclickable with helpful message
+        cell.classList.add('no-service-selected');
+        cell.style.cursor = 'not-allowed';
+        cell.style.opacity = '0.6';
+        cell.style.color = '#adb5bd';
+        if (!selectedServiceType) {
+          cell.title = 'Please select a service type first';
+        } else {
+          cell.title = 'Please select a job type to see available dates';
+        }
       } else if (!hasAvailability) {
         // Future dates with no availability - muted but visible
         cell.classList.add('no-availability');
         cell.style.cursor = 'not-allowed';
         cell.style.opacity = '0.6';
         cell.style.color = '#adb5bd';
-        cell.title = 'No employees available on this date';
+        cell.title = 'No qualified employees available on this date';
       } else {
         // Future dates with availability - clickable
         cell.classList.add('available-date');
@@ -83,7 +101,6 @@ async function generateCalendar(date) {
       }
     }
     calendarBody.appendChild(row);
-
   } catch (error) {
     console.error('Error loading calendar availability:', error);
     // Clear loading state and show error
@@ -101,18 +118,25 @@ async function generateCalendar(date) {
 }
 
 document.getElementById('prevMonth').onclick = async () => {
-  currentDate.setMonth(currentDate.getMonth() - 1);
+  // Create new date to avoid day-of-month overflow issues
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  currentDate = new Date(year, month - 1, 1);
   await generateCalendar(currentDate);
 };
 
 document.getElementById('nextMonth').onclick = async () => {
-  currentDate.setMonth(currentDate.getMonth() + 1);
+  // Create new date to avoid day-of-month overflow issues
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  currentDate = new Date(year, month + 1, 1);
   await generateCalendar(currentDate);
 };
 
 let selectedDate = null;
 let selectedTime = null;
 let selectedTime24 = null; // Store time in 24-hour format for backend
+let currentServiceDuration = 1; // Default 1 hour, will be updated when service is selected
 const confirmText = document.getElementById('confirmText');
 
 function selectDate(date, cell) {
@@ -176,9 +200,42 @@ async function generateTimeSlots(selectedDate) {
     // Format date for API call
     const dateStr = selected.toISOString().split('T')[0]; // YYYY-MM-DD format
 
-    // Fetch actual employee availability for this date
-    const response = await fetch(`/api/availability/date/${dateStr}`);
-    const result = await response.json();
+    // Check if both service type and job type are selected for filtering
+    const serviceTypeSelect = document.getElementById('service');
+    const jobSelect = document.getElementById('job');
+    const selectedServiceType = serviceTypeSelect.value;
+    const selectedJobType = jobSelect.value;
+
+    let response, result;
+
+    if (selectedServiceType && selectedJobType) {
+      // Fetch filtered availability based on service type
+      const [availabilityResponse, employeesResponse] = await Promise.all([
+        fetch(`/api/availability/date/${dateStr}`),
+        fetch(`/api/employees/by-service-type/${encodeURIComponent(selectedServiceType)}`)
+      ]);
+
+      const availabilityResult = await availabilityResponse.json();
+      const employeesResult = await employeesResponse.json();
+
+      if (availabilityResult.success && employeesResult.success) {
+        // Filter availability to only include qualified employees
+        const qualifiedEmployeeIds = new Set(employeesResult.data.map(emp => emp.employeeid));
+
+        result = {
+          success: true,
+          time_slots: availabilityResult.time_slots.filter(slot =>
+            qualifiedEmployeeIds.has(slot.employee_id)
+          )
+        };
+      } else {
+        result = { success: false, message: 'Error loading filtered availability' };
+      }
+    } else {
+      // Fetch all employee availability for this date (no filtering)
+      response = await fetch(`/api/availability/date/${dateStr}`);
+      result = await response.json();
+    }
 
     // Clear loading message
     morningSlots.innerHTML = '';
@@ -336,10 +393,14 @@ function generateTimeSlotButtons(timeSlotAvailability, isToday, now) {
 }
 
 // Utility function to check if a time slot overlaps with booked ranges
+// Now considers the duration of the current service being scheduled
 function isTimeSlotBooked(timeStr, bookedRanges) {
   const [slotHour, slotMinute] = timeStr.split(':').map(Number);
   const slotMinutes = slotHour * 60 + slotMinute;
-  const slotEndMinutes = slotMinutes + 30; // 30-minute slot duration
+
+  // Calculate the end time based on the current service duration
+  const serviceDurationMinutes = currentServiceDuration * 60; // Convert hours to minutes
+  const serviceEndMinutes = slotMinutes + serviceDurationMinutes;
 
   for (const bookedRange of bookedRanges) {
     const [bookedStartHour, bookedStartMinute] = bookedRange.start_time.split(':').map(Number);
@@ -348,13 +409,14 @@ function isTimeSlotBooked(timeStr, bookedRanges) {
     const bookedStartMinutes = bookedStartHour * 60 + bookedStartMinute;
     const bookedEndMinutes = bookedEndHour * 60 + bookedEndMinute;
 
-    // Check if slot overlaps with booked range
-    if (slotMinutes < bookedEndMinutes && slotEndMinutes > bookedStartMinutes) {
-      return true; // Overlap found - this slot is booked
+    // Check if the proposed service time range overlaps with any booked range
+    // Overlap occurs if: (service_start < booked_end) AND (service_end > booked_start)
+    if (slotMinutes < bookedEndMinutes && serviceEndMinutes > bookedStartMinutes) {
+      return true; // Overlap found - this slot is booked/conflicts
     }
   }
 
-  return false; // No overlap - slot is available
+  return false; // No overlap - slot is available for the full service duration
 }
 
 function generateSlotsInRange(startTime, endTime, employeeName, isToday, now, processedSlots, bookedRanges = []) {
@@ -448,13 +510,25 @@ async function fetchAvailabilityForMonth(year, month) {
     // JavaScript months are 0-based, but our API expects 1-based
     const apiMonth = month + 1;
 
-    const response = await fetch(`/api/availability/month/${year}/${apiMonth}`);
-    const result = await response.json();
+    // Check if both service type and job type are selected
+    const serviceTypeSelect = document.getElementById('service');
+    const jobSelect = document.getElementById('job');
+    const selectedServiceType = serviceTypeSelect.value;
+    const selectedJobType = jobSelect.value;
 
-    if (result.success) {
-      return result.available_dates || [];
+    if (selectedServiceType && selectedJobType) {
+      // Fetch filtered availability for the month - pass service_type as query param
+      const response = await fetch(`/api/availability/month/${year}/${apiMonth}?service_type=${encodeURIComponent(selectedServiceType)}`);
+      const result = await response.json();
+
+      if (result.success) {
+        return result.available_dates || [];
+      } else {
+        console.error('Error fetching filtered month availability:', result.message);
+        return [];
+      }
     } else {
-      console.error('Error fetching month availability:', result.message);
+      // Service type or job type not selected - return empty array so no dates are clickable
       return [];
     }
 
@@ -464,8 +538,8 @@ async function fetchAvailabilityForMonth(year, month) {
   }
 }
 
-// Initial state - show message when no date selected
-morningSlots.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #6c757d; padding: 20px;">Please select a date from the calendar above</div>';
+// Initial state - show message when no service and job selected
+morningSlots.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #6c757d; padding: 20px;">Please select both service type and job type first, then choose a date from the calendar above</div>';
 afternoonSlots.innerHTML = '';
 
 // Hide afternoon section initially
@@ -540,12 +614,16 @@ document.getElementById('service').addEventListener('change', function () {
   const jobSelect = document.getElementById('job');
   const serviceIdInput = document.getElementById('serviceId');
 
-  // Reset job dropdown
+  // Reset job dropdown and hide cost estimate
   jobSelect.innerHTML = '<option value="">--Select Job Type--</option>';
   jobSelect.disabled = true;
   serviceIdInput.value = '';
+  hideCostEstimate();
 
   if (!serviceTypeName) {
+    // Reset calendar and time slots when no service selected
+    updateFilterIndicator();
+    refreshCalendarForServiceType();
     return;
   }
 
@@ -563,7 +641,39 @@ document.getElementById('service').addEventListener('change', function () {
   } else {
     jobSelect.innerHTML = '<option value="">No jobs available for this service type</option>';
   }
+
+  // Note: Don't refresh calendar here since job type was just reset
+  // Calendar will refresh when job type is selected
 });
+
+// Function to update the filter indicator
+function updateFilterIndicator() {
+  const serviceTypeSelect = document.getElementById('service');
+  const jobSelect = document.getElementById('job');
+  const selectedServiceType = serviceTypeSelect.value;
+  const selectedJobType = jobSelect.value;
+  const filterIndicator = document.getElementById('filterIndicator');
+  const filterServiceType = document.getElementById('filterServiceType');
+
+  if (selectedServiceType && selectedJobType) {
+    const jobText = jobSelect.options[jobSelect.selectedIndex].text;
+    filterServiceType.textContent = `${selectedServiceType} - ${jobText}`;
+    filterIndicator.style.display = 'block';
+  } else {
+    filterIndicator.style.display = 'none';
+  }
+}
+
+// Function to refresh calendar when service type changes
+async function refreshCalendarForServiceType() {
+  // Regenerate calendar to show updated availability
+  await generateCalendar(currentDate);
+
+  // Refresh time slots if a date is already selected
+  if (selectedDate) {
+    generateTimeSlots(new Date(selectedDate));
+  }
+}
 
 // Update serviceId when job is selected and fetch cost
 document.getElementById('job').addEventListener('change', function () {
@@ -576,7 +686,17 @@ document.getElementById('job').addEventListener('change', function () {
     fetchAndDisplayCost(serviceId);
   } else {
     hideCostEstimate();
+    // Reset service duration to default when no job selected
+    currentServiceDuration = 1;
+    // Refresh time slots if a date is selected
+    if (selectedDate) {
+      generateTimeSlots(new Date(selectedDate));
+    }
   }
+
+  // Update filter indicator and refresh calendar when job type changes
+  updateFilterIndicator();
+  refreshCalendarForServiceType();
 });
 
 // Preload all data when page loads
@@ -600,6 +720,14 @@ async function fetchAndDisplayCost(serviceId) {
 
     if (result.success && result.data) {
       const cost = result.data;
+
+      // Store service duration globally for time slot conflict checking
+      currentServiceDuration = cost.duration_hours;
+
+      // Refresh time slots if a date is already selected to reflect new duration
+      if (selectedDate) {
+        generateTimeSlots(new Date(selectedDate));
+      }
 
       // Display cost breakdown
       costBreakdown.innerHTML = `

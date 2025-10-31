@@ -623,3 +623,442 @@ class EmployeeRepository:
         except Exception as e:
             print(f"Error getting work assignments: {e}")
             return []
+
+    @staticmethod
+    def get_all_employees_with_specialties():
+        """
+        Get all employees with their specialties.
+        
+        Returns:
+            list: List of employee dictionaries with specialties
+        """
+        try:
+            with BaseRepository.get_cursor() as cur:
+                query = """
+                    SELECT 
+                        e.employeeid, e.firstname, e.lastname, e.phone, e.email, 
+                        e.isadmin, e.password, e.hiredate, e.status,
+                        COALESCE(array_agg(s.specialty_name) FILTER (WHERE s.specialty_name IS NOT NULL), ARRAY[]::varchar[]) as specialties
+                    FROM employee e
+                    LEFT JOIN employee_specialties es ON e.employeeid = es.employeeid
+                    LEFT JOIN specialties s ON es.specialty_id = s.specialty_id
+                    GROUP BY e.employeeid, e.firstname, e.lastname, e.phone, e.email, 
+                             e.isadmin, e.password, e.hiredate, e.status
+                    ORDER BY e.lastname, e.firstname
+                """
+                
+                cur.execute(query)
+                results = cur.fetchall()
+                
+                employees = []
+                for result in results:
+                    employee_data = {
+                        'id': result[0],  # Use 'id' to match frontend expectation
+                        'firstName': result[1],
+                        'lastName': result[2],
+                        'phone': result[3],
+                        'email': result[4],
+                        'role': 'admin' if result[5] else 'employee',
+                        'password': result[6],
+                        'hireDate': result[7].strftime('%Y-%m-%d') if result[7] else None,
+                        'status': result[8] if result[8] else 'Active',
+                        'specialties': result[9] if result[9] else []
+                    }
+                    employees.append(employee_data)
+                
+                return employees
+                
+        except Exception as e:
+            print(f"Error getting all employees with specialties: {e}")
+            return []
+
+    @staticmethod
+    def get_employee_with_specialties(employee_id):
+        """
+        Get employee with specialties by ID.
+        
+        Args:
+            employee_id (int): The employee's ID
+            
+        Returns:
+            dict or None: Employee data with specialties if found, None otherwise
+        """
+        try:
+            with BaseRepository.get_cursor() as cur:
+                query = """
+                    SELECT 
+                        e.employeeid, e.firstname, e.lastname, e.phone, e.email, 
+                        e.isadmin, e.password, e.hiredate, e.status,
+                        COALESCE(array_agg(s.specialty_name) FILTER (WHERE s.specialty_name IS NOT NULL), ARRAY[]::varchar[]) as specialties
+                    FROM employee e
+                    LEFT JOIN employee_specialties es ON e.employeeid = es.employeeid
+                    LEFT JOIN specialties s ON es.specialty_id = s.specialty_id
+                    WHERE e.employeeid = %s
+                    GROUP BY e.employeeid, e.firstname, e.lastname, e.phone, e.email, 
+                             e.isadmin, e.password, e.hiredate, e.status
+                """
+                
+                cur.execute(query, (employee_id,))
+                result = cur.fetchone()
+                
+                if result:
+                    employee_data = {
+                        'id': result[0],
+                        'employeeId': f'EMP-{result[0]:03d}',  # Format like EMP-001
+                        'firstName': result[1],
+                        'lastName': result[2],
+                        'phone': result[3],
+                        'email': result[4],
+                        'role': 'admin' if result[5] else 'employee',
+                        'password': result[6],
+                        'hireDate': result[7].strftime('%Y-%m-%d') if result[7] else None,
+                        'status': result[8] if result[8] else 'Active',
+                        'specialties': result[9] if result[9] else []
+                    }
+                    return employee_data
+                
+                return None
+                
+        except Exception as e:
+            print(f"Error getting employee with specialties: {e}")
+            return None
+
+    @staticmethod
+    def create_employee(firstname, lastname, phone, email, password, isadmin, hiredate=None, status='Active'):
+        """
+        Create a new employee.
+        
+        Args:
+            firstname (str): Employee's first name
+            lastname (str): Employee's last name
+            phone (str): Employee's phone number
+            email (str): Employee's email
+            password (str): Employee's password
+            isadmin (bool): Whether employee is admin
+            hiredate (str, optional): Hire date in YYYY-MM-DD format
+            status (str): Employee status (Active, Inactive, On Leave)
+            
+        Returns:
+            int or None: employee_id if successful, None otherwise
+        """
+        try:
+            with BaseRepository.get_cursor() as cur:
+                query = """
+                    INSERT INTO employee (firstname, lastname, phone, email, password, isadmin, hiredate, status)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING employeeid
+                """
+                
+                cur.execute(query, (firstname, lastname, phone, email, password, isadmin, hiredate, status))
+                result = cur.fetchone()
+                
+                if result:
+                    return result[0]
+                return None
+                
+        except Exception as e:
+            print(f"Error creating employee: {e}")
+            return None
+
+    @staticmethod
+    def update_employee(employee_id, firstname=None, lastname=None, phone=None, email=None, 
+                       password=None, isadmin=None, hiredate=None, status=None):
+        """
+        Update an existing employee.
+        
+        Args:
+            employee_id (int): The employee's ID
+            Other parameters are optional and will only be updated if provided
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            with BaseRepository.get_cursor() as cur:
+                update_fields = []
+                params = []
+                
+                if firstname is not None:
+                    update_fields.append("firstname = %s")
+                    params.append(firstname)
+                
+                if lastname is not None:
+                    update_fields.append("lastname = %s")
+                    params.append(lastname)
+                
+                if phone is not None:
+                    update_fields.append("phone = %s")
+                    params.append(phone)
+                
+                if email is not None:
+                    update_fields.append("email = %s")
+                    params.append(email)
+                
+                if password is not None:
+                    update_fields.append("password = %s")
+                    params.append(password)
+                
+                if isadmin is not None:
+                    update_fields.append("isadmin = %s")
+                    params.append(isadmin)
+                
+                if hiredate is not None:
+                    update_fields.append("hiredate = %s")
+                    params.append(hiredate)
+                
+                if status is not None:
+                    update_fields.append("status = %s")
+                    params.append(status)
+                
+                if not update_fields:
+                    return False
+                
+                query = f"""
+                    UPDATE employee 
+                    SET {', '.join(update_fields)}
+                    WHERE employeeid = %s
+                """
+                params.append(employee_id)
+                
+                cur.execute(query, params)
+                return cur.rowcount > 0
+                
+        except Exception as e:
+            print(f"Error updating employee: {e}")
+            return False
+
+    @staticmethod
+    def delete_employee(employee_id):
+        """
+        Delete an employee and their specialties.
+        
+        Args:
+            employee_id (int): The employee's ID
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            with BaseRepository.get_cursor() as cur:
+                # Delete employee specialties first (due to foreign key)
+                cur.execute("DELETE FROM employee_specialties WHERE employeeid = %s", (employee_id,))
+                
+                # Delete employee
+                cur.execute("DELETE FROM employee WHERE employeeid = %s", (employee_id,))
+                
+                return cur.rowcount > 0
+                
+        except Exception as e:
+            print(f"Error deleting employee: {e}")
+            return False
+
+    @staticmethod
+    def get_all_specialties():
+        """
+        Get all available specialties.
+        
+        Returns:
+            list: List of specialty dictionaries
+        """
+        try:
+            with BaseRepository.get_cursor() as cur:
+                query = "SELECT specialty_id, specialty_name FROM specialties ORDER BY specialty_name"
+                cur.execute(query)
+                results = cur.fetchall()
+                
+                specialties = []
+                for result in results:
+                    specialty_data = {
+                        'id': result[0],
+                        'name': result[1]
+                    }
+                    specialties.append(specialty_data)
+                
+                return specialties
+                
+        except Exception as e:
+            print(f"Error getting specialties: {e}")
+            return []
+
+    @staticmethod
+    def update_employee_specialties(employee_id, specialty_names):
+        """
+        Update employee specialties.
+        
+        Args:
+            employee_id (int): The employee's ID
+            specialty_names (list): List of specialty names
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            with BaseRepository.get_cursor() as cur:
+                # Delete existing specialties
+                cur.execute("DELETE FROM employee_specialties WHERE employeeid = %s", (employee_id,))
+                
+                # Insert new specialties
+                for specialty_name in specialty_names:
+                    # Get specialty_id by name
+                    cur.execute("SELECT specialty_id FROM specialties WHERE specialty_name = %s", (specialty_name,))
+                    specialty_result = cur.fetchone()
+                    
+                    if specialty_result:
+                        specialty_id = specialty_result[0]
+                        cur.execute(
+                            "INSERT INTO employee_specialties (employeeid, specialty_id) VALUES (%s, %s)",
+                            (employee_id, specialty_id)
+                        )
+                
+                return True
+                
+        except Exception as e:
+            print(f"Error updating employee specialties: {e}")
+            return False
+
+    @staticmethod
+    def get_employees_by_specialty(specialty_name):
+        """
+        Get all employees who have a specific specialty.
+        
+        Args:
+            specialty_name (str): The specialty name to search for
+            
+        Returns:
+            list: List of employee dictionaries with their specialties
+        """
+        try:
+            with BaseRepository.get_cursor() as cur:
+                query = """
+                    SELECT DISTINCT
+                        e.employeeid,
+                        e.firstname,
+                        e.lastname,
+                        e.phone,
+                        e.email,
+                        e.isadmin,
+                        e.hiredate,
+                        e.status,
+                        COALESCE(array_agg(s.specialty_name) FILTER (WHERE s.specialty_name IS NOT NULL), ARRAY[]::varchar[]) as specialties
+                    FROM employee e
+                    JOIN employee_specialties es ON e.employeeid = es.employeeid
+                    JOIN specialties s ON es.specialty_id = s.specialty_id
+                    WHERE s.specialty_name = %s AND e.status = 'Active' AND e.isadmin = FALSE
+                    GROUP BY e.employeeid, e.firstname, e.lastname, e.phone, e.email, e.isadmin, e.hiredate, e.status
+                    ORDER BY e.firstname, e.lastname
+                """
+                cur.execute(query, (specialty_name,))
+                results = cur.fetchall()
+                
+                employees = []
+                for result in results:
+                    employee_data = {
+                        'employeeid': result[0],
+                        'firstname': result[1],
+                        'lastname': result[2],
+                        'phone': result[3],
+                        'email': result[4],
+                        'role': 'admin' if result[5] else 'employee',
+                        'hireDate': result[6].strftime('%Y-%m-%d') if result[6] else None,
+                        'status': result[7],
+                        'specialties': result[8] if result[8] else [],
+                        'full_name': f"{result[1]} {result[2]}"
+                    }
+                    employees.append(employee_data)
+                
+                return employees
+                
+        except Exception as e:
+            print(f"Error getting employees by specialty: {e}")
+            return []
+
+    @staticmethod
+    def get_employees_by_service_type(service_type_name):
+        """
+        Get all employees who can perform a specific service type based on their specialties.
+        
+        Args:
+            service_type_name (str): The service type name to match against specialties
+            
+        Returns:
+            list: List of employee dictionaries who can perform the service
+        """
+        try:
+            # Define mapping between service types and required specialties
+            service_specialty_mapping = {
+                'hvac': ['HVAC Electrician'],
+                'heating': ['HVAC Electrician'], 
+                'cooling': ['HVAC Electrician'],
+                'air conditioning': ['HVAC Electrician'],
+                'plumbing': ['Plumber'],
+                'pipes': ['Plumber'],
+                'water heater': ['Plumber'],
+                'drain cleaning': ['Plumber'],
+                'electrical': ['Electrician', 'HVAC Electrician'],
+                'wiring': ['Electrician', 'HVAC Electrician'],
+                'outlets': ['Electrician', 'HVAC Electrician'],
+                'lighting': ['Electrician', 'HVAC Electrician'],
+                'landscaping': ['Landscaper'],
+                'lawn care': ['Landscaper'],
+                'tree service': ['Landscaper'],
+                'gardening': ['Landscaper'],
+                'painting': ['Painter'],
+                'interior painting': ['Painter'],
+                'exterior painting': ['Painter']
+            }
+            
+            # Get matching specialties for the service type
+            matching_specialties = service_specialty_mapping.get(service_type_name.lower(), [])
+            
+            if not matching_specialties:
+                # If no mapping found, return all active employees
+                return EmployeeRepository.get_all_employees()
+            
+            with BaseRepository.get_cursor() as cur:
+                # Create placeholders for the IN clause
+                placeholders = ','.join(['%s'] * len(matching_specialties))
+                
+                query = f"""
+                    SELECT DISTINCT
+                        e.employeeid,
+                        e.firstname,
+                        e.lastname,
+                        e.phone,
+                        e.email,
+                        e.isadmin,
+                        e.hiredate,
+                        e.status,
+                        COALESCE(array_agg(s2.specialty_name) FILTER (WHERE s2.specialty_name IS NOT NULL), ARRAY[]::varchar[]) as specialties
+                    FROM employee e
+                    JOIN employee_specialties es ON e.employeeid = es.employeeid
+                    JOIN specialties s ON es.specialty_id = s.specialty_id
+                    LEFT JOIN employee_specialties es2 ON e.employeeid = es2.employeeid
+                    LEFT JOIN specialties s2 ON es2.specialty_id = s2.specialty_id
+                    WHERE s.specialty_name IN ({placeholders}) AND e.status = 'Active' AND e.isadmin = FALSE
+                    GROUP BY e.employeeid, e.firstname, e.lastname, e.phone, e.email, e.isadmin, e.hiredate, e.status
+                    ORDER BY e.firstname, e.lastname
+                """
+                cur.execute(query, matching_specialties)
+                results = cur.fetchall()
+                
+                employees = []
+                for result in results:
+                    employee_data = {
+                        'employeeid': result[0],
+                        'firstname': result[1],
+                        'lastname': result[2],
+                        'phone': result[3],
+                        'email': result[4],
+                        'role': 'admin' if result[5] else 'employee',
+                        'hireDate': result[6].strftime('%Y-%m-%d') if result[6] else None,
+                        'status': result[7],
+                        'specialties': result[8] if result[8] else [],
+                        'full_name': f"{result[1]} {result[2]}"
+                    }
+                    employees.append(employee_data)
+                
+                return employees
+                
+        except Exception as e:
+            print(f"Error getting employees by service type: {e}")
+            return []
