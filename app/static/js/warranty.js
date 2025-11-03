@@ -72,11 +72,13 @@ const sampleWarranties = [
     }
 ];
 
-// Lookup warranty by phone or email
+// Lookup warranty by phone or email and service type
 function lookupWarranty() {
-    const searchInput = document.getElementById('warrantySearchInput').value.trim();
+    let searchInput = document.getElementById('warrantySearchInput').value.trim();
+    const serviceType = document.getElementById('serviceTypeSelect').value;
     const resultsDiv = document.getElementById('warrantyResults');
 
+    // Validate input
     if (!searchInput) {
         resultsDiv.innerHTML = `
             <div class="error-message">
@@ -86,149 +88,105 @@ function lookupWarranty() {
         return;
     }
 
-    // Search for warranties matching the input
-    const foundWarranties = sampleWarranties.filter(warranty => 
-        warranty.customerPhone.includes(searchInput) || 
-        warranty.customerEmail.toLowerCase().includes(searchInput.toLowerCase())
-    );
+    // Check if input contains @ (indicating it's an email)
+    if (searchInput.includes('@')) {
+        // Email validation
+        searchInput = searchInput.toLowerCase();
+        const emailRegex = /^[a-z0-9][a-z0-9._-]*@[a-z0-9][a-z0-9.-]+\.[a-z]{2,}$/;
+        
+        // Check for invalid patterns
+        if (searchInput.includes(' ')) {
+            resultsDiv.innerHTML = `
+                <div class="error-message">
+                    <p>⚠️ Email address cannot contain spaces</p>
+                </div>
+            `;
+            return;
+        }
+        
+        if (searchInput.split('@').length > 2) {
+            resultsDiv.innerHTML = `
+                <div class="error-message">
+                    <p>⚠️ Email address cannot contain multiple @ symbols</p>
+                </div>
+            `;
+            return;
+        }
+        
+        if (searchInput.startsWith('@') || searchInput.endsWith('@')) {
+            resultsDiv.innerHTML = `
+                <div class="error-message">
+                    <p>⚠️ Invalid email format. Email must have text before and after @</p>
+                </div>
+            `;
+            return;
+        }
+        
+        if (!emailRegex.test(searchInput)) {
+            resultsDiv.innerHTML = `
+                <div class="error-message">
+                    <p>⚠️ Please enter a valid email address (e.g., example@domain.com)</p>
+                </div>
+            `;
+            return;
+        }
+    } else {
+        // Phone number validation
+        // Remove all non-digit characters for validation
+        const digitsOnly = searchInput.replace(/\D/g, '');
+        
+        if (digitsOnly.length !== 10) {
+            resultsDiv.innerHTML = `
+                <div class="error-message">
+                    <p>⚠️ Phone number must contain exactly 10 digits</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Format phone number for searching: (XXX) XXX-XXXX
+        searchInput = `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6)}`;
+    }
 
-    if (foundWarranties.length === 0) {
+    if (!serviceType) {
         resultsDiv.innerHTML = `
-            <div class="not-found-message">
-                <h3>No Warranties Found</h3>
-                <p>We couldn't find any warranties associated with "${searchInput}"</p>
-                <p>Please check your information and try again, or contact us at (555) 123-4567</p>
+            <div class="error-message">
+                <p>⚠️ Please select a service type</p>
             </div>
         `;
         return;
     }
 
-    // Display warranties as a list
-    displayWarranties(foundWarranties);
-}
+    // Search for warranties matching the input and service type
+    const foundWarranties = sampleWarranties.filter(warranty => 
+        (warranty.customerPhone.includes(searchInput) || 
+         warranty.customerEmail.toLowerCase().includes(searchInput)) &&
+        warranty.serviceType === serviceType
+    );
 
-// Display warranties in list format with expandable details
-function displayWarranties(warranties) {
-    const resultsDiv = document.getElementById('warrantyResults');
-    
-    let html = `
-        <div class="results-header">
-            <h2>Your Warranties</h2>
-            <p class="results-count">${warranties.length} ${warranties.length === 1 ? 'warranty' : 'warranties'} found</p>
-        </div>
-        <div class="warranty-list">
-    `;
-
-    warranties.forEach((warranty, index) => {
-        const startDate = new Date(warranty.startDate).toLocaleDateString();
-        const expirationDate = new Date(warranty.expirationDate).toLocaleDateString();
-        const today = new Date();
-        const expDate = new Date(warranty.expirationDate);
-        const daysRemaining = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
-        const isActive = expDate > today;
-        const isExpiringSoon = isActive && daysRemaining < 90;
-
-        html += `
-            <div class="warranty-card ${isActive ? 'active' : 'expired'}">
-                <div class="warranty-header">
-                    <div class="warranty-header-left">
-                        <h3>${warranty.serviceName}</h3>
-                        <p class="warranty-id">Work Order #${warranty.workOrderId}</p>
-                    </div>
-                    <div class="warranty-header-right">
-                        <span class="status-badge ${isActive ? 'active' : 'expired'}">
-                            ${isActive ? 'Active' : 'Expired'}
-                        </span>
-                        ${isExpiringSoon ? `<span class="expiring-badge">⚠️ Expiring Soon</span>` : ''}
-                    </div>
-                </div>
-
-                <div class="warranty-body">
-                    ${isExpiringSoon ? `
-                        <div class="warranty-alert">
-                            ⚠️ This warranty expires in ${daysRemaining} days. Contact us to discuss renewal options.
-                        </div>
-                    ` : ''}
-
-                    <div class="warranty-details-grid">
-                        <div class="detail-item">
-                            <span class="detail-label">Service Type</span>
-                            <span class="detail-value">${warranty.serviceType || 'N/A'}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Warranty Period</span>
-                            <span class="detail-value">${warranty.warrantyPeriod}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Start Date</span>
-                            <span class="detail-value">${startDate}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Expiration Date</span>
-                            <span class="detail-value">${expirationDate}</span>
-                        </div>
-                        ${isExpiringSoon ? `
-                            <div class="detail-item">
-                                <span class="detail-label">Days Remaining</span>
-                                <span class="detail-value expiring-text">${daysRemaining} days</span>
-                            </div>
-                        ` : ''}
-                    </div>
-
-                    <div class="warranty-coverage">
-                        <p><strong>Coverage Details:</strong> ${warranty.coverage}</p>
-                    </div>
-
-                    ${warranty.notes ? `
-                        <div class="warranty-notes">
-                            <p><strong>Important Notes:</strong> ${warranty.notes}</p>
-                        </div>
-                    ` : ''}
-                </div>
-
-                <div class="warranty-footer">
-                    ${isActive ? `
-                        <button class="action-btn primary-btn" onclick="requestWarrantyService('${warranty.id}', '${warranty.workOrderId}')">
-                            Request Warranty Service
-                        </button>
-                        <button class="action-btn secondary-btn" onclick="requestWarrantyDetails('${warranty.id}', '${warranty.workOrderId}')">
-                            Email Details
-                        </button>
-                    ` : `
-                        <button class="action-btn primary-btn" onclick="renewWarranty('${warranty.id}')">
-                            Renew Warranty
-                        </button>
-                    `}
-                </div>
+    if (foundWarranties.length === 0) {
+        // Show "No Warranties Found" message
+        resultsDiv.innerHTML = `
+            <div class="not-found-message">
+                <h3>No Warranties Found</h3>
+                <p>We couldn't find any warranties associated with "${searchInput}" for ${serviceType} services.</p>
+                <p>Please check your information and try again, or contact us at (555) 123-4567</p>
             </div>
         `;
-    });
-
-    html += '</div>';
-    resultsDiv.innerHTML = html;
-}
-
-// Function to request warranty details via email
-function requestWarrantyDetails(warrantyId, workOrderId) {
-    alert(`Warranty details for ${workOrderId} will be emailed to you shortly.\n\nWarranty ID: ${warrantyId}`);
-    // In production, this would trigger an email via backend API
-}
-
-// Function to request warranty service
-function requestWarrantyService(warrantyId, workOrderId) {
-    const confirmed = confirm(`Would you like to request warranty service for Work Order ${workOrderId}?\n\nA service technician will contact you within 24 hours.`);
-    if (confirmed) {
-        alert('Warranty service request submitted! We will contact you soon.');
-        // In production, this would create a service request in the database
-    }
-}
-
-// Function to renew warranty
-function renewWarranty(warrantyId) {
-    const confirmed = confirm('Would you like to renew this warranty?\n\nOur team will contact you with renewal options and pricing.');
-    if (confirmed) {
-        alert('Warranty renewal request submitted! We will contact you within 2 business days.');
-        // In production, this would trigger a renewal workflow
+    } else {
+        // Show email confirmation message instead of listing warranties
+        resultsDiv.innerHTML = `
+            <div class="success-message">
+                <h3>✓ Warranty Information Found</h3>
+                <p>We found ${foundWarranties.length} ${foundWarranties.length === 1 ? 'warranty' : 'warranties'} associated with your account.</p>
+                <p><strong>Your warranty information will be sent to your email shortly.</strong></p>
+                <p>Please check your inbox for detailed warranty information including coverage details, expiration dates, and service history.</p>
+                <p>If you don't receive the email within a few minutes, please contact us at (555) 123-4567</p>
+            </div>
+        `;
+        
+        // In production, this would trigger an email via backend API
+        console.log(`Sending warranty details to customer for ${foundWarranties.length} warranties`);
     }
 }
 
@@ -239,6 +197,40 @@ document.addEventListener('DOMContentLoaded', function() {
         searchInput.addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
                 lookupWarranty();
+            }
+        });
+        
+        // Auto-format phone number as user types (only if no letters or @ symbol)
+        searchInput.addEventListener('input', function(event) {
+            let value = event.target.value;
+            
+            // Check if value contains any letters or @ symbol (indicating email)
+            const containsLettersOrAt = /[a-zA-Z@]/.test(value);
+            
+            // Only format as phone number if it doesn't contain letters or @
+            if (!containsLettersOrAt) {
+                // Remove all non-digit characters
+                const digitsOnly = value.replace(/\D/g, '');
+                
+                // Limit to 10 digits
+                const limitedDigits = digitsOnly.substring(0, 10);
+                
+                // Format based on length
+                let formattedValue = '';
+                if (limitedDigits.length === 0) {
+                    formattedValue = '';
+                } else if (limitedDigits.length <= 3) {
+                    formattedValue = limitedDigits;
+                } else if (limitedDigits.length <= 6) {
+                    formattedValue = `(${limitedDigits.slice(0, 3)}) ${limitedDigits.slice(3)}`;
+                } else {
+                    formattedValue = `(${limitedDigits.slice(0, 3)}) ${limitedDigits.slice(3, 6)}-${limitedDigits.slice(6)}`;
+                }
+                
+                // Only update if the formatted value is different
+                if (formattedValue !== value) {
+                    event.target.value = formattedValue;
+                }
             }
         });
     }
