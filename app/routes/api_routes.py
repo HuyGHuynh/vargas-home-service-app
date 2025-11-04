@@ -776,3 +776,258 @@ def update_expired_warranties():
             
     except Exception as e:
         return {"success": False, "error": str(e)}, 500
+
+
+# Service Request Management Routes
+
+@api_bp.get("/service-requests")
+def get_all_service_requests():
+    """Get all service requests with full details for calendar view."""
+    try:
+        from repositories.servicerequest_repository import ServiceRequestRepository
+        service_requests = ServiceRequestRepository.get_all_service_requests()
+        return {"success": True, "data": service_requests}, 200
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.get("/service-requests/<int:request_id>")
+def get_service_request(request_id):
+    """Get a specific service request by ID."""
+    try:
+        from repositories.servicerequest_repository import ServiceRequestRepository
+        service_request = ServiceRequestRepository.get_service_request_by_id(request_id)
+        
+        if service_request:
+            return {"success": True, "data": service_request}, 200
+        else:
+            return {"success": False, "error": "Service request not found"}, 404
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.put("/service-requests/<int:request_id>/status")
+def update_service_request_status(request_id):
+    """Update service request status."""
+    try:
+        from repositories.servicerequest_repository import ServiceRequestRepository
+        
+        data = request.get_json()
+        new_status = data.get('status')
+        
+        valid_statuses = ['Pending', 'In Progress', 'Completed', 'Cancelled']
+        if new_status not in valid_statuses:
+            return {"success": False, "error": f"Invalid status. Must be one of {valid_statuses}"}, 400
+        
+        success = ServiceRequestRepository.update_service_request_status(request_id, new_status)
+        
+        if success:
+            return {"success": True, "message": f"Service request {request_id} status updated to {new_status}"}, 200
+        else:
+            return {"success": False, "error": "Service request not found or update failed"}, 404
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.post("/service-requests/<int:request_id>/assign")
+def assign_employee_to_request(request_id):
+    """Assign an employee to a service request."""
+    try:
+        data = request.get_json()
+        employee_id = data.get('employee_id')
+        
+        if not employee_id:
+            return {"success": False, "error": "Employee ID is required"}, 400
+        
+        with BaseRepository.get_cursor() as cursor:
+            # Check if assignment already exists
+            cursor.execute("SELECT assignment_id FROM work_assignments WHERE requestid = %s", (request_id,))
+            existing = cursor.fetchone()
+            
+            if existing:
+                # Update existing assignment
+                cursor.execute("""
+                    UPDATE work_assignments 
+                    SET employeeid = %s 
+                    WHERE requestid = %s
+                """, (employee_id, request_id))
+                message = f"Service request {request_id} reassigned to employee {employee_id}"
+            else:
+                # Create new assignment
+                cursor.execute("""
+                    INSERT INTO work_assignments (requestid, employeeid) 
+                    VALUES (%s, %s)
+                """, (request_id, employee_id))
+                message = f"Service request {request_id} assigned to employee {employee_id}"
+            
+            return {"success": True, "message": message}, 200
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.delete("/service-requests/<int:request_id>/assign")
+def unassign_employee_from_request(request_id):
+    """Remove employee assignment from a service request."""
+    try:
+        with BaseRepository.get_cursor() as cursor:
+            cursor.execute("DELETE FROM work_assignments WHERE requestid = %s", (request_id,))
+            
+            if cursor.rowcount > 0:
+                return {"success": True, "message": f"Employee unassigned from service request {request_id}"}, 200
+            else:
+                return {"success": False, "error": "No assignment found for this service request"}, 404
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.post("/service-requests/<int:request_id>/accept")
+def accept_service_request(request_id):
+    """Accept a pending service request, set final price and change status to In Progress."""
+    try:
+        data = request.get_json()
+        final_price = data.get('final_price')
+        
+        if not final_price or final_price <= 0:
+            return {"success": False, "error": "Valid final price is required"}, 400
+        
+        with BaseRepository.get_cursor() as cursor:
+            # Check if request exists and is pending
+            cursor.execute("SELECT status FROM servicerequests WHERE requestid = %s", (request_id,))
+            row = cursor.fetchone()
+            
+            if not row:
+                return {"success": False, "error": "Service request not found"}, 404
+            
+            if row[0] != 'Pending':
+                return {"success": False, "error": "Only pending requests can be accepted"}, 400
+            
+            # Update request status to In Progress
+            cursor.execute("""
+                UPDATE servicerequests 
+                SET status = 'In Progress' 
+                WHERE requestid = %s
+            """, (request_id,))
+            
+            # Check if final price already exists
+            cursor.execute("SELECT finalprice_id FROM finalpricedetails WHERE request_id = %s", (request_id,))
+            existing_price = cursor.fetchone()
+            
+            if existing_price:
+                # Update existing final price
+                cursor.execute("""
+                    UPDATE finalpricedetails 
+                    SET pricetotal = %s 
+                    WHERE request_id = %s
+                """, (final_price, request_id))
+            else:
+                # Insert new final price record
+                cursor.execute("""
+                    INSERT INTO finalpricedetails (pricetotal, request_id) 
+                    VALUES (%s, %s)
+                """, (final_price, request_id))
+            
+            return {"success": True, "message": f"Service request {request_id} accepted and moved to In Progress"}, 200
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.delete("/service-requests/<int:request_id>")
+def delete_service_request(request_id):
+    """Delete a service request and all related data."""
+    try:
+        with BaseRepository.get_cursor() as cursor:
+            # Delete related records first (due to foreign key constraints)
+            cursor.execute("DELETE FROM finalpricedetails WHERE request_id = %s", (request_id,))
+            cursor.execute("DELETE FROM work_assignments WHERE requestid = %s", (request_id,))
+            cursor.execute("DELETE FROM warranties WHERE request_id = %s", (request_id,))
+            
+            # Delete the main service request
+            cursor.execute("DELETE FROM servicerequests WHERE requestid = %s", (request_id,))
+            
+            if cursor.rowcount > 0:
+                return {"success": True, "message": f"Service request {request_id} deleted successfully"}, 200
+            else:
+                return {"success": False, "error": "Service request not found"}, 404
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.post("/service-requests/<int:request_id>/complete")
+def complete_service_request(request_id):
+    """Complete a service request and optionally attach a warranty."""
+    try:
+        data = request.get_json()
+        warranty_data = data.get('warranty')
+        
+        with BaseRepository.get_cursor() as cursor:
+            # Check if request exists and is in progress
+            cursor.execute("SELECT status FROM servicerequests WHERE requestid = %s", (request_id,))
+            row = cursor.fetchone()
+            
+            if not row:
+                return {"success": False, "error": "Service request not found"}, 404
+            
+            if row[0] != 'In Progress':
+                return {"success": False, "error": "Only in progress requests can be completed"}, 400
+            
+            # Update request status to Completed
+            cursor.execute("""
+                UPDATE servicerequests 
+                SET status = 'Completed' 
+                WHERE requestid = %s
+            """, (request_id,))
+            
+            # If warranty data is provided, create warranty record
+            if warranty_data and warranty_data.get('start_date'):
+                cursor.execute("""
+                    INSERT INTO warranties (start_date, end_date, description, price, status, request_id) 
+                    VALUES (%s, %s, %s, %s, 'Active', %s)
+                """, (
+                    warranty_data['start_date'],
+                    warranty_data['end_date'],
+                    warranty_data['description'],
+                    warranty_data['price'],
+                    request_id
+                ))
+                
+                warranty_message = " with warranty attached"
+            else:
+                warranty_message = ""
+            
+            return {"success": True, "message": f"Service request {request_id} completed{warranty_message}"}, 200
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.post("/service-requests/<int:request_id>/cancel")
+def cancel_service_request(request_id):
+    """Cancel a service request (In Progress -> Cancelled)."""
+    try:
+        with BaseRepository.get_cursor() as cursor:
+            # Check if request exists and is in progress
+            cursor.execute("SELECT status FROM servicerequests WHERE requestid = %s", (request_id,))
+            row = cursor.fetchone()
+            
+            if not row:
+                return {"success": False, "error": "Service request not found"}, 404
+            
+            if row[0] != 'In Progress':
+                return {"success": False, "error": "Only in progress requests can be cancelled"}, 400
+            
+            # Update request status to Cancelled
+            cursor.execute("""
+                UPDATE servicerequests 
+                SET status = 'Cancelled' 
+                WHERE requestid = %s
+            """, (request_id,))
+            
+            return {"success": True, "message": f"Service request {request_id} cancelled"}, 200
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
