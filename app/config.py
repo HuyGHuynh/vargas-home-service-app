@@ -20,6 +20,10 @@ class Config:
     # Database settings
     DATABASE_URL = os.getenv('DATABASE_URL')
     
+    # Gmail API settings
+    SENDER_EMAIL = os.getenv('SENDER_EMAIL', '')
+    SENDER_NAME = os.getenv('SENDER_NAME', "Vargas' Home Services")
+    
     # Application settings
     JSON_SORT_KEYS = False  # Preserve key order in JSON responses
     

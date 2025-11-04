@@ -11,65 +11,107 @@ class WarrantyRepository(BaseRepository):
     """Repository for warranty-related database operations."""
     
     @staticmethod
-    def lookup_by_email_or_phone(email=None, phone=None):
+    def lookup_warranty_by_contact_and_service_type(email=None, phone=None, service_type=None):
         """
-        Look up warranties by customer email or phone number.
+        Look up warranties by customer contact info and service type.
         
         Args:
             email (str, optional): Customer email
             phone (str, optional): Customer phone number
+            service_type (str, optional): Service type name
             
         Returns:
-            list[dict]: List of warranty records with details
+            list[dict]: List of warranty records with full details
         """
         if not email and not phone:
             return []
         
         with BaseRepository.get_cursor() as cur:
+            # Build query with joins to get all warranty details based on actual schema
             query = """
                 SELECT 
-                    w.id,
-                    w.service_name,
-                    w.service_type,
-                    w.work_order_id,
+                    w.warranty_id,
                     w.start_date,
                     w.end_date,
-                    w.coverage,
-                    w.notes
+                    w.description as warranty_description,
+                    w.price as warranty_price,
+                    w.status as warranty_status,
+                    c.customerid,
+                    c.firstname,
+                    c.lastname,
+                    c.phone,
+                    c.email,
+                    sr.requestid,
+                    sr.preferred_datetime,
+                    sr.description as service_description,
+                    sr.status as service_request_status,
+                    s.job_name,
+                    s.job_desc,
+                    s.service_price,
+                    s.duration_hours,
+                    st.service_type_name
                 FROM warranties w
-                INNER JOIN "user" u ON w.user_id = u.id
+                INNER JOIN servicerequests sr ON w.request_id = sr.requestid
+                INNER JOIN customer c ON sr.customerid = c.customerid
+                INNER JOIN services s ON sr.service_id = s.service_id
+                INNER JOIN service_types st ON s.service_type_id = st.service_type_id
                 WHERE 
-                    (u.email = %s OR %s = '') AND
-                    (u.phoneNumber = %s OR %s = '')
+                    (c.email = %s OR %s = '') AND
+                    (c.phone = %s OR %s = '') AND
+                    (st.service_type_name = %s OR %s = '')
                 ORDER BY w.start_date DESC;
             """
             
             email_param = email or ''
             phone_param = phone or ''
+            service_type_param = service_type or ''
             
-            cur.execute(query, (email_param, email_param, phone_param, phone_param))
+            cur.execute(query, (
+                email_param, email_param, 
+                phone_param, phone_param,
+                service_type_param, service_type_param
+            ))
             rows = cur.fetchall()
             
             # Format warranty data
             warranties = []
             for row in rows:
-                warranties.append({
-                    'id': row[0],
-                    'serviceName': row[1],
-                    'serviceType': row[2],
-                    'workOrderId': row[3],
-                    'startDate': row[4].isoformat() if row[4] else None,
-                    'endDate': row[5].isoformat() if row[5] else None,
-                    'coverage': row[6],
-                    'notes': row[7]
-                })
+                warranty_data = {
+                    'warranty_id': row[0],
+                    'start_date': row[1].isoformat() if row[1] else None,
+                    'end_date': row[2].isoformat() if row[2] else None,
+                    'warranty_description': row[3],
+                    'warranty_price': float(row[4]) if row[4] else 0.0,
+                    'warranty_status': row[5],
+                    'customer': {
+                        'customer_id': row[6],
+                        'first_name': row[7],
+                        'last_name': row[8],
+                        'phone': row[9],
+                        'email': row[10]
+                    },
+                    'service_request': {
+                        'request_id': row[11],
+                        'preferred_datetime': row[12].isoformat() if row[12] else None,
+                        'description': row[13],
+                        'status': row[14]
+                    },
+                    'service': {
+                        'job_name': row[15],
+                        'job_description': row[16],
+                        'service_price': float(row[17]) if row[17] else 0.0,
+                        'duration_hours': float(row[18]) if row[18] else 0.0,
+                        'service_type': row[19]
+                    }
+                }
+                warranties.append(warranty_data)
             
             return warranties
     
     @staticmethod
-    def get_by_id(warranty_id):
+    def get_warranty_by_id(warranty_id):
         """
-        Get a warranty by ID.
+        Get a warranty by ID with complete details.
         
         Args:
             warranty_id (int): The warranty ID
@@ -78,69 +120,87 @@ class WarrantyRepository(BaseRepository):
             dict or None: Warranty data or None if not found
         """
         with BaseRepository.get_cursor() as cur:
-            cur.execute("""
+            query = """
                 SELECT 
-                    id,
-                    service_name,
-                    service_type,
-                    work_order_id,
-                    start_date,
-                    end_date,
-                    coverage,
-                    notes,
-                    user_id
-                FROM warranties
-                WHERE id = %s;
-            """, (warranty_id,))
+                    w.warranty_id,
+                    w.start_date,
+                    w.end_date,
+                    w.description,
+                    w.price,
+                    w.status,
+                    w.request_id
+                FROM warranties w
+                WHERE w.warranty_id = %s;
+            """
+            cur.execute(query, (warranty_id,))
             row = cur.fetchone()
             
             if row:
                 return {
-                    'id': row[0],
-                    'serviceName': row[1],
-                    'serviceType': row[2],
-                    'workOrderId': row[3],
-                    'startDate': row[4].isoformat() if row[4] else None,
-                    'endDate': row[5].isoformat() if row[5] else None,
-                    'coverage': row[6],
-                    'notes': row[7],
-                    'userId': row[8]
+                    'warranty_id': row[0],
+                    'start_date': row[1].isoformat() if row[1] else None,
+                    'end_date': row[2].isoformat() if row[2] else None,
+                    'description': row[3],
+                    'price': float(row[4]) if row[4] else 0.0,
+                    'status': row[5],
+                    'request_id': row[6]
                 }
             return None
     
     @staticmethod
-    def create_service_request(warranty_id, work_order_id, customer_email, customer_phone,
-                               issue_type, urgency, problem_description, status='pending'):
+    def get_all_warranties():
         """
-        Create a service request for a warranty.
+        Get all warranties with customer and service details for admin view.
         
-        Args:
-            warranty_id (int): The warranty ID
-            work_order_id (int): The work order ID
-            customer_email (str): Customer email
-            customer_phone (str): Customer phone
-            issue_type (str): Type of issue
-            urgency (str): Urgency level
-            problem_description (str): Description of the problem
-            status (str): Request status (default: 'pending')
-            
         Returns:
-            int: The created service request ID
-            
-        Raises:
-            psycopg2.Error: If database operation fails
+            list[dict]: List of all warranty records
         """
         with BaseRepository.get_cursor() as cur:
-            insert_query = """
-                INSERT INTO service_requests 
-                (warranty_id, work_order_id, customer_email, customer_phone, 
-                 issue_type, urgency, problem_description, status, created_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())
-                RETURNING id;
+            query = """
+                SELECT 
+                    w.warranty_id,
+                    w.start_date,
+                    w.end_date,
+                    w.description as warranty_description,
+                    w.price as warranty_price,
+                    w.status as warranty_status,
+                    c.customerid,
+                    c.firstname,
+                    c.lastname,
+                    c.phone,
+                    c.email,
+                    s.job_name,
+                    st.service_type_name,
+                    sr.requestid,
+                    sr.preferred_datetime
+                FROM warranties w
+                INNER JOIN servicerequests sr ON w.request_id = sr.requestid
+                INNER JOIN customer c ON sr.customerid = c.customerid
+                INNER JOIN services s ON sr.service_id = s.service_id
+                INNER JOIN service_types st ON s.service_type_id = st.service_type_id
+                ORDER BY w.start_date DESC;
             """
-            cur.execute(insert_query, (
-                warranty_id, work_order_id, customer_email, customer_phone,
-                issue_type, urgency, problem_description, status
-            ))
-            request_id = cur.fetchone()[0]
-            return request_id
+            cur.execute(query)
+            rows = cur.fetchall()
+            
+            warranties = []
+            for row in rows:
+                warranty_data = {
+                    'warranty_id': row[0],
+                    'start_date': row[1].isoformat() if row[1] else None,
+                    'end_date': row[2].isoformat() if row[2] else None,
+                    'warranty_description': row[3],
+                    'warranty_price': float(row[4]) if row[4] else 0.0,
+                    'warranty_status': row[5],
+                    'customer_id': row[6],
+                    'customer_name': f"{row[7]} {row[8]}",
+                    'customer_phone': row[9],
+                    'customer_email': row[10],
+                    'service_name': row[11],
+                    'service_type': row[12],
+                    'request_id': row[13],
+                    'service_date': row[14].isoformat() if row[14] else None
+                }
+                warranties.append(warranty_data)
+            
+            return warranties

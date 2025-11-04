@@ -93,7 +93,7 @@ function lookupWarranty() {
         // Email validation
         searchInput = searchInput.toLowerCase();
         const emailRegex = /^[a-z0-9][a-z0-9._-]*@[a-z0-9][a-z0-9.-]+\.[a-z]{2,}$/;
-        
+
         // Check for invalid patterns
         if (searchInput.includes(' ')) {
             resultsDiv.innerHTML = `
@@ -103,7 +103,7 @@ function lookupWarranty() {
             `;
             return;
         }
-        
+
         if (searchInput.split('@').length > 2) {
             resultsDiv.innerHTML = `
                 <div class="error-message">
@@ -112,7 +112,7 @@ function lookupWarranty() {
             `;
             return;
         }
-        
+
         if (searchInput.startsWith('@') || searchInput.endsWith('@')) {
             resultsDiv.innerHTML = `
                 <div class="error-message">
@@ -121,7 +121,7 @@ function lookupWarranty() {
             `;
             return;
         }
-        
+
         if (!emailRegex.test(searchInput)) {
             resultsDiv.innerHTML = `
                 <div class="error-message">
@@ -134,7 +134,7 @@ function lookupWarranty() {
         // Phone number validation
         // Remove all non-digit characters for validation
         const digitsOnly = searchInput.replace(/\D/g, '');
-        
+
         if (digitsOnly.length !== 10) {
             resultsDiv.innerHTML = `
                 <div class="error-message">
@@ -143,7 +143,7 @@ function lookupWarranty() {
             `;
             return;
         }
-        
+
         // Format phone number for searching: (XXX) XXX-XXXX
         searchInput = `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6)}`;
     }
@@ -157,64 +157,85 @@ function lookupWarranty() {
         return;
     }
 
-    // Search for warranties matching the input and service type
-    const foundWarranties = sampleWarranties.filter(warranty => 
-        (warranty.customerPhone.includes(searchInput) || 
-         warranty.customerEmail.toLowerCase().includes(searchInput)) &&
-        warranty.serviceType === serviceType
-    );
+    // Show loading message
+    resultsDiv.innerHTML = `
+        <div class="loading-message">
+            <p>🔍 Searching for warranties...</p>
+        </div>
+    `;
 
-    if (foundWarranties.length === 0) {
-        // Show "No Warranties Found" message
-        resultsDiv.innerHTML = `
-            <div class="not-found-message">
-                <h3>No Warranties Found</h3>
-                <p>We couldn't find any warranties associated with "${searchInput}" for ${serviceType} services.</p>
-                <p>Please check your information and try again, or contact us at (555) 123-4567</p>
+    // Call the warranty lookup API
+    fetch('/api/warranty/lookup-details', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            email: searchInput.includes('@') ? searchInput : '',
+            phone: !searchInput.includes('@') ? searchInput : '',
+            service_type: serviceType
+        })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                resultsDiv.innerHTML = `
+                <div class="success-message">
+                    <h3>✓ Warranty Information Found</h3>
+                    <p>We found ${data.warranties_count} ${data.warranties_count === 1 ? 'warranty' : 'warranties'} associated with your account.</p>
+                    <p><strong>Your warranty information will be sent to your email shortly.</strong></p>
+                    <p>Please check your inbox for detailed warranty information including coverage details, expiration dates, and service history.</p>
+                    <p>If you don't receive the email within a few minutes, please contact us at (555) 123-4567</p>
+                </div>
+            `;
+            } else {
+                // Show not found message
+                resultsDiv.innerHTML = `
+                <div class="not-found-message">
+                    <h3>No Warranties Found</h3>
+                    <p>${data.message || `We couldn't find any warranties associated with "${searchInput}" for ${serviceType} services.`}</p>
+                    <p>Please check your information and try again, or contact us at (555) 123-4567</p>
+                </div>
+            `;
+            }
+        })
+        .catch(error => {
+            console.error('Error looking up warranties:', error);
+            resultsDiv.innerHTML = `
+            <div class="error-message">
+                <h3>Error</h3>
+                <p>⚠️ An error occurred while searching for warranties. Please try again or contact us at (555) 123-4567</p>
             </div>
         `;
-    } else {
-        // Show email confirmation message instead of listing warranties
-        resultsDiv.innerHTML = `
-            <div class="success-message">
-                <h3>✓ Warranty Information Found</h3>
-                <p>We found ${foundWarranties.length} ${foundWarranties.length === 1 ? 'warranty' : 'warranties'} associated with your account.</p>
-                <p><strong>Your warranty information will be sent to your email shortly.</strong></p>
-                <p>Please check your inbox for detailed warranty information including coverage details, expiration dates, and service history.</p>
-                <p>If you don't receive the email within a few minutes, please contact us at (555) 123-4567</p>
-            </div>
-        `;
-        
-        // In production, this would trigger an email via backend API
-        console.log(`Sending warranty details to customer for ${foundWarranties.length} warranties`);
-    }
+        });
 }
 
 // Allow Enter key to trigger search
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('warrantySearchInput');
     if (searchInput) {
-        searchInput.addEventListener('keypress', function(event) {
+        searchInput.addEventListener('keypress', function (event) {
             if (event.key === 'Enter') {
                 lookupWarranty();
             }
         });
-        
+
         // Auto-format phone number as user types (only if no letters or @ symbol)
-        searchInput.addEventListener('input', function(event) {
+        searchInput.addEventListener('input', function (event) {
             let value = event.target.value;
-            
+
             // Check if value contains any letters or @ symbol (indicating email)
             const containsLettersOrAt = /[a-zA-Z@]/.test(value);
-            
+
             // Only format as phone number if it doesn't contain letters or @
             if (!containsLettersOrAt) {
                 // Remove all non-digit characters
                 const digitsOnly = value.replace(/\D/g, '');
-                
+
                 // Limit to 10 digits
                 const limitedDigits = digitsOnly.substring(0, 10);
-                
+
                 // Format based on length
                 let formattedValue = '';
                 if (limitedDigits.length === 0) {
@@ -226,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     formattedValue = `(${limitedDigits.slice(0, 3)}) ${limitedDigits.slice(3, 6)}-${limitedDigits.slice(6)}`;
                 }
-                
+
                 // Only update if the formatted value is different
                 if (formattedValue !== value) {
                     event.target.value = formattedValue;
