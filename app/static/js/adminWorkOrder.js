@@ -164,7 +164,6 @@ function renderWorkOrders(ordersToRender = null) {
       <td>
         <div class="action-buttons">
           <button class="view-btn" onclick="viewWorkOrder('${order.id}')">View</button>
-          <button class="status-btn" onclick="updateStatus('${order.id}')">Update</button>
         </div>
       </td>
     </tr>

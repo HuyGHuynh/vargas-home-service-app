@@ -606,3 +606,179 @@ h1 {
         flex: none;
     }
 }
+
+/* Add Work Order Modal Styles - Appointment Form Style */
+#addWorkOrderModal .modal-content.appointment-form-style {
+    max-width: 700px;
+    width: 90%;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+#addWorkOrderModal h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #333;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.selected-date-display {
+    background-color: #e3f2fd;
+    border: 1px solid #1976d2;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+    color: #1565c0;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+#addWorkOrderForm label {
+    font-weight: bold;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    display: block;
+    color: #333;
+}
+
+#addWorkOrderForm input[type="text"],
+#addWorkOrderForm input[type="email"],
+#addWorkOrderForm input[type="number"],
+#addWorkOrderForm select,
+#addWorkOrderForm textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+#addWorkOrderForm input:focus,
+#addWorkOrderForm select:focus,
+#addWorkOrderForm textarea:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+#addWorkOrderForm input[readonly] {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+    border-color: #dee2e6;
+}
+
+#addWorkOrderForm textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Cost Estimate Styling */
+.cost-estimate {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+}
+
+.cost-estimate h4 {
+    margin: 0 0 10px 0;
+    color: #495057;
+}
+
+.cost-breakdown {
+    margin-bottom: 10px;
+}
+
+.total-cost {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #28a745;
+    margin-top: 10px;
+    text-align: right;
+}
+
+.cost-disclaimer {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #dee2e6;
+    font-size: 0.9em;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Button Styling */
+#addWorkOrderModal .modal-actions {
+    margin-top: 25px;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.btn-submit {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    min-width: 150px;
+}
+
+.btn-submit:hover {
+    background: #0056b3;
+}
+
+.btn-cancel {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    min-width: 120px;
+}
+
+.btn-cancel:hover {
+    background: #545b62;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #addWorkOrderModal .modal-content.appointment-form-style {
+        width: 95%;
+        margin: 20px auto;
+        padding: 20px;
+        max-height: 90vh;
+    }
+    
+    #addWorkOrderModal .modal-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .btn-submit,
+    .btn-cancel {
+        width: 100%;
+        max-width: 300px;
+        margin-bottom: 10px;
+    }
+
+    .selected-date-display {
+        padding: 12px;
+        font-size: 1rem;
+    }
+}

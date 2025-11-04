@@ -258,7 +258,8 @@ class WorkorderService:
         request_data = {
             'description': data.get('description', ''),
             'preferred_datetime': preferred_datetime,
-            'photo_path': data.get('photo_path')  # Will be None if not provided
+            'photo_path': data.get('photo_path'),  # Will be None if not provided
+            'assigned_employee_id': data.get('assignedEmployeeId')  # Optional manual assignment
         }
         
         workorder_data = {
@@ -279,14 +280,37 @@ class WorkorderService:
                 customer_data, address_data, service_data, request_data, workorder_data
             )
             
-            # Auto-assign employee if requested and time data is available
-            if data.get('autoAssignEmployee') and data.get('scheduledTime24'):
-                try:
-                    from services.employee_service import EmployeeService
-                    
-                    # Get request ID from result
-                    request_id = result.get('request_id')
-                    if request_id:
+            # Handle manual or auto assignment
+            request_id = result.get('request_id')
+            if request_id:
+                # Manual assignment takes priority
+                assigned_employee_id = data.get('assignedEmployeeId')
+                if assigned_employee_id:
+                    try:
+                        from repositories.employee_repository import EmployeeRepository
+                        
+                        # Create manual work assignment (this will override automatic assignment)
+                        assignment_id = EmployeeRepository.create_work_assignment(
+                            request_id, 
+                            int(assigned_employee_id)
+                        )
+                        
+                        if assignment_id:
+                            # Get employee details for the result
+                            employee_details = EmployeeRepository.get_employee_by_id(int(assigned_employee_id))
+                            if employee_details:
+                                result['technician'] = employee_details
+                                result['assignment_id'] = assignment_id
+                                result['assignment_type'] = 'manual'
+                    except Exception as e:
+                        # Log the error but don't fail the whole operation
+                        print(f"Warning: Failed to manually assign technician: {e}")
+                
+                # Auto-assign employee if requested and time data is available (and no manual assignment)
+                elif data.get('autoAssignEmployee') and data.get('scheduledTime24'):
+                    try:
+                        from services.employee_service import EmployeeService
+                        
                         # Auto-assign employee based on availability
                         assignment_result = EmployeeService.auto_assign_employee_to_request(
                             request_id, 
@@ -298,13 +322,14 @@ class WorkorderService:
                             # Add employee assignment info to result
                             result['technician'] = assignment_result['assigned_employee']
                             result['assignment_id'] = assignment_result['assignment_id']
+                            result['assignment_type'] = 'automatic'
                         else:
                             # Log warning but don't fail the entire request
                             print(f"Warning: Could not auto-assign employee: {assignment_result['message']}")
                             
-                except Exception as assign_error:
-                    # Log error but don't fail the entire request creation
-                    print(f"Error during auto-assignment: {assign_error}")
+                    except Exception as assign_error:
+                        # Log error but don't fail the entire request creation
+                        print(f"Error during auto-assignment: {assign_error}")
             
             return {
                 "ok": True,

@@ -15,6 +15,10 @@ try {
         const requestId = info.event.extendedProps.requestId;
         showServiceRequestDetails(requestId);
       },
+      dateClick: function (info) {
+        // Open add work order modal when clicking on a date
+        openAddWorkOrderModal(info.dateStr);
+      },
       eventDidMount: function (info) {
         // Add status-based styling
         const status = info.event.extendedProps.status;
@@ -25,6 +29,78 @@ try {
     });
 
     calendar.render();
+
+    // Initialize service type and job type functionality
+    initializeServiceTypeHandling();
+
+    // Handle add work order form submission
+    const addWorkOrderForm = document.getElementById('addWorkOrderForm');
+    if (addWorkOrderForm) {
+      addWorkOrderForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const fullAddress = `${formData.get('address')}, ${formData.get('city')}, ${formData.get('state')} ${formData.get('zipCode')}`;
+        
+        // Get estimated cost from the cost estimate display
+        const totalCostElement = document.getElementById('totalCost');
+        const estimatedCost = totalCostElement && totalCostElement.textContent ? 
+          parseFloat(totalCostElement.textContent.replace(/[^0-9.]/g, '')) || 0 : 0;
+        
+        const data = {
+          customerData: {
+            firstName: formData.get('firstName'),
+            lastName: formData.get('lastName'),
+            email: formData.get('customerEmail'),
+            phone: formData.get('customerPhone')
+          },
+          addressData: {
+            address: fullAddress
+          },
+          serviceData: {
+            serviceType: formData.get('serviceType'),
+            serviceId: formData.get('serviceId')
+          },
+          requestData: {
+            preferredDateTime: formData.get('selectedDate'),
+            requestDescription: formData.get('requestDescription'),
+            requestStatus: 'pending',
+            assignedEmployeeId: formData.get('assignedTechnician') || null
+          },
+          workorderData: {
+            scheduledDate: formData.get('selectedDate'),
+            estimatedCost: estimatedCost,
+            isCompleted: false
+          }
+        };
+        
+        try {
+          showNotification('Creating work order...', 'info');
+          
+          const response = await fetch('/workorders/expanded', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            showNotification('Work order created successfully!', 'success');
+            closeAddWorkOrderModal();
+            // Reload service requests to show the new work order
+            loadServiceRequests();
+          } else {
+            showNotification(result.error || 'Failed to create work order', 'error');
+          }
+        } catch (error) {
+          console.error('Error creating work order:', error);
+          showNotification('Network error creating work order', 'error');
+        }
+      });
+    }
   });
 } catch (error) {
   console.error(error);
@@ -481,4 +557,326 @@ function showNotification(message, type = 'success') {
     notification.style.animation = 'slideOutRight 0.3s ease';
     setTimeout(() => notification.remove(), 300);
   }, 3000);
+}
+
+// Open add work order modal
+function openAddWorkOrderModal(dateStr) {
+  const modal = document.getElementById('addWorkOrderModal');
+  const selectedDateInput = document.getElementById('selectedDate');
+  const selectedDateDisplay = document.getElementById('selectedDateDisplay');
+  
+  // Format date for display
+  const date = new Date(dateStr);
+  const formattedDate = date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  
+  selectedDateInput.value = dateStr;
+  selectedDateDisplay.textContent = formattedDate;
+  modal.style.display = 'block';
+  
+  // Reset form
+  document.getElementById('addWorkOrderForm').reset();
+  selectedDateInput.value = dateStr; // Set date again after reset
+  selectedDateDisplay.textContent = formattedDate; // Set display again after reset
+  
+  // Ensure state field always shows NJ after reset
+  const stateInput = document.getElementById('state');
+  if (stateInput) {
+    stateInput.value = 'NJ';
+  }
+  
+  // Reset service dropdowns
+  const jobSelect = document.getElementById('jobType');
+  const serviceIdInput = document.getElementById('serviceId');
+  if (jobSelect) {
+    jobSelect.innerHTML = '<option value="">--Select Service Type First--</option>';
+    jobSelect.disabled = true;
+  }
+  if (serviceIdInput) {
+    serviceIdInput.value = '';
+  }
+  
+  // Hide cost estimate
+  hideCostEstimateInModal();
+  
+  // Ensure service types are populated and technicians show all initially
+  populateServiceTypeDropdown();
+  populateTechnicianDropdown(); // Show all technicians initially
+}
+
+// Close add work order modal
+function closeAddWorkOrderModal() {
+  const modal = document.getElementById('addWorkOrderModal');
+  modal.style.display = 'none';
+  document.getElementById('addWorkOrderForm').reset();
+}
+
+// Close modal when clicking outside of it
+window.addEventListener('click', function(event) {
+  const addWorkOrderModal = document.getElementById('addWorkOrderModal');
+  
+  if (event.target === addWorkOrderModal) {
+    closeAddWorkOrderModal();
+  }
+});
+
+// Service Type and Job Type Handling
+let servicesByType = {}; // Cached services organized by type
+let serviceTypes = [];
+let allServices = [];
+let allTechnicians = []; // Cached technicians
+
+// Initialize service type functionality
+function initializeServiceTypeHandling() {
+  // Preload service data when modal is opened
+  preloadServiceData();
+  
+  // Preload technician data
+  preloadTechnicianData();
+  
+  // Add event listeners for service type and job type changes
+  setupServiceTypeEventListeners();
+}
+
+// Preload all service data
+async function preloadServiceData() {
+  try {
+    // Fetch both service types and all services in parallel
+    const [typesResponse, servicesResponse] = await Promise.all([
+      fetch('/api/service-types'),
+      fetch('/api/services')
+    ]);
+
+    const typesResult = await typesResponse.json();
+    const servicesResult = await servicesResponse.json();
+
+    if (typesResult.success && servicesResult.success) {
+      serviceTypes = typesResult.data;
+      allServices = servicesResult.data;
+
+      // Organize services by type in memory for instant lookup
+      servicesByType = {};
+      allServices.forEach(service => {
+        const typeName = service.category;
+        if (!servicesByType[typeName]) {
+          servicesByType[typeName] = [];
+        }
+        servicesByType[typeName].push(service);
+      });
+
+      // Populate service type dropdown when modal opens
+      populateServiceTypeDropdown();
+    } else {
+      console.error('Failed to load service data');
+    }
+  } catch (error) {
+    console.error('Error preloading service data:', error);
+  }
+}
+
+// Populate service type dropdown
+function populateServiceTypeDropdown() {
+  const serviceSelect = document.getElementById('serviceType');
+  if (serviceSelect && serviceTypes.length > 0) {
+    serviceSelect.innerHTML = '<option value="">--Select Service Type--</option>';
+    serviceTypes.forEach(type => {
+      const option = document.createElement('option');
+      option.value = type.service_type_name;
+      option.textContent = type.service_type_name;
+      serviceSelect.appendChild(option);
+    });
+    serviceSelect.disabled = false;
+  }
+}
+
+// Preload technician data
+async function preloadTechnicianData() {
+  try {
+    const response = await fetch('/api/employees');
+    const result = await response.json();
+
+    if (result.success) {
+      allTechnicians = result.data;
+      populateTechnicianDropdown();
+    } else {
+      console.error('Failed to load technician data:', result.error);
+    }
+  } catch (error) {
+    console.error('Error preloading technician data:', error);
+  }
+}
+
+// Populate technician dropdown (all technicians)
+function populateTechnicianDropdown() {
+  const technicianSelect = document.getElementById('assignedTechnician');
+  if (technicianSelect && allTechnicians.length > 0) {
+    technicianSelect.innerHTML = '<option value="">--Select Technician--</option>';
+    allTechnicians.forEach(technician => {
+      const option = document.createElement('option');
+      option.value = technician.employee_id;
+      const fullName = `${technician.first_name} ${technician.last_name}`;
+      const specialties = technician.specialties ? ` (${technician.specialties.join(', ')})` : '';
+      option.textContent = fullName + specialties;
+      technicianSelect.appendChild(option);
+    });
+  }
+}
+
+// Populate technician dropdown with only qualified technicians for selected service type
+function populateQualifiedTechniciansDropdown(serviceTypeName) {
+  const technicianSelect = document.getElementById('assignedTechnician');
+  if (!technicianSelect || !allTechnicians.length) {
+    return;
+  }
+
+  // Filter technicians who have the required specialty for this service type
+  const qualifiedTechnicians = allTechnicians.filter(technician => {
+    // If technician has no specialties, they can't do specialized work
+    if (!technician.specialties || technician.specialties.length === 0) {
+      return false;
+    }
+    
+    // Check if technician has specialty matching the service type
+    return technician.specialties.some(specialty => 
+      specialty.toLowerCase() === serviceTypeName.toLowerCase()
+    );
+  });
+
+  // Clear and repopulate dropdown
+  technicianSelect.innerHTML = '<option value="">--Select Technician--</option>';
+  
+  if (qualifiedTechnicians.length > 0) {
+    qualifiedTechnicians.forEach(technician => {
+      const option = document.createElement('option');
+      option.value = technician.employee_id;
+      const fullName = `${technician.first_name} ${technician.last_name}`;
+      const specialties = technician.specialties ? ` (${technician.specialties.join(', ')})` : '';
+      option.textContent = fullName + specialties;
+      technicianSelect.appendChild(option);
+    });
+  } else {
+    // If no qualified technicians, show a message
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = `No technicians qualified for ${serviceTypeName}`;
+    option.disabled = true;
+    technicianSelect.appendChild(option);
+  }
+}
+
+// Setup event listeners for service type and job type
+function setupServiceTypeEventListeners() {
+  // Service type change handler
+  document.addEventListener('change', function(e) {
+    if (e.target && e.target.id === 'serviceType') {
+      const serviceTypeName = e.target.value;
+      const jobSelect = document.getElementById('jobType');
+      const serviceIdInput = document.getElementById('serviceId');
+
+      // Reset job dropdown and hide cost estimate
+      jobSelect.innerHTML = '<option value="">--Select Job Type--</option>';
+      jobSelect.disabled = true;
+      serviceIdInput.value = '';
+      hideCostEstimateInModal();
+
+      if (!serviceTypeName) {
+        // Reset technician dropdown to show all technicians when no service type is selected
+        populateTechnicianDropdown();
+        return;
+      }
+
+      // Get services from cached data
+      const services = servicesByType[serviceTypeName] || [];
+
+      if (services.length > 0) {
+        services.forEach(service => {
+          const option = document.createElement('option');
+          option.value = service.service_id;
+          option.textContent = service.job_name;
+          jobSelect.appendChild(option);
+        });
+        jobSelect.disabled = false;
+      } else {
+        jobSelect.innerHTML = '<option value="">No jobs available for this service type</option>';
+      }
+
+      // Filter technicians based on selected service type
+      populateQualifiedTechniciansDropdown(serviceTypeName);
+    }
+  });
+
+  // Job type change handler
+  document.addEventListener('change', function(e) {
+    if (e.target && e.target.id === 'jobType') {
+      const serviceIdInput = document.getElementById('serviceId');
+      const serviceId = e.target.value;
+      serviceIdInput.value = serviceId;
+
+      // Fetch and display cost estimate
+      if (serviceId) {
+        fetchAndDisplayCostInModal(serviceId);
+      } else {
+        hideCostEstimateInModal();
+      }
+    }
+  });
+}
+
+// Fetch and display cost estimate in modal
+async function fetchAndDisplayCostInModal(serviceId) {
+  try {
+    const costEstimate = document.getElementById('costEstimate');
+    const costBreakdown = document.getElementById('costBreakdown');
+    const totalCost = document.getElementById('totalCost');
+
+    // Show cost estimate section
+    costEstimate.style.display = 'block';
+    costBreakdown.innerHTML = '<div style="color: #6c757d;">Calculating cost...</div>';
+    totalCost.innerHTML = '';
+
+    // Fetch cost data from API
+    const response = await fetch(`/api/services/${serviceId}/cost`);
+    const result = await response.json();
+
+    if (result.success && result.data) {
+      const data = result.data;
+      
+      // Update breakdown display
+      let breakdownHTML = '';
+      if (data.hourly_rate) {
+        breakdownHTML += `<div>Hourly Rate: $${data.hourly_rate}</div>`;
+      }
+      if (data.estimated_hours) {
+        breakdownHTML += `<div>Estimated Hours: ${data.estimated_hours}</div>`;
+      }
+      if (data.material_cost) {
+        breakdownHTML += `<div>Material Cost: $${data.material_cost}</div>`;
+      }
+      
+      costBreakdown.innerHTML = breakdownHTML;
+      
+      // Update total cost
+      const total = data.total_cost || 0;
+      totalCost.innerHTML = `Total: $${total}`;
+    } else {
+      throw new Error('Failed to fetch cost data');
+    }
+  } catch (error) {
+    console.error('Error fetching cost estimate:', error);
+    const costBreakdown = document.getElementById('costBreakdown');
+    costBreakdown.innerHTML = '<div style="color: #dc3545;">Unable to load cost estimate</div>';
+  }
+}
+
+// Hide cost estimate in modal
+function hideCostEstimateInModal() {
+  const costEstimate = document.getElementById('costEstimate');
+  
+  if (costEstimate) {
+    costEstimate.style.display = 'none';
+  }
 }
