@@ -70,11 +70,13 @@ const sampleWorkOrders = [
     }
 ];
 
-// Lookup work orders by phone or email
+// Lookup work orders by phone or email and service type
 function lookupWorkOrders() {
-    const searchInput = document.getElementById('searchInput').value.trim();
+    let searchInput = document.getElementById('searchInput').value.trim();
+    const serviceType = document.getElementById('serviceTypeSelect').value;
     const resultsContainer = document.getElementById('resultsContainer');
 
+    // Validate input
     if (!searchInput) {
         resultsContainer.innerHTML = `
             <div class="error-message">
@@ -84,98 +86,106 @@ function lookupWorkOrders() {
         return;
     }
 
-    // Search for work orders matching the input
-    const foundOrders = sampleWorkOrders.filter(order =>
-        order.customerPhone.includes(searchInput) ||
-        order.customerEmail.toLowerCase().includes(searchInput.toLowerCase())
-    );
+    // Check if input contains @ (indicating it's an email)
+    if (searchInput.includes('@')) {
+        // Email validation
+        searchInput = searchInput.toLowerCase();
+        const emailRegex = /^[a-z0-9][a-z0-9._-]*@[a-z0-9][a-z0-9.-]+\.[a-z]{2,}$/;
+        
+        // Check for invalid patterns
+        if (searchInput.includes(' ')) {
+            resultsContainer.innerHTML = `
+                <div class="error-message">
+                    <p>⚠️ Email address cannot contain spaces</p>
+                </div>
+            `;
+            return;
+        }
+        
+        if (searchInput.split('@').length > 2) {
+            resultsContainer.innerHTML = `
+                <div class="error-message">
+                    <p>⚠️ Email address cannot contain multiple @ symbols</p>
+                </div>
+            `;
+            return;
+        }
+        
+        if (searchInput.startsWith('@') || searchInput.endsWith('@')) {
+            resultsContainer.innerHTML = `
+                <div class="error-message">
+                    <p>⚠️ Invalid email format. Email must have text before and after @</p>
+                </div>
+            `;
+            return;
+        }
+        
+        if (!emailRegex.test(searchInput)) {
+            resultsContainer.innerHTML = `
+                <div class="error-message">
+                    <p>⚠️ Please enter a valid email address (e.g., example@domain.com)</p>
+                </div>
+            `;
+            return;
+        }
+    } else {
+        // Phone number validation
+        // Remove all non-digit characters for validation
+        const digitsOnly = searchInput.replace(/\D/g, '');
+        
+        if (digitsOnly.length !== 10) {
+            resultsContainer.innerHTML = `
+                <div class="error-message">
+                    <p>⚠️ Phone number must contain exactly 10 digits</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Format phone number for searching: (XXX) XXX-XXXX
+        searchInput = `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6)}`;
+    }
 
-    if (foundOrders.length === 0) {
+    if (!serviceType) {
         resultsContainer.innerHTML = `
-            <div class="not-found-message">
-                <h3>No Work Orders Found</h3>
-                <p>We couldn't find any work orders associated with "${searchInput}"</p>
-                <p>Please check your information and try again, or contact us at (555) 123-4567</p>
+            <div class="error-message">
+                <p>⚠️ Please select a service type</p>
             </div>
         `;
         return;
     }
 
-    // Display work orders as a list
-    displayWorkOrders(foundOrders);
-}
+    // Search for work orders matching the input and service type
+    const foundOrders = sampleWorkOrders.filter(order =>
+        (order.customerPhone.includes(searchInput) ||
+         order.customerEmail.toLowerCase().includes(searchInput)) &&
+        order.serviceType === serviceType
+    );
 
-// Display work orders in list format
-function displayWorkOrders(orders) {
-    const resultsContainer = document.getElementById('resultsContainer');
-
-    let html = `
-        <div class="results-header">
-            <h2>Your Work Orders</h2>
-            <p class="results-count">${orders.length} work ${orders.length === 1 ? 'order' : 'orders'} found</p>
-        </div>
-        <div class="order-list">
-    `;
-
-    orders.forEach((order, index) => {
-        const dateRequested = new Date(order.dateRequested).toLocaleDateString();
-        const dateScheduled = order.dateScheduled ? new Date(order.dateScheduled).toLocaleDateString() : 'Not scheduled';
-        const dateCompleted = order.dateCompleted ? new Date(order.dateCompleted).toLocaleDateString() : 'N/A';
-
-        const statusClass = order.status.toLowerCase().replace(' ', '-');
-
-        html += `
-            <div class="order-card">
-                <div class="order-header">
-                    <div class="order-header-left">
-                        <h3>${order.serviceType}</h3>
-                        <p class="order-id">Work Order #${order.id}</p>
-                    </div>
-                    <div class="order-header-right">
-                        <span class="status-badge ${statusClass}">${order.status}</span>
-                    </div>
-                </div>
-
-                <div class="order-body">
-                    <div class="order-description">
-                        <p><strong>Description:</strong> ${order.description}</p>
-                    </div>
-
-                    <div class="order-details-grid">
-                        <div class="detail-item">
-                            <span class="detail-label">Customer</span>
-                            <span class="detail-value">${order.customerName}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Technician</span>
-                            <span class="detail-value">${order.technician}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Date Scheduled</span>
-                            <span class="detail-value">${dateScheduled}</span>
-                        </div>
-                        ${order.dateCompleted ? `
-                            <div class="detail-item">
-                                <span class="detail-label">Date Completed</span>
-                                <span class="detail-value">${dateCompleted}</span>
-                            </div>
-                        ` : ''}
-                        <div class="detail-item">
-                            <span class="detail-label">Estimated Cost</span>
-                            <span class="detail-value">${order.estimatedCost}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Actual Cost</span>
-                            <span class="detail-value">${order.actualCost || 'TBD'}</span>
-                        </div>
-                    </div>
-                </div>
+    if (foundOrders.length === 0) {
+        // Show "No Work Orders Found" message
+        resultsContainer.innerHTML = `
+            <div class="not-found-message">
+                <h3>No Work Orders Found</h3>
+                <p>We couldn't find any work orders associated with "${searchInput}" for ${serviceType} services.</p>
+                <p>Please check your information and try again, or contact us at (555) 123-4567</p>
             </div>
         `;
-    });
-
-    html += '</div>';
-    resultsContainer.innerHTML = html;
+    } else {
+        // Show email confirmation message instead of listing work orders
+        resultsContainer.innerHTML = `
+            <div class="success-message">
+                <h3>✓ Work Order Information Found</h3>
+                <p>We found ${foundOrders.length} work ${foundOrders.length === 1 ? 'order' : 'orders'} associated with your account.</p>
+                <p><strong>Your work order information will be sent to your email shortly.</strong></p>
+                <p>Please check your inbox for detailed work order information including service status, scheduled dates, and cost estimates.</p>
+                <p>If you don't receive the email within a few minutes, please contact us at (555) 123-4567</p>
+            </div>
+        `;
+        
+        // In production, this would trigger an email via backend API
+        console.log(`Sending work order details to customer for ${foundOrders.length} work orders`);
+    }
 }
 
 // Allow Enter key to trigger search
@@ -185,6 +195,40 @@ document.addEventListener('DOMContentLoaded', function () {
         searchInput.addEventListener('keypress', function (event) {
             if (event.key === 'Enter') {
                 lookupWorkOrders();
+            }
+        });
+        
+        // Auto-format phone number as user types (only if no letters or @ symbol)
+        searchInput.addEventListener('input', function(event) {
+            let value = event.target.value;
+            
+            // Check if value contains any letters or @ symbol (indicating email)
+            const containsLettersOrAt = /[a-zA-Z@]/.test(value);
+            
+            // Only format as phone number if it doesn't contain letters or @
+            if (!containsLettersOrAt) {
+                // Remove all non-digit characters
+                const digitsOnly = value.replace(/\D/g, '');
+                
+                // Limit to 10 digits
+                const limitedDigits = digitsOnly.substring(0, 10);
+                
+                // Format based on length
+                let formattedValue = '';
+                if (limitedDigits.length === 0) {
+                    formattedValue = '';
+                } else if (limitedDigits.length <= 3) {
+                    formattedValue = limitedDigits;
+                } else if (limitedDigits.length <= 6) {
+                    formattedValue = `(${limitedDigits.slice(0, 3)}) ${limitedDigits.slice(3)}`;
+                } else {
+                    formattedValue = `(${limitedDigits.slice(0, 3)}) ${limitedDigits.slice(3, 6)}-${limitedDigits.slice(6)}`;
+                }
+                
+                // Only update if the formatted value is different
+                if (formattedValue !== value) {
+                    event.target.value = formattedValue;
+                }
             }
         });
     }

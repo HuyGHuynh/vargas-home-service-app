@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Service Review - Vargas Home Service</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/review.css') }}">
+</head>
+
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="logo">Vargas Home Service</div>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/appointment">Schedule Service</a></li>
+      <li><a href="/warranty">Warranty</a></li>
+      <li><a href="/workorder">Track Order</a></li>
+      <li><a href="/review" class="active">Review</a></li>
+    </ul>
+  </nav>
+
+  <!-- Review Form Section -->
+  <div class="review-container">
+    <div class="review-header">
+      <h1>Handyman Service Customer Review Form</h1>
+      <p>We value your feedback! Please take a moment to rate your experience with our service.</p>
+    </div>
+
+    <form id="reviewForm" class="review-form">
+      <!-- Work Order ID -->
+      <div class="form-group">
+        <label for="workOrderId">Work Order ID *</label>
+        <input type="text" id="workOrderId" required placeholder="Enter your work order ID (e.g., WO-2024-001)">
+      </div>
+
+      <!-- Customer Information -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="customerName">Your Name *</label>
+          <input type="text" id="customerName" required placeholder="Enter your full name">
+        </div>
+        <div class="form-group">
+          <label for="customerEmail">Email Address *</label>
+          <input type="email" id="customerEmail" required placeholder="your.email@example.com">
+        </div>
+      </div>
+
+      <!-- Question 1: Service Quality -->
+      <div class="question-group">
+        <label class="question-label">
+          <span class="question-number">1.</span> Service Quality
+        </label>
+        <p class="question-text">How satisfied are you with the quality of the work completed?</p>
+        <div class="rating-options">
+          <label class="rating-option">
+            <input type="radio" name="serviceQuality" value="1" required>
+            <span class="rating-label">
+              <span class="rating-number">1</span>
+              <span class="rating-text">Poor</span>
+            </span>
+          </label>
+          <label class="rating-option">
+            <input type="radio" name="serviceQuality" value="2">
+            <span class="rating-label">
+              <span class="rating-number">2</span>
+              <span class="rating-text">Fair</span>
+            </span>
+          </label>
+          <label class="rating-option">
+            <input type="radio" name="serviceQuality" value="3">
+            <span class="rating-label">
+              <span class="rating-number">3</span>
+              <span class="rating-text">Good</span>
+            </span>
+          </label>
+          <label class="rating-option">
+            <input type="radio" name="serviceQuality" value="4">
+            <span class="rating-label">
+              <span class="rating-number">4</span>
+              <span class="rating-text">Very Good</span>
+            </span>
+          </label>
+          <label class="rating-option">
+            <input type="radio" name="serviceQuality" value="5">
+            <span class="rating-label">
+              <span class="rating-number">5</span>
+              <span class="rating-text">Excellent</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Question 2: Professionalism -->
+      <div class="question-group">
+        <label class="question-label">
+          <span class="question-number">2.</span> Professionalism
+        </label>
+        <p class="question-text">How would you rate the professionalism and attitude of the handyman?</p>
+        <div class="rating-options">
+          <label class="rating-option">
+            <input type="radio" name="professionalism" value="1" required>
+            <span class="rating-label">
+              <span class="rating-number">1</span>
+              <span class="rating-text">Poor</span>
+            </span>
+          </label>
+          <label class="rating-option">
+            <input type="radio" name="professionalism" value="2">
+            <span class="rating-label">
+              <span class="rating-number">2</span>
+              <span class="rating-text">Fair</span>
+            </span>
+          </label>
+          <label class="rating-option">
+            <input type="radio" name="professionalism" value="3">
+            <span class="rating-label">
+              <span class="rating-number">3</span>
+              <span class="rating-text">Good</span>
+            </span>
+          </label>
+          <label class="rating-option">
+            <input type="radio" name="professionalism" value="4">
+            <span class="rating-label">
+              <span class="rating-number">4</span>
+              <span class="rating-text">Very Good</span>
+            </span>
+          </label>
+          <label class="rating-option">
+            <input type="radio" name="professionalism" value="5">
+            <span class="rating-label">
+              <span class="rating-number">5</span>
+              <span class="rating-text">Excellent</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Question 3: Timeliness -->
+      <div class="question-group">
+        <label class="question-label">
+          <span class="question-number">3.</span> Timeliness
+        </label>
+        <p class="question-text">How satisfied are you with the timeliness of the service (arrival and completion)?</p>
+        <div class="rating-options">
+          <label class="rating-option">
+            <input type="radio" name="timeliness" value="1" required>
+            <span class="rating-label">
+              <span class="rating-number">1</span>
+              <span class="rating-text">Very Dissatisfied</span>
+            </span>
+          </label>
+          <label class="rating-option">
+            <input type="radio" name="timeliness" value="2">
+            <span class="rating-label">
+              <span class="rating-number">2</span>
+              <span class="rating-text">Dissatisfied</span>
+            </span>
+          </label>
+          <label class="rating-option">
+            <input type="radio" name="timeliness" value="3">
+            <span class="rating-label">
+              <span class="rating-number">3</span>
+              <span class="rating-text">Neutral</span>
+            </span>
+          </label>
+          <label class="rating-option">
+            <input type="radio" name="timeliness" value="4">
+            <span class="rating-label">
+              <span class="rating-number">4</span>
+              <span class="rating-text">Satisfied</span>
+            </span>
+          </label>
+          <label class="rating-option">
+            <input type="radio" name="timeliness" value="5">
+            <span class="rating-label">
+              <span class="rating-number">5</span>
+              <span class="rating-text">Very Satisfied</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Question 4: Communication -->
+      <div class="question-group">
+        <label class="question-label">
+          <span class="question-number">4.</span> Communication
+        </label>
+        <p class="question-text">How well did we communicate before and during the service (e.g., scheduling, updates)?</p>
+        <div class="rating-options">
+          <label class="rating-option">
+            <input type="radio" name="communication" value="1" required>
+            <span class="rating-label">
+              <span class="rating-number">1</span>
+              <span class="rating-text">Poor</span>
+            </span>
+          </label>
+          <label class="rating-option">
+            <input type="radio" name="communication" value="2">
+            <span class="rating-label">
+              <span class="rating-number">2</span>
+              <span class="rating-text">Fair</span>
+            </span>
+          </label>
+          <label class="rating-option">
+            <input type="radio" name="communication" value="3">
+            <span class="rating-label">
+              <span class="rating-number">3</span>
+              <span class="rating-text">Good</span>
+            </span>
+          </label>
+          <label class="rating-option">
+            <input type="radio" name="communication" value="4">
+            <span class="rating-label">
+              <span class="rating-number">4</span>
+              <span class="rating-text">Very Good</span>
+            </span>
+          </label>
+          <label class="rating-option">
+            <input type="radio" name="communication" value="5">
+            <span class="rating-label">
+              <span class="rating-number">5</span>
+              <span class="rating-text">Excellent</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Question 5: Overall Experience -->
+      <div class="question-group">
+        <label class="question-label">
+          <span class="question-number">5.</span> Overall Experience
+        </label>
+        <p class="question-text">How likely are you to recommend our handyman services to others?</p>
+        <div class="rating-options">
+          <label class="rating-option">
+            <input type="radio" name="recommendation" value="1" required>
+            <span class="rating-label">
+              <span class="rating-number">1</span>
+              <span class="rating-text">Very Unlikely</span>
+            </span>
+          </label>
+          <label class="rating-option">
+            <input type="radio" name="recommendation" value="2">
+            <span class="rating-label">
+              <span class="rating-number">2</span>
+              <span class="rating-text">Unlikely</span>
+            </span>
+          </label>
+          <label class="rating-option">
+            <input type="radio" name="recommendation" value="3">
+            <span class="rating-label">
+              <span class="rating-number">3</span>
+              <span class="rating-text">Neutral</span>
+            </span>
+          </label>
+          <label class="rating-option">
+            <input type="radio" name="recommendation" value="4">
+            <span class="rating-label">
+              <span class="rating-number">4</span>
+              <span class="rating-text">Likely</span>
+            </span>
+          </label>
+          <label class="rating-option">
+            <input type="radio" name="recommendation" value="5">
+            <span class="rating-label">
+              <span class="rating-number">5</span>
+              <span class="rating-text">Very Likely</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Additional Comments -->
+      <div class="form-group">
+        <label for="comments">Additional Comments (Optional)</label>
+        <textarea id="comments" rows="5" placeholder="Please share any additional feedback or suggestions..."></textarea>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="form-actions">
+        <button type="submit" class="submit-btn">Submit Review</button>
+      </div>
+    </form>
+
+    <!-- Success Message -->
+    <div id="successMessage" class="success-message" style="display: none;">
+      <div class="success-icon">✓</div>
+      <h2>Thank You for Your Feedback!</h2>
+      <p>Your review has been submitted successfully. We appreciate your time and will use your feedback to improve our services.</p>
+      <button onclick="resetForm()" class="back-btn">Submit Another Review</button>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/review.js') }}"></script>
+</body>
+
+</html>

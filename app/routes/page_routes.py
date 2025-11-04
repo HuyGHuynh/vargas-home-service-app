@@ -61,6 +61,12 @@ def admin_warranty():
     return render_template("admin/adminWarranty.html")
 
 
+@page_bp.get("/admin/workorder")
+def admin_workorder():
+    """Admin work order management page."""
+    return render_template("admin/adminWorkOrder.html")
+
+
 # ==================== Employee Pages ====================
 
 def check_employee_access(employee_id):
@@ -231,3 +237,9 @@ def warranty():
 def workorder():
     """Work order page."""
     return render_template("customer/workOrder.html")
+
+
+@page_bp.get("/review")
+def review():
+    """Customer review page."""
+    return render_template("customer/review.html")

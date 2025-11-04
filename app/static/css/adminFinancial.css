@@ -134,12 +134,36 @@
     border-left: 4px solid #4caf50;
 }
 
+.summary-card.income {
+    border-left: 4px solid #4caf50;
+}
+
+.summary-card.expense {
+    border-left: 4px solid #f44336;
+}
+
 .summary-card.labor {
     border-left: 4px solid #ff9800;
 }
 
 .summary-card.profit {
     border-left: 4px solid #2196f3;
+}
+
+.summary-card.profit.positive {
+    border-left: 4px solid #4caf50;
+}
+
+.summary-card.profit.negative {
+    border-left: 4px solid #f44336;
+}
+
+.summary-card.receivables {
+    border-left: 4px solid #9c27b0;
+}
+
+.summary-card.payables {
+    border-left: 4px solid #ff5722;
 }
 
 .summary-card.orders {
@@ -433,4 +457,84 @@ tfoot td {
     .card-value {
         font-size: 1.5rem;
     }
+}
+
+/* Direction Badge */
+.direction-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.direction-badge.income {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.direction-badge.expense {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+/* Amount Styling */
+.income-amount {
+    color: #2e7d32;
+    font-weight: 600;
+}
+
+.expense-amount {
+    color: #c62828;
+    font-weight: 600;
+}
+
+/* Status Badge */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-badge.status-completed {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.status-badge.status-pending {
+    background-color: #fff3e0;
+    color: #ef6c00;
+}
+
+.status-badge.status-paid {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+/* Financial Table */
+.financial-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.financial-table th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 600;
+    text-align: left;
+    padding: 14px 12px;
+    border-bottom: 2px solid #5a67d8;
+    white-space: nowrap;
+}
+
+.financial-table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.financial-table tbody tr:hover {
+    background-color: #f9f9f9;
 }

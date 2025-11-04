@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Work Order Management</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ownerView.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/adminWorkOrder.css') }}">
+</head>
+
+<body>
+  <!-- Navigation Bar -->
+  <header class="admin-header">
+    <div class="admin-nav-container">
+      <h1 class="admin-logo">Admin Dashboard</h1>
+      <nav class="admin-nav-links">
+        <a href="/owner">Dashboard</a>
+        <a href="/admin/service">Service</a>
+        <a href="/admin/warranty">Warranty</a>
+        <a href="/admin/workorder" class="active">Work Order</a>
+        <a href="/admin/financial">Financial</a>
+        <a href="/admin/employee">Manage Employee</a>
+        <a href="/admin/timesheet">Timesheet</a>
+        <a href="/" class="logout-btn">Log Out</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Work Order Management Section -->
+  <div class="workorder-container">
+    <div class="workorder-header">
+      <h1>Work Order Management</h1>
+      <div class="header-actions">
+        <button class="add-btn" onclick="openCreateModal()">+ Create Work Order</button>
+      </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+      <button class="tab-btn active" onclick="filterWorkOrders('all')">All Orders</button>
+      <button class="tab-btn" onclick="filterWorkOrders('scheduled')">Scheduled</button>
+      <button class="tab-btn" onclick="filterWorkOrders('in-progress')">In Progress</button>
+      <button class="tab-btn" onclick="filterWorkOrders('completed')">Completed</button>
+      <button class="tab-btn" onclick="filterWorkOrders('cancelled')">Cancelled</button>
+      <button class="tab-btn" onclick="filterWorkOrders('reviews')">Reviews</button>
+    </div>
+
+    <!-- Search and Filter Bar -->
+    <div class="search-filter-bar">
+      <input type="text" id="searchInput" placeholder="Search by customer name, phone, or order ID..." class="search-input">
+      <select id="serviceTypeFilter" class="filter-select">
+        <option value="">All Service Types</option>
+        <option value="Kitchen Remodel">Kitchen Remodel</option>
+        <option value="Bathroom Renovation">Bathroom Renovation</option>
+        <option value="Roof Repair">Roof Repair</option>
+        <option value="HVAC Installation">HVAC Installation</option>
+        <option value="Plumbing Repair">Plumbing Repair</option>
+        <option value="Electrical">Electrical</option>
+        <option value="Outdoor Projects">Outdoor Projects</option>
+        <option value="Other">Other</option>
+      </select>
+      <button class="search-btn" onclick="searchWorkOrders()">Search</button>
+    </div>
+
+    <!-- Work Order Table -->
+    <div class="workorder-table-container">
+      <table class="workorder-table">
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Customer</th>
+            <th>Service Type</th>
+            <th>Status</th>
+            <th>Date Scheduled</th>
+            <th>Technician</th>
+            <th>Cost</th>
+            <th>Review</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="workOrderTableBody">
+          <!-- Work order rows will be populated here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- View/Edit Work Order Modal -->
+  <div id="workOrderModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeWorkOrderModal()">&times;</span>
+      <h2 id="modalTitle">Work Order Details</h2>
+
+      <div class="workorder-details" id="workOrderDetails">
+        <!-- Details will be populated here -->
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="cancel-btn" onclick="closeWorkOrderModal()">Close</button>
+        <button type="button" class="edit-btn" id="editBtn" onclick="enableEdit()">Edit</button>
+        <button type="button" class="delete-btn" id="deleteBtn" onclick="deleteWorkOrder()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Review Details Modal -->
+  <div id="reviewDetailsModal" class="modal">
+    <div class="modal-content review-modal">
+      <span class="close-modal" onclick="closeReviewModal()">&times;</span>
+      <h2>Customer Review</h2>
+      
+      <div class="review-details" id="reviewDetailsContent">
+        <!-- Review details will be populated here -->
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="cancel-btn" onclick="closeReviewModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Work Order Modal -->
+  <div id="createWorkOrderModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeCreateModal()">&times;</span>
+      <h2>Create New Work Order</h2>
+
+      <form id="createWorkOrderForm" class="workorder-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="customerName">Customer Name *</label>
+            <input type="text" id="customerName" required>
+          </div>
+          <div class="form-group">
+            <label for="customerPhone">Phone Number *</label>
+            <input type="tel" id="customerPhone" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="customerEmail">Email *</label>
+            <input type="email" id="customerEmail" required>
+          </div>
+          <div class="form-group">
+            <label for="serviceType">Service Type *</label>
+            <select id="serviceType" required>
+              <option value="">Select Service Type</option>
+              <option value="Kitchen Remodel">Kitchen Remodel</option>
+              <option value="Bathroom Renovation">Bathroom Renovation</option>
+              <option value="Roof Repair">Roof Repair</option>
+              <option value="HVAC Installation">HVAC Installation</option>
+              <option value="Plumbing Repair">Plumbing Repair</option>
+              <option value="Electrical">Electrical</option>
+              <option value="Outdoor Projects">Outdoor Projects</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description *</label>
+          <textarea id="description" rows="4" required></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="dateScheduled">Scheduled Date *</label>
+            <input type="date" id="dateScheduled" required>
+          </div>
+          <div class="form-group">
+            <label for="priority">Priority *</label>
+            <select id="priority" required>
+              <option value="Low">Low</option>
+              <option value="Normal" selected>Normal</option>
+              <option value="High">High</option>
+              <option value="Urgent">Urgent</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="technician">Assign Technician</label>
+            <select id="technician">
+              <option value="">Select Technician</option>
+              <option value="Mike Johnson">Mike Johnson</option>
+              <option value="Dave Martinez">Dave Martinez</option>
+              <option value="Tom Wilson">Tom Wilson</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="estimatedCost">Estimated Cost</label>
+            <input type="text" id="estimatedCost" placeholder="$0.00">
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="cancel-btn" onclick="closeCreateModal()">Cancel</button>
+          <button type="submit" class="save-btn">Create Work Order</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/adminWorkOrder.js') }}"></script>
+</body>
+
+</html>

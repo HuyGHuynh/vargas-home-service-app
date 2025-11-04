@@ -18,6 +18,7 @@
         <a href="/owner">Dashboard</a>
         <a href="/admin/service">Service</a>
         <a href="/admin/warranty">Warranty</a>
+        <a href="#" onclick="return false;">Work Order</a>
         <a href="/admin/financial" class="active">Financial</a>
         <a href="/admin/employee">Manage Employee</a>
         <a href="/admin/timesheet">Timesheet</a>
@@ -75,21 +76,19 @@
 
     <!-- Summary Cards -->
     <div class="summary-cards" id="summaryCards">
-      <div class="summary-card revenue">
+      <div class="summary-card income">
         <div class="card-icon">💰</div>
         <div class="card-content">
-          <h3>Total Revenue</h3>
-          <div class="card-value" id="totalRevenue">$0.00</div>
-          <div class="card-change positive" id="revenueChange">+0%</div>
+          <h3>Total Income</h3>
+          <div class="card-value" id="totalIncome">$0.00</div>
         </div>
       </div>
 
-      <div class="summary-card labor">
-        <div class="card-icon">👷</div>
+      <div class="summary-card expense">
+        <div class="card-icon">�</div>
         <div class="card-content">
-          <h3>Labor Costs</h3>
-          <div class="card-value" id="totalLabor">$0.00</div>
-          <div class="card-change" id="laborChange">+0%</div>
+          <h3>Total Expense</h3>
+          <div class="card-value" id="totalExpense">$0.00</div>
         </div>
       </div>
 
@@ -98,28 +97,44 @@
         <div class="card-content">
           <h3>Net Profit</h3>
           <div class="card-value" id="netProfit">$0.00</div>
-          <div class="card-change positive" id="profitChange">+0%</div>
         </div>
       </div>
 
-      <div class="summary-card orders">
-        <div class="card-icon">📋</div>
+      <div class="summary-card receivables">
+        <div class="card-icon">📥</div>
         <div class="card-content">
-          <h3>Completed Orders</h3>
-          <div class="card-value" id="completedOrders">0</div>
-          <div class="card-change positive" id="ordersChange">+0%</div>
+          <h3>Receivables</h3>
+          <div class="card-value" id="receivables">$0.00</div>
+        </div>
+      </div>
+
+      <div class="summary-card payables">
+        <div class="card-icon">�</div>
+        <div class="card-content">
+          <h3>Payables</h3>
+          <div class="card-value" id="payables">$0.00</div>
         </div>
       </div>
     </div>
 
     <!-- Detailed Report Table -->
     <div class="report-section">
-      <h2 id="reportTitle">Summary Report</h2>
+      <h2 id="reportTitle">Transaction History</h2>
 
       <div class="table-container">
-        <table id="reportTable">
+        <table id="reportTable" class="financial-table">
           <thead id="tableHeader">
-            <!-- Header will be dynamically generated -->
+            <tr>
+              <th>Txn ID</th>
+              <th>Date</th>
+              <th>Category</th>
+              <th>Direction</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Description</th>
+              <th>Employee</th>
+              <th>Request Order</th>
+            </tr>
           </thead>
           <tbody id="tableBody">
             <!-- Data will be dynamically generated -->
