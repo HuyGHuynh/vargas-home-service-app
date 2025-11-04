@@ -705,3 +705,74 @@ def get_employees_by_service_type(service_type_name):
         return {"success": True, "data": employees}, 200
     except Exception as e:
         return {"success": False, "error": str(e)}, 500
+
+
+# Admin Warranty Management Routes
+
+@api_bp.get("/admin/warranties")
+def get_all_warranties():
+    """Get all warranties for admin management."""
+    try:
+        from repositories.warranty_repository import WarrantyRepository
+        warranties = WarrantyRepository.get_all_warranties()
+        return {"success": True, "data": warranties}, 200
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.put("/admin/warranties/<int:warranty_id>/status")
+def update_warranty_status(warranty_id):
+    """Update warranty status."""
+    try:
+        from repositories.warranty_repository import WarrantyRepository
+        
+        data = request.get_json()
+        new_status = data.get('status')
+        
+        if new_status not in ['Active', 'Pending', 'Inactive']:
+            return {"success": False, "error": "Invalid status. Must be Active, Pending, or Inactive"}, 400
+        
+        success = WarrantyRepository.update_warranty_status(warranty_id, new_status)
+        
+        if success:
+            return {"success": True, "message": f"Warranty {warranty_id} status updated to {new_status}"}, 200
+        else:
+            return {"success": False, "error": "Warranty not found or update failed"}, 404
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.delete("/admin/warranties/<int:warranty_id>")
+def delete_warranty(warranty_id):
+    """Delete a warranty."""
+    try:
+        from repositories.warranty_repository import WarrantyRepository
+        
+        success = WarrantyRepository.delete_warranty(warranty_id)
+        
+        if success:
+            return {"success": True, "message": f"Warranty {warranty_id} deleted successfully"}, 200
+        else:
+            return {"success": False, "error": "Warranty not found or delete failed"}, 404
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.post("/admin/warranties/update-expired")
+def update_expired_warranties():
+    """Update warranties that have passed their end date to 'Inactive' status."""
+    try:
+        from repositories.warranty_repository import WarrantyRepository
+        
+        updated_count = WarrantyRepository.update_expired_warranties()
+        
+        return {
+            "success": True, 
+            "message": f"Updated {updated_count} expired warranties to Inactive status",
+            "updated_count": updated_count
+        }, 200
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500

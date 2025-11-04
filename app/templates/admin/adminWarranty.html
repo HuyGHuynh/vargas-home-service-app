@@ -35,7 +35,7 @@
         <button class="tab-btn active" onclick="filterWarranties('all')">All Warranties</button>
         <button class="tab-btn" onclick="filterWarranties('pending')">Pending Requests</button>
         <button class="tab-btn" onclick="filterWarranties('active')">Active</button>
-        <button class="tab-btn" onclick="filterWarranties('expired')">Expired</button>
+        <button class="tab-btn" onclick="filterWarranties('inactive')">Inactive</button>
       </div>
     </div>
 
@@ -57,8 +57,23 @@
 
       <div class="modal-actions">
         <button type="button" class="cancel-btn" onclick="closeWarrantyModal()">Close</button>
-        <button type="button" class="reject-btn" id="rejectBtn" onclick="rejectWarranty()">Reject</button>
-        <button type="button" class="accept-btn" id="acceptBtn" onclick="acceptWarranty()">Accept Request</button>
+        <button type="button" class="reject-btn" id="rejectBtn" onclick="showRejectConfirmation()">Reject</button>
+        <button type="button" class="accept-btn" id="acceptBtn" onclick="showAcceptConfirmation()">Accept
+          Request</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmationModal" class="modal">
+    <div class="modal-content confirmation-modal">
+      <h2 id="confirmationTitle">Confirm Action</h2>
+      <div id="confirmationMessage" class="confirmation-message">
+        <!-- Confirmation message will be populated here -->
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="cancel-btn" onclick="closeConfirmationModal()">Cancel</button>
+        <button type="button" id="confirmActionBtn" class="confirm-btn">Confirm</button>
       </div>
     </div>
   </div>
