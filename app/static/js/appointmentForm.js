@@ -807,6 +807,10 @@ document.getElementById("appointmentForm").addEventListener("submit", function (
     return;
   }
 
+  // Check if image is uploaded
+  const photoInput = document.getElementById('photo');
+  const hasImage = photoInput.files && photoInput.files.length > 0;
+
   const appointmentData = {
     firstName: formData.get('firstName'),
     lastName: formData.get('lastName'),
@@ -835,8 +839,34 @@ document.getElementById("appointmentForm").addEventListener("submit", function (
     body: JSON.stringify(appointmentData)
   })
     .then(response => response.json())
-    .then(data => {
+    .then(async data => {
       if (data.ok) {
+        const requestId = data.result.request_id;
+
+        // Upload image if one was selected
+        if (hasImage) {
+          try {
+            const imageFormData = new FormData();
+            imageFormData.append('image', photoInput.files[0]);
+
+            const imageResponse = await fetch(`/api/images/upload/service-request/${requestId}`, {
+              method: 'POST',
+              body: imageFormData
+            });
+
+            const imageResult = await imageResponse.json();
+            if (!imageResult.success) {
+              console.warn('Image upload failed:', imageResult.message);
+              // Don't block the process if image upload fails
+            } else {
+              console.log('Image uploaded successfully:', imageResult.image_url);
+            }
+          } catch (error) {
+            console.warn('Image upload error:', error);
+            // Don't block the process if image upload fails
+          }
+        }
+
         // Prepare confirmation data with original form values and technician info
         const confirmationData = {
           firstName: formData.get('firstName'),
@@ -852,7 +882,7 @@ document.getElementById("appointmentForm").addEventListener("submit", function (
           scheduled_date: selectedDate,
           scheduled_time: selectedTime,
           description: formData.get('description'),
-          request_id: data.result.request_id,
+          request_id: requestId,
           // Include technician data if available
           technician: data.result.technician
         };
@@ -960,3 +990,100 @@ document.getElementById("appointmentForm").addEventListener("submit", function (
     return false;
   }
 }, true); // Use capture phase to run before the other submit handler
+
+// Image Upload Functionality
+document.addEventListener('DOMContentLoaded', function () {
+  const photoInput = document.getElementById('photo');
+  const photoUploadArea = document.getElementById('photoUploadArea');
+  const uploadPlaceholder = photoUploadArea.querySelector('.upload-placeholder');
+  const imagePreview = document.getElementById('imagePreview');
+  const previewImage = document.getElementById('previewImage');
+  const removeImageBtn = document.getElementById('removeImage');
+
+  // Click to select file
+  photoUploadArea.addEventListener('click', (e) => {
+    if (e.target !== removeImageBtn) {
+      photoInput.click();
+    }
+  });
+
+  // Drag and drop functionality
+  photoUploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    photoUploadArea.style.borderColor = '#3b82f6';
+    photoUploadArea.style.backgroundColor = '#eff6ff';
+  });
+
+  photoUploadArea.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    photoUploadArea.style.borderColor = '#d1d5db';
+    photoUploadArea.style.backgroundColor = '#f9fafb';
+  });
+
+  photoUploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    photoUploadArea.style.borderColor = '#d1d5db';
+    photoUploadArea.style.backgroundColor = '#f9fafb';
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      if (validateImageFile(file)) {
+        photoInput.files = files;
+        showImagePreview(file);
+      }
+    }
+  });
+
+  // File input change
+  photoInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file && validateImageFile(file)) {
+      showImagePreview(file);
+    } else if (file) {
+      // Invalid file, clear selection
+      photoInput.value = '';
+      hideImagePreview();
+    }
+  });
+
+  // Remove image
+  removeImageBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    photoInput.value = '';
+    hideImagePreview();
+  });
+
+  function validateImageFile(file) {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    if (!allowedTypes.includes(file.type)) {
+      alert('Please select a valid image file (JPG, PNG, GIF, or WebP)');
+      return false;
+    }
+
+    if (file.size > maxSize) {
+      alert('Image file size must be less than 5MB');
+      return false;
+    }
+
+    return true;
+  }
+
+  function showImagePreview(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      previewImage.src = e.target.result;
+      uploadPlaceholder.style.display = 'none';
+      imagePreview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function hideImagePreview() {
+    uploadPlaceholder.style.display = 'flex';
+    imagePreview.style.display = 'none';
+    previewImage.src = '';
+  }
+});

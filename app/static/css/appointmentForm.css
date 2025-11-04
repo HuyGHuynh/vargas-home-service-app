@@ -254,5 +254,104 @@
    cursor: pointer;
    font-size: 18px;
    font-weight: bold;
+<<<<<<< HEAD
    color: #000000;
  }
+=======
+   color: #007bff;
+ }
+
+ /* Photo Upload Styles */
+ .photo-upload-section {
+   margin: 15px 0;
+ }
+
+ .photo-upload-area {
+   border: 2px dashed #d1d5db;
+   border-radius: 8px;
+   padding: 20px;
+   text-align: center;
+   cursor: pointer;
+   transition: all 0.3s ease;
+   background-color: #f9fafb;
+ }
+
+ .photo-upload-area:hover {
+   border-color: #3b82f6;
+   background-color: #eff6ff;
+ }
+
+ .upload-placeholder {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   gap: 8px;
+ }
+
+ .upload-icon {
+   font-size: 3em;
+   color: #9ca3af;
+ }
+
+ .upload-text {
+   font-size: 1.1em;
+   font-weight: 600;
+   color: #374151;
+ }
+
+ .upload-subtext {
+   font-size: 0.9em;
+   color: #6b7280;
+ }
+
+ .image-preview {
+   position: relative;
+   display: inline-block;
+ }
+
+ .image-preview img {
+   max-width: 200px;
+   max-height: 200px;
+   border-radius: 8px;
+   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+ }
+
+ .remove-image {
+   position: absolute;
+   top: -8px;
+   right: -8px;
+   background: #ef4444;
+   color: white;
+   border: none;
+   border-radius: 50%;
+   width: 24px;
+   height: 24px;
+   cursor: pointer;
+   font-size: 16px;
+   line-height: 1;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   transition: background-color 0.2s ease;
+ }
+
+ .remove-image:hover {
+   background: #dc2626;
+ }
+
+ /* Mobile responsive */
+ @media (max-width: 768px) {
+   .photo-upload-area {
+     padding: 15px;
+   }
+
+   .upload-icon {
+     font-size: 2.5em;
+   }
+
+   .image-preview img {
+     max-width: 150px;
+     max-height: 150px;
+   }
+ }
+>>>>>>> 3219e5d (Handle image service with Google Cloud Storage)

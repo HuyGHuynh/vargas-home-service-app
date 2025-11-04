@@ -32,6 +32,28 @@ class Config:
     SENDER_EMAIL = os.getenv('SENDER_EMAIL', '')
     SENDER_NAME = os.getenv('SENDER_NAME', "Vargas' Home Services")
     
+    # Google Cloud Storage settings
+    GCS_BUCKET_NAME = os.getenv('GCS_BUCKET_NAME', 'vargas-home-service-images')
+    GCS_PROJECT_ID = os.getenv('GCS_PROJECT_ID')
+    GOOGLE_APPLICATION_CREDENTIALS = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+    
+    @staticmethod
+    def setup_gcs_credentials():
+        """Set up Google Cloud Storage credentials."""
+        credentials_path = Config.GOOGLE_APPLICATION_CREDENTIALS
+        if credentials_path and not os.path.isabs(credentials_path):
+            # Convert relative path to absolute path
+            project_root = os.path.dirname(os.path.dirname(__file__))
+            credentials_path = os.path.join(project_root, credentials_path)
+        
+        if credentials_path and os.path.exists(credentials_path):
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials_path
+            return True
+        return False
+    
+    # File upload settings
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
+    
     # Application settings
     JSON_SORT_KEYS = False  # Preserve key order in JSON responses
     

@@ -227,7 +227,7 @@ function showServiceRequestDetails(requestId) {
       ${serviceRequest.request_status !== 'Pending' || serviceRequest.final_price ? `
       <div class="detail-row">
         <div class="detail-label">Final Price:</div>
-        <div class="detail-value" id="finalPriceDisplay">
+        <div class="detail-value" id="finalPriceDisplay" data-field="final_price">
           ${serviceRequest.final_price ? `$${serviceRequest.final_price.toFixed(2)}` : '<span class="tbd-price">TBD</span>'}
         </div>
       </div>
@@ -238,15 +238,7 @@ function showServiceRequestDetails(requestId) {
       </div>
     </div>
     
-    ${serviceRequest.request_status === 'Pending' && !serviceRequest.final_price ? `
-    <div class="detail-section">
-      <h3>Set Final Price</h3>
-      <div class="price-input-row">
-        <label for="finalPriceInput">Final Price ($):</label>
-        <input type="number" id="finalPriceInput" step="0.01" min="0" placeholder="Enter final price" class="price-input">
-      </div>
-    </div>
-    ` : ''}
+
   `;
 
   document.getElementById('serviceRequestDetails').innerHTML = detailsHtml;
@@ -258,6 +250,29 @@ function showServiceRequestDetails(requestId) {
   modalActions.innerHTML = '';
 
   if (serviceRequest.request_status === 'Pending') {
+    // Add final price setting section for Pending requests
+    const finalPriceSection = document.createElement('div');
+    finalPriceSection.className = 'final-price-section';
+    finalPriceSection.innerHTML = `
+      <div class="price-input-group">
+        <label for="finalPriceInput">Set Final Price ($):</label>
+        <div class="price-input-container">
+          <input type="number" 
+                 id="finalPriceInput" 
+                 step="0.01" 
+                 min="0" 
+                 placeholder="Enter final price"
+                 value="${serviceRequest.final_price && serviceRequest.final_price !== 'TBD' ? serviceRequest.final_price : ''}"
+                 class="price-input">
+          <button type="button" 
+                  class="save-price-btn" 
+                  onclick="saveFinalPrice(${serviceRequest.request_id})">
+            Save Price
+          </button>
+        </div>
+      </div>
+    `;
+
     // Add Accept and Reject buttons for Pending requests (admin warranty style)
     const acceptBtn = document.createElement('button');
     acceptBtn.type = 'button';
@@ -271,6 +286,7 @@ function showServiceRequestDetails(requestId) {
     rejectBtn.textContent = 'Reject Request';
     rejectBtn.onclick = () => rejectRequest(serviceRequest.request_id);
 
+    modalActions.appendChild(finalPriceSection);
     modalActions.appendChild(rejectBtn);
     modalActions.appendChild(acceptBtn);
   } else if (serviceRequest.request_status === 'In Progress') {
@@ -390,6 +406,54 @@ async function rejectRequest(requestId) {
   } catch (error) {
     console.error('Error rejecting request:', error);
     showNotification('Network error rejecting request', 'error');
+  }
+}
+
+// Save final price for pending request without changing status
+async function saveFinalPrice(requestId) {
+  const finalPriceInput = document.getElementById('finalPriceInput');
+  const finalPrice = parseFloat(finalPriceInput.value);
+  
+  // Validate input
+  if (!finalPrice || finalPrice <= 0) {
+    showNotification('Please enter a valid price greater than 0', 'error');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/api/service-requests/${requestId}/set-final-price`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        final_price: finalPrice
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Update local data
+      const serviceRequest = serviceRequests.find(sr => sr.request_id === requestId);
+      if (serviceRequest) {
+        serviceRequest.final_price = finalPrice.toFixed(2);
+      }
+
+      // Update the final price display in the modal if it exists
+      const finalPriceElement = document.querySelector('.detail-value[data-field="final_price"]');
+      if (finalPriceElement) {
+        finalPriceElement.textContent = `$${finalPrice.toFixed(2)}`;
+        finalPriceElement.classList.remove('tbd-price');
+      }
+
+      showNotification('Final price saved successfully!', 'success');
+    } else {
+      showNotification(`Failed to save final price: ${result.error}`, 'error');
+    }
+  } catch (error) {
+    console.error('Error saving final price:', error);
+    showNotification('Network error saving final price', 'error');
   }
 }
 

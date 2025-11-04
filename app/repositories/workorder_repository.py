@@ -314,3 +314,51 @@ class WorkorderRepository(BaseRepository):
                 WHERE workorderid = %s;
             """, (workorder_id,))
             return cur.rowcount > 0
+    
+    @staticmethod
+    def update_service_request_image(request_id, image_url):
+        """
+        Update the image URL for a service request.
+        
+        Args:
+            request_id (int): Service request ID
+            image_url (str): URL of the uploaded image (can be None to remove)
+            
+        Returns:
+            bool: True if updated successfully
+        """
+        try:
+            with BaseRepository.get_cursor() as cur:
+                cur.execute("""
+                    UPDATE servicerequests 
+                    SET imageurl = %s 
+                    WHERE requestid = %s;
+                """, (image_url, request_id))
+                return cur.rowcount > 0
+        except Exception as e:
+            print(f"Error updating service request image: {e}")
+            return False
+    
+    @staticmethod
+    def get_service_request_image_url(request_id):
+        """
+        Get the image URL for a service request.
+        
+        Args:
+            request_id (int): Service request ID
+            
+        Returns:
+            str or None: Image URL or None if not found/no image
+        """
+        try:
+            with BaseRepository.get_cursor() as cur:
+                cur.execute("""
+                    SELECT imageurl 
+                    FROM servicerequests 
+                    WHERE requestid = %s;
+                """, (request_id,))
+                result = cur.fetchone()
+                return result[0] if result else None
+        except Exception as e:
+            print(f"Error getting service request image URL: {e}")
+            return None

@@ -29,6 +29,7 @@ class ServiceRequestRepository(BaseRepository):
                         sr.service_id,
                         sr.description as request_description,
                         sr.status as request_status,
+                        sr.imageurl,
                         c.firstname,
                         c.lastname,
                         c.phone as customer_phone,
@@ -74,35 +75,36 @@ class ServiceRequestRepository(BaseRepository):
                         'service_id': row[4],
                         'request_description': row[5],
                         'request_status': row[6],
+                        'image_url': row[7],
                         'customer': {
-                            'first_name': row[7],
-                            'last_name': row[8],
-                            'phone': row[9],
-                            'email': row[10]
+                            'first_name': row[8],
+                            'last_name': row[9],
+                            'phone': row[10],
+                            'email': row[11]
                         },
                         'address': {
-                            'street': row[11],
-                            'city': row[12],
-                            'state': row[13],
-                            'zip_code': row[14]
+                            'street': row[12],
+                            'city': row[13],
+                            'state': row[14],
+                            'zip_code': row[15]
                         },
                         'service': {
-                            'job_name': row[15],
-                            'job_description': row[16],
-                            'service_price': float(row[17]) if row[17] else 0.0,
-                            'duration_hours': float(row[18]) if row[18] else 0.0,
-                            'service_type': row[19]
+                            'job_name': row[16],
+                            'job_description': row[17],
+                            'service_price': float(row[18]) if row[18] else 0.0,
+                            'duration_hours': float(row[19]) if row[19] else 0.0,
+                            'service_type': row[20]
                         },
-                        'final_price': float(row[20]) if row[20] else None,
+                        'final_price': float(row[21]) if row[21] else None,
                         'assigned_employee': {
-                            'employee_id': row[21],
-                            'first_name': row[22],
-                            'last_name': row[23],
-                            'phone': row[24],
-                            'email': row[25],
-                            'status': row[26],
-                            'assignment_id': row[27]
-                        } if row[21] else None  # Only include if employee is assigned
+                            'employee_id': row[22],
+                            'first_name': row[23],
+                            'last_name': row[24],
+                            'phone': row[25],
+                            'email': row[26],
+                            'status': row[27],
+                            'assignment_id': row[28]
+                        } if row[22] else None  # Only include if employee is assigned
                     }
                     service_requests.append(service_request)
                 
@@ -134,6 +136,7 @@ class ServiceRequestRepository(BaseRepository):
                         sr.service_id,
                         sr.description as request_description,
                         sr.status as request_status,
+                        sr.imageurl,
                         c.firstname,
                         c.lastname,
                         c.phone as customer_phone,
@@ -178,35 +181,36 @@ class ServiceRequestRepository(BaseRepository):
                         'service_id': row[4],
                         'request_description': row[5],
                         'request_status': row[6],
+                        'image_url': row[7],
                         'customer': {
-                            'first_name': row[7],
-                            'last_name': row[8],
-                            'phone': row[9],
-                            'email': row[10]
+                            'first_name': row[8],
+                            'last_name': row[9],
+                            'phone': row[10],
+                            'email': row[11]
                         },
                         'address': {
-                            'street': row[11],
-                            'city': row[12],
-                            'state': row[13],
-                            'zip_code': row[14]
+                            'street': row[12],
+                            'city': row[13],
+                            'state': row[14],
+                            'zip_code': row[15]
                         },
                         'service': {
-                            'job_name': row[15],
-                            'job_description': row[16],
-                            'service_price': float(row[17]) if row[17] else 0.0,
-                            'duration_hours': float(row[18]) if row[18] else 0.0,
-                            'service_type': row[19]
+                            'job_name': row[16],
+                            'job_description': row[17],
+                            'service_price': float(row[18]) if row[18] else 0.0,
+                            'duration_hours': float(row[19]) if row[19] else 0.0,
+                            'service_type': row[20]
                         },
-                        'final_price': float(row[20]) if row[20] else None,
+                        'final_price': float(row[21]) if row[21] else None,
                         'assigned_employee': {
-                            'employee_id': row[21],
-                            'first_name': row[22],
-                            'last_name': row[23],
-                            'phone': row[24],
-                            'email': row[25],
-                            'status': row[26],
-                            'assignment_id': row[27]
-                        } if row[21] else None  # Only include if employee is assigned
+                            'employee_id': row[22],
+                            'first_name': row[23],
+                            'last_name': row[24],
+                            'phone': row[25],
+                            'email': row[26],
+                            'status': row[27],
+                            'assignment_id': row[28]
+                        } if row[22] else None  # Only include if employee is assigned
                     }
                 return None
                 

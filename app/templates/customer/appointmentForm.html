@@ -74,7 +74,21 @@
       <textarea id="description" name="description" placeholder="Describe the issue or job details..."></textarea>
 
       <label for="photo">Upload a Photo (optional):</label>
-      <input type="file" id="photo" name="photo" accept="image/*">
+      <div class="photo-upload-section">
+        <input type="file" id="photo" name="photo" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+          style="display: none;">
+        <div class="photo-upload-area" id="photoUploadArea">
+          <div class="upload-placeholder">
+            <span class="upload-icon">📷</span>
+            <span class="upload-text">Click to select an image</span>
+            <span class="upload-subtext">JPG, PNG, GIF up to 5MB</span>
+          </div>
+          <div class="image-preview" id="imagePreview" style="display: none;">
+            <img id="previewImage" src="" alt="Preview">
+            <button type="button" class="remove-image" id="removeImage">×</button>
+          </div>
+        </div>
+      </div>
 
       <h3 style="margin-top:30px;">Select Preferred Date & Time:</h3>
       <div id="filterIndicator"
