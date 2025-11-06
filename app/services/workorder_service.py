@@ -70,30 +70,7 @@ class WorkorderService:
                     'error': 'Customer email not found for sending work order details'
                 }, 400
             
-            # Console log the work order details (as requested)
-            print("\n" + "="*80)
-            print(f"WORK ORDER EMAIL LOOKUP - CONSOLE OUTPUT")
-            print("="*80)
-            print(f"Customer Contact: {email or phone}")
-            print(f"Service Type: {service_type}")
-            print(f"Number of Work Orders Found: {len(work_orders)}")
-            print(f"Customer Email: {customer_email}")
-            
-            for i, order in enumerate(work_orders, 1):
-                print(f"\nWORK ORDER #{i} - ID: {order['request_id']}")
-                print(f"Customer: {order['customer']['first_name']} {order['customer']['last_name']}")
-                print(f"Service: {order['service']['job_name']} (${order['service']['service_price']:.2f})")
-                print(f"Status: {order['request_status']}")
-                print(f"Date: {order['preferred_datetime']}")
-                print(f"Description: {order['request_description']}")
-                if order.get('assigned_employee'):
-                    print(f"Assigned Employee: {order['assigned_employee']['first_name']} {order['assigned_employee']['last_name']}")
-                if order.get('final_price'):
-                    print(f"Final Price: ${order['final_price']:.2f}")
-                if order.get('image_url'):
-                    print(f"Image: {order['image_url']}")
-            
-            print("="*80 + "\n")
+
             
             # Send work order details via email
             try:
@@ -102,15 +79,12 @@ class WorkorderService:
                 email_sent = email_service.send_workorder_email(customer_email, work_orders)
                 
                 if email_sent:
-                    print(f"✅ Work order details emailed to {customer_email}")
                     return {
                         'success': True,
                         'message': f'Work order details sent to {customer_email}. {len(work_orders)} work order(s) processed.',
                         'workorders_count': len(work_orders)
                     }, 200
                 else:
-                    # Email failed, but still show console output for debugging
-                    print("⚠️ Email sending failed, but work order details are shown above in console")
                     return {
                         'success': True,
                         'message': f'Work order details found. {len(work_orders)} work order(s) processed. Email delivery may be delayed.',
@@ -118,11 +92,9 @@ class WorkorderService:
                     }, 200
                     
             except ImportError:
-                # Email service not available
-                print("⚠️ Email service not available, but work order details are shown above in console")
                 return {
                     'success': True,
-                    'message': f'Work order details found and logged. {len(work_orders)} work order(s) processed.',
+                    'message': f'Work order details found. {len(work_orders)} work order(s) processed.',
                     'workorders_count': len(work_orders)
                 }, 200
             

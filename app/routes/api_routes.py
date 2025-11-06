@@ -928,8 +928,43 @@ def accept_service_request(request_id):
                     INSERT INTO finalpricedetails (pricetotal, request_id) 
                     VALUES (%s, %s)
                 """, (final_price, request_id))
+        
+        # After successful database update, send appointment confirmation emails
+        try:
+            from repositories.servicerequest_repository import ServiceRequestRepository
+            from services.email_service import EmailService
             
-            return {"success": True, "message": f"Service request {request_id} accepted and moved to In Progress"}, 200
+            # Get full service request details with customer and employee info
+            service_request = ServiceRequestRepository.get_service_request_by_id(request_id)
+            
+            if service_request:
+                # Update the final price in the service request data for email
+                service_request['final_price'] = final_price
+                
+                # Send appointment confirmation emails
+                email_service = EmailService()
+                email_results = email_service.send_appointment_confirmation_email(service_request)
+                
+                success_message = f"Service request {request_id} accepted and moved to In Progress"
+                
+                # Add email status to response message
+                if email_results['customer_email_sent'] and email_results['employee_email_sent']:
+                    success_message += ". Confirmation emails sent to customer and employee."
+                elif email_results['customer_email_sent']:
+                    success_message += ". Confirmation email sent to customer."
+                elif email_results['employee_email_sent']:
+                    success_message += ". Notification email sent to employee."
+                else:
+                    success_message += ". Note: Email notifications could not be sent."
+                
+                return {"success": True, "message": success_message}, 200
+            else:
+                return {"success": True, "message": f"Service request {request_id} accepted and moved to In Progress"}, 200
+                
+        except Exception as email_error:
+            # Don't fail the entire request if email fails - just log it
+            print(f"Email notification error: {email_error}")
+            return {"success": True, "message": f"Service request {request_id} accepted and moved to In Progress. Note: Email notifications could not be sent."}, 200
             
     except Exception as e:
         return {"success": False, "error": str(e)}, 500
@@ -1028,48 +1063,6 @@ def cancel_service_request(request_id):
             """, (request_id,))
             
             return {"success": True, "message": f"Service request {request_id} cancelled"}, 200
-            
-    except Exception as e:
-        return {"success": False, "error": str(e)}, 500
-
-
-@api_bp.put("/service-requests/<int:request_id>/set-final-price")
-def set_final_price(request_id):
-    """Set final price for a service request without changing status."""
-    try:
-        data = request.get_json()
-        final_price = data.get('final_price')
-        
-        if not final_price or final_price <= 0:
-            return {"success": False, "error": "Invalid final price provided"}, 400
-        
-        with BaseRepository.get_cursor() as cursor:
-            # Check if service request exists
-            cursor.execute("SELECT status FROM servicerequests WHERE requestid = %s", (request_id,))
-            result = cursor.fetchone()
-            
-            if not result:
-                return {"success": False, "error": "Service request not found"}, 404
-            
-            # Check if final price record already exists
-            cursor.execute("SELECT finalprice_id FROM finalpricedetails WHERE request_id = %s", (request_id,))
-            existing_price = cursor.fetchone()
-            
-            if existing_price:
-                # Update existing final price
-                cursor.execute("""
-                    UPDATE finalpricedetails 
-                    SET pricetotal = %s 
-                    WHERE request_id = %s
-                """, (final_price, request_id))
-            else:
-                # Insert new final price record
-                cursor.execute("""
-                    INSERT INTO finalpricedetails (pricetotal, request_id) 
-                    VALUES (%s, %s)
-                """, (final_price, request_id))
-            
-            return {"success": True, "message": "Final price saved successfully", "final_price": final_price}, 200
             
     except Exception as e:
         return {"success": False, "error": str(e)}, 500

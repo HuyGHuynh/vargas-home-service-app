@@ -91,7 +91,7 @@ function lookupWorkOrders() {
         // Email validation
         searchInput = searchInput.toLowerCase();
         const emailRegex = /^[a-z0-9][a-z0-9._-]*@[a-z0-9][a-z0-9.-]+\.[a-z]{2,}$/;
-        
+
         // Check for invalid patterns
         if (searchInput.includes(' ')) {
             resultsContainer.innerHTML = `
@@ -101,7 +101,7 @@ function lookupWorkOrders() {
             `;
             return;
         }
-        
+
         if (searchInput.split('@').length > 2) {
             resultsContainer.innerHTML = `
                 <div class="error-message">
@@ -110,7 +110,7 @@ function lookupWorkOrders() {
             `;
             return;
         }
-        
+
         if (searchInput.startsWith('@') || searchInput.endsWith('@')) {
             resultsContainer.innerHTML = `
                 <div class="error-message">
@@ -119,7 +119,7 @@ function lookupWorkOrders() {
             `;
             return;
         }
-        
+
         if (!emailRegex.test(searchInput)) {
             resultsContainer.innerHTML = `
                 <div class="error-message">
@@ -132,7 +132,7 @@ function lookupWorkOrders() {
         // Phone number validation
         // Remove all non-digit characters for validation
         const digitsOnly = searchInput.replace(/\D/g, '');
-        
+
         if (digitsOnly.length !== 10) {
             resultsContainer.innerHTML = `
                 <div class="error-message">
@@ -141,7 +141,7 @@ function lookupWorkOrders() {
             `;
             return;
         }
-        
+
         // Format phone number for searching: (XXX) XXX-XXXX
         searchInput = `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6)}`;
     }
@@ -187,10 +187,6 @@ function lookupWorkOrders() {
                         <p>If you don't receive the email within a few minutes, please contact us at (555) 123-4567</p>
                     </div>
                 `;
-                
-                // Console log as requested for debugging
-                console.log(`✅ Work order details found for ${data.workorders_count} work orders`);
-                console.log('Details have been logged to server console for debugging');
             } else {
                 // Show not found message
                 resultsContainer.innerHTML = `
@@ -222,22 +218,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 lookupWorkOrders();
             }
         });
-        
+
         // Auto-format phone number as user types (only if no letters or @ symbol)
-        searchInput.addEventListener('input', function(event) {
+        searchInput.addEventListener('input', function (event) {
             let value = event.target.value;
-            
+
             // Check if value contains any letters or @ symbol (indicating email)
             const containsLettersOrAt = /[a-zA-Z@]/.test(value);
-            
+
             // Only format as phone number if it doesn't contain letters or @
             if (!containsLettersOrAt) {
                 // Remove all non-digit characters
                 const digitsOnly = value.replace(/\D/g, '');
-                
+
                 // Limit to 10 digits
                 const limitedDigits = digitsOnly.substring(0, 10);
-                
+
                 // Format based on length
                 let formattedValue = '';
                 if (limitedDigits.length === 0) {
@@ -249,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else {
                     formattedValue = `(${limitedDigits.slice(0, 3)}) ${limitedDigits.slice(3, 6)}-${limitedDigits.slice(6)}`;
                 }
-                
+
                 // Only update if the formatted value is different
                 if (formattedValue !== value) {
                     event.target.value = formattedValue;
