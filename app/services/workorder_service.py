@@ -11,6 +11,129 @@ class WorkorderService:
     """Service for workorder business logic."""
     
     @staticmethod
+    def lookup_workorder_details(data):
+        """
+        Look up work order details by customer contact and service type, then email them.
+        
+        Args:
+            data (dict): Request data containing:
+                - email (str, optional): Customer email
+                - phone (str, optional): Customer phone number
+                - service_type (str): Service type name
+                
+        Returns:
+            tuple: (response_dict, status_code)
+        """
+        if not data:
+            return {
+                'error': 'No data provided',
+                'success': False
+            }, 400
+        
+        email = data.get('email', '').strip()
+        phone = data.get('phone', '').strip()
+        service_type = data.get('service_type', '').strip()
+        
+        # Validation
+        if not email and not phone:
+            return {
+                'error': 'Email or phone number required',
+                'success': False
+            }, 400
+        
+        if not service_type:
+            return {
+                'error': 'Service type is required',
+                'success': False
+            }, 400
+        
+        try:
+            # Get work orders from repository
+            work_orders = WorkorderRepository.lookup_workorder_by_contact_and_service_type(
+                email=email, 
+                phone=phone, 
+                service_type=service_type
+            )
+            
+            if not work_orders:
+                return {
+                    'success': False,
+                    'message': f'No work orders found for the provided information and {service_type} service type'
+                }, 404
+            
+            # Get customer email for sending
+            customer_email = email or work_orders[0]['customer']['email']
+            
+            if not customer_email:
+                return {
+                    'success': False,
+                    'error': 'Customer email not found for sending work order details'
+                }, 400
+            
+            # Console log the work order details (as requested)
+            print("\n" + "="*80)
+            print(f"WORK ORDER EMAIL LOOKUP - CONSOLE OUTPUT")
+            print("="*80)
+            print(f"Customer Contact: {email or phone}")
+            print(f"Service Type: {service_type}")
+            print(f"Number of Work Orders Found: {len(work_orders)}")
+            print(f"Customer Email: {customer_email}")
+            
+            for i, order in enumerate(work_orders, 1):
+                print(f"\nWORK ORDER #{i} - ID: {order['request_id']}")
+                print(f"Customer: {order['customer']['first_name']} {order['customer']['last_name']}")
+                print(f"Service: {order['service']['job_name']} (${order['service']['service_price']:.2f})")
+                print(f"Status: {order['request_status']}")
+                print(f"Date: {order['preferred_datetime']}")
+                print(f"Description: {order['request_description']}")
+                if order.get('assigned_employee'):
+                    print(f"Assigned Employee: {order['assigned_employee']['first_name']} {order['assigned_employee']['last_name']}")
+                if order.get('final_price'):
+                    print(f"Final Price: ${order['final_price']:.2f}")
+                if order.get('image_url'):
+                    print(f"Image: {order['image_url']}")
+            
+            print("="*80 + "\n")
+            
+            # Send work order details via email
+            try:
+                from services.email_service import EmailService
+                email_service = EmailService()
+                email_sent = email_service.send_workorder_email(customer_email, work_orders)
+                
+                if email_sent:
+                    print(f"✅ Work order details emailed to {customer_email}")
+                    return {
+                        'success': True,
+                        'message': f'Work order details sent to {customer_email}. {len(work_orders)} work order(s) processed.',
+                        'workorders_count': len(work_orders)
+                    }, 200
+                else:
+                    # Email failed, but still show console output for debugging
+                    print("⚠️ Email sending failed, but work order details are shown above in console")
+                    return {
+                        'success': True,
+                        'message': f'Work order details found. {len(work_orders)} work order(s) processed. Email delivery may be delayed.',
+                        'workorders_count': len(work_orders)
+                    }, 200
+                    
+            except ImportError:
+                # Email service not available
+                print("⚠️ Email service not available, but work order details are shown above in console")
+                return {
+                    'success': True,
+                    'message': f'Work order details found and logged. {len(work_orders)} work order(s) processed.',
+                    'workorders_count': len(work_orders)
+                }, 200
+            
+        except Exception as e:
+            print(f"Error in lookup_workorder_details: {e}")
+            return {
+                'success': False,
+                'error': 'An error occurred while looking up work orders'
+            }, 500
+    
+    @staticmethod
     def parse_bool(val, default=False):
         """Parse a value to boolean."""
         if val is None:

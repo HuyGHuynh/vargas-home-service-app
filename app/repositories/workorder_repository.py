@@ -362,3 +362,129 @@ class WorkorderRepository(BaseRepository):
         except Exception as e:
             print(f"Error getting service request image URL: {e}")
             return None
+    
+    @staticmethod
+    def lookup_workorder_by_contact_and_service_type(email=None, phone=None, service_type=None):
+        """
+        Look up work orders (service requests) by customer contact info and service type.
+        
+        Args:
+            email (str, optional): Customer email
+            phone (str, optional): Customer phone number
+            service_type (str, optional): Service type name
+            
+        Returns:
+            list[dict]: List of work order records with full details
+        """
+        if not email and not phone:
+            return []
+        
+        try:
+            with BaseRepository.get_cursor() as cur:
+                # Build query with joins to get all work order details
+                query = """
+                    SELECT 
+                        sr.requestid,
+                        sr.customerid,
+                        sr.addressid,
+                        sr.preferred_datetime,
+                        sr.service_id,
+                        sr.description as request_description,
+                        sr.status as request_status,
+                        sr.imageurl,
+                        c.firstname,
+                        c.lastname,
+                        c.phone,
+                        c.email,
+                        ab.address,
+                        ab.city,
+                        ab.state,
+                        ab.zip_code,
+                        s.job_name,
+                        s.job_desc,
+                        s.service_price,
+                        s.duration_hours,
+                        st.service_type_name,
+                        fpd.pricetotal as final_price,
+                        e.employeeid,
+                        e.firstname as employee_firstname,
+                        e.lastname as employee_lastname,
+                        e.phone as employee_phone,
+                        e.email as employee_email,
+                        e.status as employee_status,
+                        wa.assignment_id
+                    FROM servicerequests sr
+                    LEFT JOIN customer c ON sr.customerid = c.customerid
+                    LEFT JOIN addressbook ab ON sr.addressid = ab.address_id
+                    LEFT JOIN services s ON sr.service_id = s.service_id
+                    LEFT JOIN service_types st ON s.service_type_id = st.service_type_id
+                    LEFT JOIN finalpricedetails fpd ON sr.requestid = fpd.request_id
+                    LEFT JOIN work_assignments wa ON sr.requestid = wa.requestid
+                    LEFT JOIN employee e ON wa.employeeid = e.employeeid
+                    WHERE 
+                        (c.email = %s OR %s = '') AND
+                        (c.phone = %s OR %s = '') AND
+                        (st.service_type_name = %s OR %s = '')
+                    ORDER BY sr.preferred_datetime DESC;
+                """
+                
+                email_param = email or ''
+                phone_param = phone or ''
+                service_type_param = service_type or ''
+                
+                cur.execute(query, (
+                    email_param, email_param, 
+                    phone_param, phone_param,
+                    service_type_param, service_type_param
+                ))
+                rows = cur.fetchall()
+                
+                # Format work order data (similar to ServiceRequestRepository structure)
+                work_orders = []
+                for row in rows:
+                    work_order_data = {
+                        'request_id': row[0],
+                        'customer_id': row[1],
+                        'address_id': row[2],
+                        'preferred_datetime': row[3].isoformat() if row[3] else None,
+                        'service_id': row[4],
+                        'request_description': row[5],
+                        'request_status': row[6],
+                        'image_url': row[7],
+                        'customer': {
+                            'first_name': row[8],
+                            'last_name': row[9],
+                            'phone': row[10],
+                            'email': row[11]
+                        },
+                        'address': {
+                            'street': row[12],
+                            'city': row[13],
+                            'state': row[14],
+                            'zip_code': row[15]
+                        },
+                        'service': {
+                            'job_name': row[16],
+                            'job_description': row[17],
+                            'service_price': float(row[18]) if row[18] else 0.0,
+                            'duration_hours': float(row[19]) if row[19] else 0.0,
+                            'service_type': row[20]
+                        },
+                        'final_price': float(row[21]) if row[21] else None,
+                        'assigned_employee': {
+                            'employee_id': row[22],
+                            'first_name': row[23],
+                            'last_name': row[24],
+                            'phone': row[25],
+                            'email': row[26],
+                            'status': row[27],
+                            'assignment_id': row[28]
+                        } if row[22] else None  # Only include if employee is assigned
+                    }
+                    work_orders.append(work_order_data)
+                
+                return work_orders
+                
+        except Exception as e:
+            print(f"Error in lookup_workorder_by_contact_and_service_type: {e}")
+            return []

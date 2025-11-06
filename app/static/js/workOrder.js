@@ -155,37 +155,62 @@ function lookupWorkOrders() {
         return;
     }
 
-    // Search for work orders matching the input and service type
-    const foundOrders = sampleWorkOrders.filter(order =>
-        (order.customerPhone.includes(searchInput) ||
-         order.customerEmail.toLowerCase().includes(searchInput)) &&
-        order.serviceType === serviceType
-    );
+    // Show loading message
+    resultsContainer.innerHTML = `
+        <div class="loading-message">
+            <p>🔍 Searching for work orders...</p>
+        </div>
+    `;
 
-    if (foundOrders.length === 0) {
-        // Show "No Work Orders Found" message
-        resultsContainer.innerHTML = `
-            <div class="not-found-message">
-                <h3>No Work Orders Found</h3>
-                <p>We couldn't find any work orders associated with "${searchInput}" for ${serviceType} services.</p>
-                <p>Please check your information and try again, or contact us at (555) 123-4567</p>
-            </div>
-        `;
-    } else {
-        // Show email confirmation message instead of listing work orders
-        resultsContainer.innerHTML = `
-            <div class="success-message">
-                <h3>✓ Work Order Information Found</h3>
-                <p>We found ${foundOrders.length} work ${foundOrders.length === 1 ? 'order' : 'orders'} associated with your account.</p>
-                <p><strong>Your work order information will be sent to your email shortly.</strong></p>
-                <p>Please check your inbox for detailed work order information including service status, scheduled dates, and cost estimates.</p>
-                <p>If you don't receive the email within a few minutes, please contact us at (555) 123-4567</p>
-            </div>
-        `;
-        
-        // In production, this would trigger an email via backend API
-        console.log(`Sending work order details to customer for ${foundOrders.length} work orders`);
-    }
+    // Call the work order lookup API
+    fetch('/workorders/lookup-details', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            email: searchInput.includes('@') ? searchInput : '',
+            phone: !searchInput.includes('@') ? searchInput : '',
+            service_type: serviceType
+        })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                resultsContainer.innerHTML = `
+                    <div class="success-message">
+                        <h3>✓ Work Order Information Found</h3>
+                        <p>We found ${data.workorders_count} work ${data.workorders_count === 1 ? 'order' : 'orders'} associated with your account.</p>
+                        <p><strong>Your work order information will be sent to your email shortly.</strong></p>
+                        <p>Please check your inbox for detailed work order information including service status, scheduled dates, and cost estimates.</p>
+                        <p>If you don't receive the email within a few minutes, please contact us at (555) 123-4567</p>
+                    </div>
+                `;
+                
+                // Console log as requested for debugging
+                console.log(`✅ Work order details found for ${data.workorders_count} work orders`);
+                console.log('Details have been logged to server console for debugging');
+            } else {
+                // Show not found message
+                resultsContainer.innerHTML = `
+                    <div class="not-found-message">
+                        <h3>No Work Orders Found</h3>
+                        <p>${data.message || `We couldn't find any work orders associated with "${searchInput}" for ${serviceType} services.`}</p>
+                        <p>Please check your information and try again, or contact us at (555) 123-4567</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error looking up work orders:', error);
+            resultsContainer.innerHTML = `
+                <div class="error-message">
+                    <h3>Error</h3>
+                    <p>⚠️ An error occurred while searching for work orders. Please try again or contact us at (555) 123-4567</p>
+                </div>
+            `;
+        });
 }
 
 // Allow Enter key to trigger search

@@ -205,6 +205,22 @@ header {
   font-weight: 600;
 }
 
+.loading-message {
+  background: #f0f9ff;
+  border: 1px solid #0ea5e9;
+  border-radius: 12px;
+  padding: 30px;
+  text-align: center;
+  margin: 30px 0;
+}
+
+.loading-message p {
+  color: #0c4a6e;
+  font-size: 1.1rem;
+  margin: 0;
+  font-weight: 500;
+}
+
 .results-header {
   margin-bottom: 30px;
   text-align: center;
