@@ -453,10 +453,429 @@ const transactions = [
   }
 ];
 
+// Initialize category dropdown with unique categories from data
+function initializeCategoryFilter() {
+  const categoryFilter = document.getElementById('categoryFilter');
+  if (!categoryFilter) return;
+  
+  // Get unique categories from transactions
+  const uniqueCategories = [...new Set(transactions.map(txn => txn.category))];
+  
+  // Clear existing options except "All Categories"
+  categoryFilter.innerHTML = '<option value="all">All Categories</option>';
+  
+  // Add unique categories to dropdown
+  uniqueCategories.sort().forEach(category => {
+    const option = document.createElement('option');
+    option.value = category;
+    option.textContent = category;
+    categoryFilter.appendChild(option);
+  });
+}
+
+// Revenue Trend Chart Functions
+let revenueChart = null;
+
+function getMonthlyRevenueData() {
+  const categoryFilter = document.getElementById('categoryFilter');
+  
+  // Get filtered transactions based on category
+  let filteredTransactions = transactions;
+  if (categoryFilter && categoryFilter.value !== 'all') {
+    filteredTransactions = transactions.filter(txn => txn.category === categoryFilter.value);
+  }
+  
+  // Filter only revenue (income) transactions
+  const revenueTransactions = filteredTransactions.filter(txn => txn.direction === 'Income');
+  
+  // Group by month
+  const monthlyData = {};
+  revenueTransactions.forEach(txn => {
+    const date = new Date(txn.date);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const monthName = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+    
+    if (!monthlyData[monthKey]) {
+      monthlyData[monthKey] = {
+        name: monthName,
+        total: 0,
+        count: 0
+      };
+    }
+    
+    monthlyData[monthKey].total += txn.amount;
+    monthlyData[monthKey].count += 1;
+  });
+  
+  // Sort by month and return arrays for Chart.js
+  const sortedMonths = Object.keys(monthlyData).sort();
+  const labels = sortedMonths.map(key => monthlyData[key].name);
+  const values = sortedMonths.map(key => monthlyData[key].total);
+  const counts = sortedMonths.map(key => monthlyData[key].count);
+  
+  return { labels, values, counts };
+}
+
+function updateChartStats(data) {
+  if (data.values.length === 0) {
+    document.getElementById('avgMonthlyRevenue').textContent = '$0';
+    document.getElementById('bestMonth').textContent = '-';
+    document.getElementById('totalMonths').textContent = '0';
+    return;
+  }
+  
+  // Calculate average monthly revenue
+  const avgRevenue = data.values.reduce((sum, val) => sum + val, 0) / data.values.length;
+  document.getElementById('avgMonthlyRevenue').textContent = '$' + formatNumber(avgRevenue);
+  
+  // Find best month
+  const maxValue = Math.max(...data.values);
+  const bestMonthIndex = data.values.indexOf(maxValue);
+  const bestMonthName = data.labels[bestMonthIndex];
+  document.getElementById('bestMonth').textContent = `${bestMonthName} ($${formatNumber(maxValue)})`;
+  
+  // Total months
+  document.getElementById('totalMonths').textContent = data.labels.length.toString();
+}
+
+function createRevenueChart() {
+  const chartPlaceholder = document.getElementById('revenueChart');
+  if (!chartPlaceholder) return;
+  
+  const data = getMonthlyRevenueData();
+  
+  // Update chart statistics
+  updateChartStats(data);
+  
+  // Destroy existing chart if it exists
+  if (revenueChart) {
+    revenueChart.destroy();
+    revenueChart = null;
+  }
+  
+  // Handle empty state
+  if (data.values.length === 0) {
+    chartPlaceholder.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 300px; color: #666; font-size: 1rem;">No revenue data available for the selected category</div>';
+    return;
+  }
+  
+  // Restore canvas if it was replaced
+  if (!document.getElementById('revenueChartCanvas')) {
+    chartPlaceholder.innerHTML = '<canvas id="revenueChartCanvas"></canvas>';
+  }
+  
+  const ctx = document.getElementById('revenueChartCanvas');
+
+  revenueChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.labels,
+      datasets: [{
+        label: 'Monthly Revenue',
+        data: data.values,
+        backgroundColor: 'rgba(74, 112, 169, 0.8)',
+        borderColor: '#4A70A9',
+        borderWidth: 2,
+        borderRadius: 8,
+        borderSkipped: false,
+        hoverBackgroundColor: 'rgba(143, 171, 212, 0.9)',
+        hoverBorderColor: '#8FABD4',
+        maxBarThickness: 60
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: {
+        duration: 1000,
+        easing: 'easeOutQuart'
+      },
+      plugins: {
+        title: {
+          display: false
+        },
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const value = context.parsed.y;
+              const count = data.counts[context.dataIndex];
+              return [
+                `Revenue: $${formatNumber(value)}`,
+                `Transactions: ${count}`
+              ];
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return '$' + formatNumber(value);
+            },
+            color: '#333'
+          },
+          grid: {
+            color: 'rgba(0, 0, 0, 0.1)'
+          }
+        },
+        x: {
+          ticks: {
+            color: '#333',
+            maxRotation: 45,
+            minRotation: 0
+          },
+          grid: {
+            display: false
+          }
+        }
+      },
+      elements: {
+        bar: {
+          borderRadius: 8
+        }
+      },
+      categoryPercentage: 0.8,
+      barPercentage: 0.9
+    }
+  });
+}
+
+// Service Distribution Pie Chart Functions
+let serviceChart = null;
+
+function extractServiceType(description) {
+  // Extract service type from description (everything before " - " or the whole description)
+  const servicePart = description.split(' - ')[0];
+  
+  // Map similar services together
+  const serviceMapping = {
+    'Kitchen Remodel': 'Kitchen Services',
+    'Kitchen': 'Kitchen Services',
+    'Plumbing Repair': 'Plumbing Services',
+    'Plumbing': 'Plumbing Services',
+    'Water Heater Installation': 'Plumbing Services',
+    'HVAC Installation': 'HVAC Services',
+    'HVAC': 'HVAC Services',
+    'Electrical Upgrade': 'Electrical Services',
+    'Electrical': 'Electrical Services',
+    'Roof Repair': 'Roofing Services',
+    'Roofing': 'Roofing Services',
+    'Bathroom Renovation': 'Bathroom Services',
+    'Bathroom': 'Bathroom Services',
+    'Deck Building': 'Exterior Services',
+    'Deck': 'Exterior Services',
+    'Painting Service': 'Painting Services',
+    'Painting': 'Painting Services'
+  };
+  
+  // Check for exact matches first
+  if (serviceMapping[servicePart]) {
+    return serviceMapping[servicePart];
+  }
+  
+  // Check for partial matches
+  for (const key in serviceMapping) {
+    if (servicePart.toLowerCase().includes(key.toLowerCase())) {
+      return serviceMapping[key];
+    }
+  }
+  
+  // If no match found, return the cleaned service part
+  return servicePart || 'Other Services';
+}
+
+function getServiceDistributionData() {
+  const categoryFilter = document.getElementById('categoryFilter');
+  
+  // Get filtered transactions based on category
+  let filteredTransactions = transactions;
+  if (categoryFilter && categoryFilter.value !== 'all') {
+    filteredTransactions = transactions.filter(txn => txn.category === categoryFilter.value);
+  }
+  
+  // Only analyze Service Revenue transactions (actual services requested by customers)
+  const serviceTransactions = filteredTransactions.filter(txn => 
+    txn.direction === 'Income' && txn.category === 'Service Revenue'
+  );
+  
+  // Group by service type
+  const serviceData = {};
+  serviceTransactions.forEach(txn => {
+    const serviceType = extractServiceType(txn.description);
+    
+    if (!serviceData[serviceType]) {
+      serviceData[serviceType] = {
+        count: 0,
+        revenue: 0
+      };
+    }
+    
+    serviceData[serviceType].count += 1;
+    serviceData[serviceType].revenue += txn.amount;
+  });
+  
+  // Sort services by request count (descending) and take top 5
+  const sortedServices = Object.keys(serviceData).sort((a, b) => 
+    serviceData[b].count - serviceData[a].count
+  );
+  
+  // Take only top 5 services
+  const top5Services = sortedServices.slice(0, 5);
+  
+  // Group remaining services as "Others" if there are more than 5
+  let labels, counts, revenues;
+  if (sortedServices.length > 5) {
+    const othersCount = sortedServices.slice(5).reduce((sum, service) => 
+      sum + serviceData[service].count, 0
+    );
+    const othersRevenue = sortedServices.slice(5).reduce((sum, service) => 
+      sum + serviceData[service].revenue, 0
+    );
+    
+    labels = [...top5Services, 'Others'];
+    counts = [...top5Services.map(service => serviceData[service].count), othersCount];
+    revenues = [...top5Services.map(service => serviceData[service].revenue), othersRevenue];
+  } else {
+    labels = top5Services;
+    counts = top5Services.map(service => serviceData[service].count);
+    revenues = top5Services.map(service => serviceData[service].revenue);
+  }
+  
+  return { labels, counts, revenues, serviceData };
+}
+
+function updateServiceStats(data) {
+  if (data.labels.length === 0) {
+    document.getElementById('mostRequestedService').textContent = '-';
+    document.getElementById('totalServices').textContent = '0';
+    document.getElementById('serviceTypes').textContent = '0';
+    return;
+  }
+  
+  // Find most requested service
+  const maxCount = Math.max(...data.counts);
+  const mostRequestedIndex = data.counts.indexOf(maxCount);
+  const mostRequestedService = data.labels[mostRequestedIndex];
+  document.getElementById('mostRequestedService').textContent = `${mostRequestedService} (${maxCount})`;
+  
+  // Total number of service requests
+  const totalRequests = data.counts.reduce((sum, count) => sum + count, 0);
+  document.getElementById('totalServices').textContent = totalRequests.toString();
+  
+  // Number of different service types
+  document.getElementById('serviceTypes').textContent = data.labels.length.toString();
+}
+
+function createServiceChart() {
+  const chartPlaceholder = document.getElementById('serviceChart');
+  if (!chartPlaceholder) return;
+  
+  const data = getServiceDistributionData();
+  
+  // Update service statistics
+  updateServiceStats(data);
+  
+  // Destroy existing chart if it exists
+  if (serviceChart) {
+    serviceChart.destroy();
+    serviceChart = null;
+  }
+  
+  // Handle empty state
+  if (data.labels.length === 0) {
+    chartPlaceholder.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 300px; color: #666; font-size: 1rem;">No service data available for the selected category</div>';
+    return;
+  }
+  
+  // Restore canvas if it was replaced
+  if (!document.getElementById('serviceChartCanvas')) {
+    chartPlaceholder.innerHTML = '<canvas id="serviceChartCanvas"></canvas>';
+  }
+  
+  const ctx = document.getElementById('serviceChartCanvas');
+
+  // Generate colors for pie slices
+  const colors = [
+    'rgba(74, 112, 169, 0.8)',   // Primary blue
+    'rgba(143, 171, 212, 0.8)',  // Light blue
+    'rgba(76, 175, 80, 0.8)',    // Green
+    'rgba(255, 193, 7, 0.8)',    // Amber
+    'rgba(244, 67, 54, 0.8)',    // Red
+    'rgba(156, 39, 176, 0.8)',   // Purple
+    'rgba(255, 152, 0, 0.8)',    // Orange
+    'rgba(96, 125, 139, 0.8)',   // Blue Grey
+    'rgba(121, 85, 72, 0.8)',    // Brown
+    'rgba(158, 158, 158, 0.8)'   // Grey
+  ];
+
+  serviceChart = new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: data.labels,
+      datasets: [{
+        data: data.counts,
+        backgroundColor: colors.slice(0, data.labels.length),
+        borderColor: colors.slice(0, data.labels.length).map(color => color.replace('0.8', '1')),
+        borderWidth: 2,
+        hoverOffset: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: {
+        duration: 1000,
+        easing: 'easeOutQuart'
+      },
+      plugins: {
+        title: {
+          display: false
+        },
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: {
+            padding: 20,
+            usePointStyle: true,
+            font: {
+              size: 12
+            },
+            color: '#333'
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const serviceName = context.label;
+              const count = context.parsed;
+              const revenue = data.revenues[context.dataIndex];
+              const percentage = ((count / data.counts.reduce((a, b) => a + b, 0)) * 100).toFixed(1);
+              
+              return [
+                `${serviceName}: ${count} requests`,
+                `Revenue: $${formatNumber(revenue)}`,
+                `Percentage: ${percentage}%`
+              ];
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
+  initializeCategoryFilter();
   renderTransactions();
   updateFinancialSummary();
+  createRevenueChart();
+  createServiceChart();
   setupEventListeners();
 });
 
@@ -481,19 +900,26 @@ function setupEventListeners() {
 // Render transactions table
 function renderTransactions() {
   const tableBody = document.getElementById('tableBody');
+  const categoryFilter = document.getElementById('categoryFilter');
   
-  if (transactions.length === 0) {
+  // Get filtered transactions based on category
+  let filteredTransactions = transactions;
+  if (categoryFilter && categoryFilter.value !== 'all') {
+    filteredTransactions = transactions.filter(txn => txn.category === categoryFilter.value);
+  }
+  
+  if (filteredTransactions.length === 0) {
     tableBody.innerHTML = `
       <tr>
         <td colspan="9" style="text-align: center; padding: 40px; color: #999;">
-          No transactions found
+          No transactions found for the selected category
         </td>
       </tr>
     `;
     return;
   }
   
-  tableBody.innerHTML = transactions.map(txn => `
+  tableBody.innerHTML = filteredTransactions.map(txn => `
     <tr>
       <td><strong>${txn.txnId}</strong></td>
       <td>${formatDate(txn.date)}</td>
@@ -520,21 +946,29 @@ function renderTransactions() {
 
 // Update financial summary
 function updateFinancialSummary() {
-  const totalIncome = transactions
+  const categoryFilter = document.getElementById('categoryFilter');
+  
+  // Get filtered transactions based on category
+  let filteredTransactions = transactions;
+  if (categoryFilter && categoryFilter.value !== 'all') {
+    filteredTransactions = transactions.filter(txn => txn.category === categoryFilter.value);
+  }
+  
+  const totalIncome = filteredTransactions
     .filter(t => t.direction === 'Income')
     .reduce((sum, t) => sum + t.amount, 0);
   
-  const totalExpense = transactions
+  const totalExpense = filteredTransactions
     .filter(t => t.direction === 'Expense')
     .reduce((sum, t) => sum + t.amount, 0);
   
   const netProfit = totalIncome - totalExpense;
   
-  const receivables = transactions
+  const receivables = filteredTransactions
     .filter(t => t.direction === 'Income' && t.status === 'Pending')
     .reduce((sum, t) => sum + t.amount, 0);
   
-  const payables = transactions
+  const payables = filteredTransactions
     .filter(t => t.direction === 'Expense' && t.status === 'Pending')
     .reduce((sum, t) => sum + t.amount, 0);
   
@@ -544,6 +978,16 @@ function updateFinancialSummary() {
   document.getElementById('netProfit').textContent = `$${formatNumber(netProfit)}`;
   document.getElementById('receivables').textContent = `$${formatNumber(receivables)}`;
   document.getElementById('payables').textContent = `$${formatNumber(payables)}`;
+  
+  // Update filter indicator
+  const filterIndicator = document.getElementById('filterIndicator');
+  const currentCategory = document.getElementById('currentCategory');
+  if (categoryFilter && categoryFilter.value !== 'all') {
+    filterIndicator.style.display = 'flex';
+    currentCategory.textContent = categoryFilter.value;
+  } else {
+    filterIndicator.style.display = 'none';
+  }
   
   // Update profit card color based on positive/negative
   const profitCard = document.querySelector('.summary-card.profit');
@@ -575,22 +1019,32 @@ function formatNumber(num) {
 function updateReport() {
   renderTransactions();
   updateFinancialSummary();
+  createRevenueChart();
+  createServiceChart();
 }
 
 // Export to CSV
 function exportToCSV() {
+  const categoryFilter = document.getElementById('categoryFilter');
+  
+  // Get filtered transactions based on category
+  let filteredTransactions = transactions;
+  if (categoryFilter && categoryFilter.value !== 'all') {
+    filteredTransactions = transactions.filter(txn => txn.category === categoryFilter.value);
+  }
+  
   let csv = 'Txn ID,Date,Category,Direction,Amount,Status,Description,Employee,Request Order\n';
   
-  transactions.forEach(txn => {
+  filteredTransactions.forEach(txn => {
     csv += `"${txn.txnId}","${txn.date}","${txn.category}","${txn.direction}","${txn.amount}","${txn.status}","${txn.description}","${txn.employee}","${txn.requestOrder}"\n`;
   });
   
-  // Add summary
-  const totalIncome = transactions.filter(t => t.direction === 'Income').reduce((sum, t) => sum + t.amount, 0);
-  const totalExpense = transactions.filter(t => t.direction === 'Expense').reduce((sum, t) => sum + t.amount, 0);
+  // Add summary for filtered data
+  const totalIncome = filteredTransactions.filter(t => t.direction === 'Income').reduce((sum, t) => sum + t.amount, 0);
+  const totalExpense = filteredTransactions.filter(t => t.direction === 'Expense').reduce((sum, t) => sum + t.amount, 0);
   const netProfit = totalIncome - totalExpense;
-  const receivables = transactions.filter(t => t.direction === 'Income' && t.status === 'Pending').reduce((sum, t) => sum + t.amount, 0);
-  const payables = transactions.filter(t => t.direction === 'Expense' && t.status === 'Pending').reduce((sum, t) => sum + t.amount, 0);
+  const receivables = filteredTransactions.filter(t => t.direction === 'Income' && t.status === 'Pending').reduce((sum, t) => sum + t.amount, 0);
+  const payables = filteredTransactions.filter(t => t.direction === 'Expense' && t.status === 'Pending').reduce((sum, t) => sum + t.amount, 0);
   
   csv += '\n';
   csv += `"Total Income","","","","${totalIncome}","","","",""\n`;
@@ -603,8 +1057,9 @@ function exportToCSV() {
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
+  const categoryName = categoryFilter.value === 'all' ? 'all_categories' : categoryFilter.value.replace(/\s+/g, '_').toLowerCase();
   a.setAttribute('href', url);
-  a.setAttribute('download', `financial_report_${new Date().toISOString().split('T')[0]}.csv`);
+  a.setAttribute('download', `financial_report_${categoryName}_${new Date().toISOString().split('T')[0]}.csv`);
   a.click();
   window.URL.revokeObjectURL(url);
 }

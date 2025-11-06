@@ -14,13 +14,13 @@
 .review-header h1 {
   font-size: 32px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #000000;
   margin-bottom: 15px;
 }
 
 .review-header p {
   font-size: 16px;
-  color: #666;
+  color: #000000;
   line-height: 1.6;
 }
 
@@ -29,7 +29,7 @@
   background: white;
   border-radius: 12px;
   padding: 40px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(74, 112, 169, 0.1);
 }
 
 .form-row {
@@ -47,7 +47,7 @@
   display: block;
   font-size: 15px;
   font-weight: 600;
-  color: #333;
+  color: #000000;
   margin-bottom: 8px;
 }
 
@@ -268,7 +268,7 @@
 
 .success-message p {
   font-size: 16px;
-  color: #666;
+  color: #333;
   line-height: 1.6;
   margin-bottom: 30px;
 }

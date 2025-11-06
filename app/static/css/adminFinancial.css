@@ -1,3 +1,11 @@
+/* Body and Page Background */
+body {
+    background-color: #EFECE3;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
 /* Financial Container */
 .financial-container {
     max-width: 1400px;
@@ -13,13 +21,13 @@
 }
 
 .financial-header h1 {
-    color: #333;
+    color: #000000;
     font-size: 2rem;
     margin: 0;
 }
 
 .export-csv-btn {
-    background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+    background: linear-gradient(135deg, #8FABD4 0%, #4A70A9 100%);
     color: white;
     border: none;
     padding: 12px 24px;
@@ -35,7 +43,7 @@
 
 .export-csv-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+    box-shadow: 0 4px 12px rgba(74, 112, 169, 0.4);
 }
 
 .export-csv-btn span {
@@ -63,7 +71,7 @@
 }
 
 .filter-group label {
-    color: #666;
+    color: #333;
     font-weight: 600;
     font-size: 0.9rem;
 }
@@ -81,12 +89,12 @@
 .filter-group select:focus,
 .filter-group input[type="date"]:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #4A70A9;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .refresh-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #8FABD4 0%, #4A70A9 100%);
     color: white;
     border: none;
     padding: 12px 24px;
@@ -104,6 +112,31 @@
 .refresh-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Filter Indicator */
+.filter-indicator {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border: 1px solid #4A70A9;
+    border-radius: 8px;
+    padding: 12px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-icon {
+    font-size: 1.2rem;
+}
+
+.filter-text {
+    color: #000000;
+    font-size: 0.95rem;
+}
+
+.filter-text strong {
+    color: #4A70A9;
 }
 
 /* Summary Cards */
@@ -180,7 +213,7 @@
 }
 
 .card-content h3 {
-    color: #666;
+    color: #333;
     font-size: 0.9rem;
     font-weight: 600;
     margin: 0 0 8px 0;
@@ -209,7 +242,7 @@
 }
 
 .card-change.neutral {
-    color: #666;
+    color: #333;
 }
 
 /* Report Section */
@@ -239,7 +272,7 @@ table {
 }
 
 thead {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #8FABD4 0%, #4A70A9 100%);
     color: white;
 }
 
@@ -253,28 +286,28 @@ thead th {
 }
 
 tbody tr {
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid #8FABD4;
     transition: background-color 0.2s ease;
 }
 
 tbody tr:hover {
-    background-color: #f8f9fa;
+    background-color: #EFECE3;
 }
 
 tbody td {
     padding: 16px;
-    color: #333;
+    color: #000000;
 }
 
 tfoot {
-    background-color: #f8f9fa;
+    background-color: #EFECE3;
     font-weight: 700;
 }
 
 tfoot td {
     padding: 16px;
-    color: #333;
-    border-top: 2px solid #667eea;
+    color: #000000;
+    border-top: 2px solid #4A70A9;
 }
 
 .status-badge {
@@ -288,26 +321,26 @@ tfoot td {
 
 .status-badge.completed {
     background-color: #e8f5e9;
-    color: #2e7d32;
+    color: #4caf50;
 }
 
 .status-badge.in-progress {
-    background-color: #fff3e0;
-    color: #f57c00;
+    background-color: #e3f2fd;
+    color: #1565c0;
 }
 
 .status-badge.cancelled {
     background-color: #ffebee;
-    color: #c62828;
+    color: #f44336;
 }
 
 .amount-positive {
-    color: #4caf50;
+    color: #000000;
     font-weight: 600;
 }
 
 .amount-negative {
-    color: #f44336;
+    color: #000000;
     font-weight: 600;
 }
 
@@ -339,7 +372,7 @@ tfoot td {
     justify-content: center;
     background: #f8f9fa;
     border-radius: 8px;
-    color: #999;
+    color: #2d3748;
     font-size: 0.9rem;
 }
 
@@ -348,11 +381,42 @@ tfoot td {
     max-height: 300px;
 }
 
+/* Chart Statistics */
+.chart-stats {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    padding: 16px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #666;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 1.1rem;
+    color: #000000;
+    font-weight: 700;
+}
+
 /* Empty State */
 .empty-state {
     text-align: center;
     padding: 60px 20px;
-    color: #666;
+    color: #333;
 }
 
 .empty-state-icon {
@@ -368,7 +432,7 @@ tfoot td {
 }
 
 .empty-state p {
-    color: #666;
+    color: #333;
     font-size: 1rem;
 }
 
@@ -376,6 +440,23 @@ tfoot td {
 @media (max-width: 1024px) {
     .charts-section {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .chart-stats {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .stat-item {
+        flex-direction: row;
+        justify-content: space-between;
+        text-align: left;
+    }
+    
+    .stat-label {
+        margin-bottom: 0;
     }
 }
 
@@ -501,17 +582,17 @@ tfoot td {
 
 .status-badge.status-completed {
     background-color: #e8f5e9;
-    color: #2e7d32;
+    color: #4caf50;
 }
 
 .status-badge.status-pending {
     background-color: #fff3e0;
-    color: #ef6c00;
+    color: #ff9800;
 }
 
 .status-badge.status-paid {
-    background-color: #e3f2fd;
-    color: #1565c0;
+    background-color: #e8f5e9;
+    color: #4caf50;
 }
 
 /* Financial Table */
@@ -521,20 +602,21 @@ tfoot td {
 }
 
 .financial-table th {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #8FABD4 0%, #4A70A9 100%);
     color: white;
     font-weight: 600;
     text-align: left;
     padding: 14px 12px;
-    border-bottom: 2px solid #5a67d8;
+    border-bottom: 2px solid #4A70A9;
     white-space: nowrap;
 }
 
 .financial-table td {
     padding: 14px 12px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid #8FABD4;
+    color: #000000;
 }
 
 .financial-table tbody tr:hover {
-    background-color: #f9f9f9;
+    background-color: #EFECE3;
 }

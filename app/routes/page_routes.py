@@ -233,6 +233,12 @@ def warranty():
     return render_template("customer/warranty.html")
 
 
+@page_bp.get("/warranty-selection")
+def warranty_selection():
+    """Warranty selection page."""
+    return render_template("customer/warrantySelection.html")
+
+
 @page_bp.get("/workorder")
 def workorder():
     """Work order page."""

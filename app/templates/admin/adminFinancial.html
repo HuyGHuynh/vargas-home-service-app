@@ -7,6 +7,7 @@
   <title>Admin - Financial Reports</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/ownerView.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/adminFinancial.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -18,7 +19,7 @@
         <a href="/owner">Dashboard</a>
         <a href="/admin/service">Service</a>
         <a href="/admin/warranty">Warranty</a>
-        <a href="#" onclick="return false;">Work Order</a>
+        <a href="/admin/workorder">Work Order</a>
         <a href="/admin/financial" class="active">Financial</a>
         <a href="/admin/employee">Manage Employee</a>
         <a href="/admin/timesheet">Timesheet</a>
@@ -39,12 +40,10 @@
     <!-- Report Filters -->
     <div class="report-filters">
       <div class="filter-group">
-        <label for="reportType">Report Type:</label>
-        <select id="reportType" onchange="updateReport()">
-          <option value="summary">Summary</option>
-          <option value="revenue">Revenue Details</option>
-          <option value="labor">Labor Costs</option>
-          <option value="work-orders">Work Orders</option>
+        <label for="categoryFilter">Category Filter:</label>
+        <select id="categoryFilter" onchange="updateReport()">
+          <option value="all">All Categories</option>
+          <!-- Categories will be populated dynamically by JavaScript -->
         </select>
       </div>
 
@@ -72,6 +71,12 @@
       <button class="refresh-btn" onclick="updateReport()">
         <span>🔄</span> Refresh
       </button>
+    </div>
+
+    <!-- Category Filter Indicator -->
+    <div class="filter-indicator" id="filterIndicator" style="display: none;">
+      <span class="filter-icon">📊</span>
+      <span class="filter-text">Showing data for: <strong id="currentCategory">All Categories</strong></span>
     </div>
 
     <!-- Summary Cards -->
@@ -150,6 +155,20 @@
     <div class="charts-section">
       <div class="chart-card">
         <h3>Revenue Trend</h3>
+        <div class="chart-stats" id="chartStats">
+          <div class="stat-item">
+            <span class="stat-label">Average Monthly Revenue:</span>
+            <span class="stat-value" id="avgMonthlyRevenue">$0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Best Month:</span>
+            <span class="stat-value" id="bestMonth">-</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Total Months:</span>
+            <span class="stat-value" id="totalMonths">0</span>
+          </div>
+        </div>
         <div class="chart-placeholder" id="revenueChart">
           <canvas id="revenueChartCanvas"></canvas>
         </div>
@@ -157,6 +176,20 @@
 
       <div class="chart-card">
         <h3>Service Distribution</h3>
+        <div class="chart-stats" id="serviceStats">
+          <div class="stat-item">
+            <span class="stat-label">Most Requested:</span>
+            <span class="stat-value" id="mostRequestedService">-</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Total Services:</span>
+            <span class="stat-value" id="totalServices">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Service Types:</span>
+            <span class="stat-value" id="serviceTypes">0</span>
+          </div>
+        </div>
         <div class="chart-placeholder" id="serviceChart">
           <canvas id="serviceChartCanvas"></canvas>
         </div>

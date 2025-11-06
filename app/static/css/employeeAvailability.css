@@ -7,14 +7,14 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #EFECE3 0%, #8FABD4 100%);
   min-height: 100vh;
   color: #333;
 }
 
 /* Navigation Header */
 .employee-header {
-  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  background: linear-gradient(135deg, #8FABD4 0%, #4A70A9 100%);
   padding: 0;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   position: sticky;
@@ -129,7 +129,7 @@ body {
 }
 
 .page-description {
-  color: #666;
+  color: #333;
   font-size: 1.05rem;
 }
 
@@ -154,7 +154,7 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  color: #666;
+  color: #333;
 }
 
 .availability-tab:hover {
@@ -164,10 +164,10 @@ body {
 }
 
 .availability-tab.active {
-  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  background: linear-gradient(135deg, #8FABD4 0%, #4A70A9 100%);
   color: white;
-  border-color: #1976D2;
-  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+  border-color: #4A70A9;
+  box-shadow: 0 4px 12px rgba(74, 112, 169, 0.4);
 }
 
 /* Form Container */
@@ -207,7 +207,7 @@ body {
 }
 
 .helper-text {
-  color: #666;
+  color: #333;
   font-size: 0.95rem;
   margin-bottom: 1rem;
   font-style: italic;
@@ -320,15 +320,15 @@ body {
 }
 
 .calendar-day.selected {
-  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  background: linear-gradient(135deg, #8FABD4 0%, #4A70A9 100%);
   color: white;
-  border-color: #1976D2;
-  box-shadow: 0 4px 8px rgba(33, 150, 243, 0.4);
+  border-color: #4A70A9;
+  box-shadow: 0 4px 8px rgba(74, 112, 169, 0.4);
 }
 
 .calendar-day.disabled {
   background: #fafafa;
-  color: #ccc;
+  color: #444;
   cursor: not-allowed;
   opacity: 0.5;
 }
@@ -394,7 +394,7 @@ body {
 
 .cancel-btn {
   background: #f5f5f5;
-  color: #666;
+  color: #333;
 }
 
 .cancel-btn:hover {
@@ -403,14 +403,14 @@ body {
 }
 
 .submit-btn {
-  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  background: linear-gradient(135deg, #8FABD4 0%, #4A70A9 100%);
   color: white;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .submit-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(33, 150, 243, 0.4);
+  box-shadow: 0 6px 12px rgba(74, 112, 169, 0.4);
 }
 
 /* Responsive Design */

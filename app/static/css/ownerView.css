@@ -1,8 +1,8 @@
 /* Admin Navigation Bar Styles */
 .admin-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #8FABD4 0%, #4A70A9 100%);
     padding: 0;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px rgba(74, 112, 169, 0.2);
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -72,7 +72,7 @@
 
 .logout-btn:hover {
     background-color: white !important;
-    color: #667eea !important;
+    color: #000000 !important;
     transform: translateY(-2px);
 }
 
@@ -81,9 +81,9 @@
     position: absolute;
     top: 10px;
     left: 10px;
-    background-color: #f3f0f0;
-    border: 2px solid black;
-    color: #050404;
+    background-color: #EFECE3;
+    border: 2px solid #4A70A9;
+    color: #000000;
     padding: 6px 10px;
     border-radius: 6px;
     font-weight: 600;
@@ -92,20 +92,21 @@
 }
 
 #home:hover {
-    background-color: #e0dedf;
+    background-color: #8FABD4;
+    color: white;
     transform: scale(1.05);
 }
 
 body {
     font-family: Arial, sans-serif;
-    background-color: #f4f7fc;
+    background-color: #EFECE3;
     padding: 0;
     margin: 0;
 }
 
 h1 {
     text-align: center;
-    color: #333;
+    color: #000000;
     margin: 30px 0;
 }
 
@@ -115,7 +116,7 @@ h1 {
     background: white;
     padding: 15px;
     border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px rgba(74, 112, 169, 0.1);
 }
 
 #errorBox {
@@ -197,7 +198,7 @@ h1 {
 }
 
 .close-modal {
-    color: #aaa;
+    color: #555;
     position: absolute;
     right: 25px;
     top: 25px;
@@ -233,7 +234,7 @@ h1 {
 }
 
 .detail-section h3 {
-    color: #667eea;
+    color: #000000;
     font-size: 1.1rem;
     margin: 0 0 16px 0;
 }
@@ -247,7 +248,7 @@ h1 {
 }
 
 .detail-label {
-    color: #666;
+    color: #333;
     font-weight: 600;
 }
 
@@ -256,7 +257,7 @@ h1 {
 }
 
 .detail-value.highlight {
-    color: #667eea;
+    color: #000000;
     font-weight: 600;
 }
 
@@ -274,22 +275,22 @@ h1 {
 
 .status-badge.pending {
     background-color: #fff3e0;
-    color: #f57c00;
+    color: #ff9800;
 }
 
 .status-badge.in-progress {
     background-color: #e3f2fd;
-    color: #1976d2;
+    color: #2196f3;
 }
 
 .status-badge.completed {
     background-color: #e8f5e9;
-    color: #388e3c;
+    color: #4caf50;
 }
 
 .status-badge.cancelled {
     background-color: #ffebee;
-    color: #d32f2f;
+    color: #f44336;
 }
 
 /* Employee Assignment Status */
@@ -315,12 +316,12 @@ h1 {
 
 .employee-status.active {
     background-color: #e8f5e9;
-    color: #2e7d32;
+    color: #4caf50;
 }
 
 .employee-status.inactive {
     background-color: #ffebee;
-    color: #c62828;
+    color: #f44336;
 }
 
 .employee-status.on-leave {
@@ -344,7 +345,7 @@ h1 {
 }
 
 .price-input-row label {
-    color: #666;
+    color: #333;
     font-weight: 600;
     min-width: 120px;
 }
@@ -360,7 +361,7 @@ h1 {
 
 .price-input:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #4A70A9;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -517,7 +518,7 @@ h1 {
 }
 
 .warranty-section h3 {
-    color: #667eea;
+    color: #000000;
     font-size: 1.1rem;
     margin: 0 0 16px 0;
     text-align: center;
@@ -564,7 +565,7 @@ h1 {
 
 .warranty-form .form-control:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #4A70A9;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 

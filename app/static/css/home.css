@@ -14,7 +14,7 @@
 
     /* ---------- Header / Nav ---------- */
     header {
-      background: linear-gradient(90deg, #0b1220, #12213b);
+      background: linear-gradient(90deg, #4A70A9, #000000);
       color: white;
       position: sticky;
       top: 0;
@@ -46,14 +46,14 @@
     
     .nav-links { display:flex; gap: 16px; align-items:center; margin-left: auto; }
     .nav-links a {
-      color: #e6eefc;
+      color: #fff;
       text-decoration: none;
       font-weight: 600;
       padding: 8px 10px;
       border-radius: 8px;
       transition: background 180ms, color 180ms, transform 180ms;
     }
-    .nav-links a:hover { background: rgba(255,255,255,0.04); transform: translateY(-2px); color: #cfe6ff; }
+    .nav-links a:hover { background: rgba(255,255,255,0.04); transform: translateY(-2px); color: #fff; }
 
     .btn-primary {
       background: #ffefdb;
@@ -76,7 +76,7 @@
 
     /* Stylish Schedule Appointment Button */
 .appointment-btn {
-  background: linear-gradient(135deg, #2563eb, #1e3a8a);
+  background: linear-gradient(135deg, #8FABD4, #4A70A9);
   color: white;
   padding: 14px 28px;
   font-size: 1.1em;
@@ -90,7 +90,7 @@
 }
 
 .appointment-btn:hover {
-  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  background: linear-gradient(135deg, #4A70A9, #8FABD4);
   transform: translateY(-3px);
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
 }
@@ -125,7 +125,7 @@
 
     /* ---------- Hero ---------- */
     .hero {
-      background: linear-gradient(135deg, #2563eb 0%, #0f172a 100%);
+      background: linear-gradient(135deg, #8FABD4 0%, #000000 100%);
       color: white;
       text-align: center;
       padding: 56px 12px;
@@ -166,7 +166,7 @@
       margin: 0 auto;
     }
     .service-card {
-      background: linear-gradient(180deg,#ffffff,#f6fbff);
+      background: linear-gradient(180deg,#EFECE3,#8FABD4);
       padding: 22px;
       border-radius: 12px;
       box-shadow: 0 8px 22px rgba(12,30,50,0.06);
@@ -207,7 +207,7 @@
     }
     .step {
       width: 220px;
-      background: linear-gradient(180deg,#f3f8ff,#ffffff);
+      background: linear-gradient(180deg,#EFECE3,#8FABD4);
       padding:18px;
       border-radius:12px;
       text-align:left;
@@ -228,7 +228,7 @@
 
     /* ---------- Warranty Lookup Section ---------- */
     .warranty-section {
-        background: linear-gradient(180deg, #f8fafc, #ffffff);
+        background: linear-gradient(180deg, #EFECE3, #8FABD4);
         padding: 56px 12px;
     }
 
@@ -272,7 +272,7 @@
 
     .warranty-lookup-btn {
         padding: 14px 28px;
-        background: linear-gradient(135deg, #2563eb, #1e3a8a);
+        background: linear-gradient(135deg, #8FABD4, #4A70A9);
         color: white;
         border: none;
         border-radius: 8px;
@@ -280,13 +280,13 @@
         font-size: 1rem;
         cursor: pointer;
         transition: all 220ms;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        box-shadow: 0 4px 12px rgba(74, 112, 169, 0.2);
     }
 
     .warranty-lookup-btn:hover {
-        background: linear-gradient(135deg, #1e3a8a, #2563eb);
+        background: linear-gradient(135deg, #4A70A9, #8FABD4);
         transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+        box-shadow: 0 6px 16px rgba(74, 112, 169, 0.3);
     }
 
     .warranty-lookup-btn:active {
@@ -331,7 +331,7 @@
     /* Footer */
     footer {
       background: #071026;
-      color: #e6eefc;
+      color: #fff;
       text-align:center;
       padding: 22px 10px;
       margin-top: 18px;
@@ -343,7 +343,7 @@
     }
     @media (max-width: 720px) {
       .service-grid { grid-template-columns: 1fr; }
-      .nav-links { display: none; position: absolute; right: 12px; top: 64px; background: linear-gradient(180deg,#0f2a4b,#081324); padding: 12px; border-radius: 10px; box-shadow: 0 14px 30px rgba(4,10,20,0.45); flex-direction: column; min-width: 170px; }
+      .nav-links { display: none; position: absolute; right: 12px; top: 64px; background: linear-gradient(180deg,#4A70A9,#000000); padding: 12px; border-radius: 10px; box-shadow: 0 14px 30px rgba(4,10,20,0.45); flex-direction: column; min-width: 170px; }
       .nav-links a { padding: 10px; display: block; }
       .hamburger { display:flex; }
       .gallery-grid img { height:150px; }
@@ -381,8 +381,8 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background: linear-gradient(180deg, #ffffff, #f9fbfd);
-        border-bottom: 1px solid #e2e8f0;
+        background: linear-gradient(180deg, #EFECE3, #8FABD4);
+        border-bottom: 1px solid #4A70A9;
     }
 
     .warranty-summary-left {
@@ -427,13 +427,13 @@
     }
 
     .status-badge.active {
-        background: #dcfce7;
-        color: #166534;
+        background: #e8f5e9;
+        color: #4caf50;
     }
 
     .status-badge.expired {
-        background: #fee2e2;
-        color: #991b1b;
+        background: #ffebee;
+        color: #f44336;
     }
 
     .toggle-icon {
@@ -514,47 +514,47 @@
     }
 
     .email-btn {
-        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        background: linear-gradient(135deg, #8FABD4, #4A70A9);
         color: white;
     }
 
     .email-btn:hover {
-        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        background: linear-gradient(135deg, #4A70A9, #8FABD4);
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        box-shadow: 0 4px 12px rgba(74, 112, 169, 0.3);
     }
 
     .help-btn {
-        background: linear-gradient(135deg, #10b981, #059669);
+        background: linear-gradient(135deg, #8FABD4, #4A70A9);
         color: white;
     }
 
     .help-btn:hover {
-        background: linear-gradient(135deg, #059669, #047857);
+        background: linear-gradient(135deg, #4A70A9, #8FABD4);
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+        box-shadow: 0 4px 12px rgba(74, 112, 169, 0.3);
     }
 
     .renew-btn {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
+        background: linear-gradient(135deg, #8FABD4, #4A70A9);
         color: white;
     }
 
     .renew-btn:hover {
-        background: linear-gradient(135deg, #d97706, #b45309);
+        background: linear-gradient(135deg, #4A70A9, #8FABD4);
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+        box-shadow: 0 4px 12px rgba(74, 112, 169, 0.3);
     }
 
     .print-btn {
-        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        background: linear-gradient(135deg, #8FABD4, #4A70A9);
         color: white;
     }
 
     .print-btn:hover {
-        background: linear-gradient(135deg, #4f46e5, #4338ca);
+        background: linear-gradient(135deg, #4A70A9, #8FABD4);
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        box-shadow: 0 4px 12px rgba(74, 112, 169, 0.3);
     }
 
     .btn-icon {

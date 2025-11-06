@@ -10,7 +10,7 @@
 }
 
 .warranty-header h1 {
-    color: #333;
+    color: #000000;
     font-size: 2rem;
     margin: 0 0 24px 0;
 }
@@ -24,23 +24,23 @@
 
 .tab-btn {
     padding: 10px 24px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid #8FABD4;
     background: white;
     border-radius: 25px;
     font-size: 0.95rem;
     font-weight: 600;
-    color: #666;
+    color: #000000;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .tab-btn:hover {
-    border-color: #667eea;
-    color: #667eea;
+    border-color: #4A70A9;
+    color: #000000;
 }
 
 .tab-btn.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #8FABD4 0%, #4A70A9 100%);
     color: white;
     border-color: transparent;
 }
@@ -95,7 +95,7 @@
 }
 
 .warranty-service-type {
-    color: #667eea;
+    color: #000000;
     font-weight: 600;
     font-size: 0.95rem;
 }
@@ -118,17 +118,17 @@
 
 .warranty-status.pending {
     background-color: #fff3e0;
-    color: #f57c00;
+    color: #ff9800;
 }
 
 .warranty-status.active {
     background-color: #e8f5e9;
-    color: #2e7d32;
+    color: #4caf50;
 }
 
 .warranty-status.inactive {
     background-color: #ffebee;
-    color: #c62828;
+    color: #f44336;
 }
 
 .expired-badge {
@@ -157,7 +157,7 @@
 }
 
 .warranty-info-label {
-    color: #666;
+    color: #333;
     font-weight: 500;
 }
 
@@ -193,7 +193,7 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #8FABD4 0%, #4A70A9 100%);
     color: white;
 }
 
@@ -304,7 +304,7 @@
 }
 
 .close-modal {
-    color: #aaa;
+    color: #555;
     position: absolute;
     right: 25px;
     top: 25px;
@@ -340,7 +340,7 @@
 }
 
 .detail-section h3 {
-    color: #667eea;
+    color: #000000;
     font-size: 1.1rem;
     margin: 0 0 16px 0;
 }
@@ -354,7 +354,7 @@
 }
 
 .detail-label {
-    color: #666;
+    color: #333;
     font-weight: 600;
 }
 
@@ -363,7 +363,7 @@
 }
 
 .detail-value.highlight {
-    color: #667eea;
+    color: #000000;
     font-weight: 600;
 }
 
@@ -419,7 +419,7 @@
 
 .cancel-btn {
     background-color: #f5f5f5;
-    color: #666;
+    color: #333;
 }
 
 .cancel-btn:hover {
@@ -453,7 +453,7 @@
 .empty-state {
     text-align: center;
     padding: 80px 20px;
-    color: #666;
+    color: #333;
     grid-column: 1 / -1;
 }
 
@@ -470,7 +470,7 @@
 }
 
 .empty-state p {
-    color: #666;
+    color: #333;
     font-size: 1rem;
 }
 
