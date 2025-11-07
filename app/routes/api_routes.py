@@ -1017,6 +1017,38 @@ def complete_service_request(request_id):
                 WHERE requestid = %s
             """, (request_id,))
             
+            # Get customer details for email notifications
+            cursor.execute("""
+                SELECT c.email, c.firstname, c.lastname, c.customerid
+                FROM servicerequests sr
+                JOIN customer c ON sr.customerid = c.customerid
+                WHERE sr.requestid = %s
+            """, (request_id,))
+            
+            customer_row = cursor.fetchone()
+            customer_email = customer_row[0] if customer_row else None
+            customer_name = f"{customer_row[1]} {customer_row[2]}" if customer_row else None
+            customer_id = customer_row[3] if customer_row else None
+            
+            warranty_message = ""
+            review_message = ""
+            
+            # Send review request email (always send when service is completed)
+            if customer_email and customer_name:
+                from services.email_service import EmailService
+                
+                try:
+                    EmailService.send_service_completion_email(
+                        customer_email=customer_email,
+                        customer_name=customer_name,
+                        request_id=request_id,
+                        customer_id=customer_id
+                    )
+                    review_message = " and review request sent to customer"
+                except Exception as email_error:
+                    print(f"Failed to send review email: {email_error}")
+                    review_message = " (review email sending failed)"
+            
             # If warranty data is provided, create warranty record and send customer email
             if warranty_data and warranty_data.get('start_date'):
                 # Create warranty with 'Pending' status (customer hasn't decided yet)
@@ -1034,18 +1066,8 @@ def complete_service_request(request_id):
                 
                 warranty_id = cursor.fetchone()[0]
                 
-                # Get customer email for sending warranty selection email
-                cursor.execute("""
-                    SELECT c.email, c.firstname, c.lastname 
-                    FROM servicerequests sr
-                    JOIN customer c ON sr.customerid = c.customerid
-                    WHERE sr.requestid = %s
-                """, (request_id,))
-                
-                customer_row = cursor.fetchone()
-                if customer_row:
-                    customer_email = customer_row[0]
-                    customer_name = f"{customer_row[1]} {customer_row[2]}"
+                # Use already-fetched customer data for warranty email
+                if customer_email and customer_name:
                     
                     # Import and use email service to send warranty selection email
                     from services.email_service import EmailService
@@ -1070,7 +1092,7 @@ def complete_service_request(request_id):
             else:
                 warranty_message = ""
             
-            return {"success": True, "message": f"Service request {request_id} completed{warranty_message}"}, 200
+            return {"success": True, "message": f"Service request {request_id} completed{warranty_message}{review_message}"}, 200
             
     except Exception as e:
         return {"success": False, "error": str(e)}, 500
@@ -1220,6 +1242,185 @@ def cleanup_inactive_warranties():
             deleted_count = cursor.rowcount
             
             return {"success": True, "message": f"Cleaned up {deleted_count} inactive warranties", "deleted_count": deleted_count}, 200
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+# Review Management Routes
+
+@api_bp.get("/reviews/<int:request_id>/details")
+def get_review_details(request_id):
+    """Get service request details for review form."""
+    try:
+        # Use the existing ServiceRequestRepository method
+        from repositories.servicerequest_repository import ServiceRequestRepository
+        
+        work_order_data = ServiceRequestRepository.get_service_request_by_id(request_id)
+        
+        if not work_order_data:
+            return {"success": False, "error": "Work order not found"}, 404
+        
+        # Check if the work order is completed
+        if work_order_data['request_status'] != 'Completed':
+            return {"success": False, "error": "Work order is not completed yet"}, 400
+        
+        # Check if review already exists
+        with BaseRepository.get_cursor() as cursor:
+            cursor.execute("""
+                SELECT review_id FROM reviews 
+                WHERE request_id = %s AND customer_id = %s
+            """, (request_id, work_order_data['customer_id']))
+            
+            existing_review = cursor.fetchone()
+            if existing_review:
+                return {"success": False, "error": "Review already submitted for this service request"}, 400
+        
+        # Return the work order data in the expected format
+        print(f"DEBUG: Returning work order data: {work_order_data}")
+        return {"success": True, "work_order": work_order_data}, 200
+            
+    except Exception as e:
+        print(f"Error getting review details for request_id {request_id}: {e}")
+        print(f"Exception type: {type(e).__name__}")
+        import traceback
+        print(f"Full traceback: {traceback.format_exc()}")
+        return {"success": False, "error": f"Database error: {str(e)}"}, 500
+
+
+@api_bp.post("/reviews/<int:request_id>")
+def submit_review(request_id):
+    """Submit a customer review for a specific request."""
+    try:
+        data = request.get_json()
+        print(f"DEBUG: Received review submission for request_id: {request_id}")
+        print(f"DEBUG: Data received: {data}")
+        
+        if not data:
+            return {"success": False, "error": "No data provided"}, 400
+        
+        # Validate required fields (request_id comes from URL, customer_id will be looked up)
+        required_fields = ['rating_quality', 'rating_professionalism', 
+                          'rating_timeliness', 'rating_communication', 'rating_overall']
+        for field in required_fields:
+            if field not in data:
+                return {"success": False, "error": f"Missing required field: {field}"}, 400
+        
+        # Validate rating ranges (1-5)
+        rating_fields = ['rating_quality', 'rating_professionalism', 'rating_timeliness', 
+                        'rating_communication', 'rating_overall']
+        for field in rating_fields:
+            rating = data.get(field)
+            if not isinstance(rating, int) or rating < 1 or rating > 5:
+                return {"success": False, "error": f"Invalid {field}: must be between 1 and 5"}, 400
+        
+        with BaseRepository.get_cursor() as cursor:
+            # First, get the customer_id from the service request
+            print(f"DEBUG: Looking up customer_id for request_id={request_id}")
+            cursor.execute("""
+                SELECT customerid, status FROM servicerequests 
+                WHERE requestid = %s
+            """, (request_id,))
+            
+            service_row = cursor.fetchone()
+            print(f"DEBUG: Service request found: {service_row}")
+            
+            if not service_row:
+                return {"success": False, "error": "Service request not found"}, 404
+            
+            customer_id = service_row[0]
+            service_status = service_row[1]
+            
+            if service_status != 'Completed':
+                return {"success": False, "error": "Can only review completed service requests"}, 400
+            
+            # Check if review already exists
+            print(f"DEBUG: Checking for existing review with request_id={request_id}, customer_id={customer_id}")
+            cursor.execute("""
+                SELECT review_id FROM reviews 
+                WHERE request_id = %s AND customer_id = %s
+            """, (request_id, customer_id))
+            
+            existing_review = cursor.fetchone()
+            print(f"DEBUG: Existing review found: {existing_review}")
+            
+            if existing_review:
+                return {"success": False, "error": "Review already submitted for this service request"}, 400
+            
+            # Insert review
+            insert_values = (
+                customer_id,  # Now we get this from the service request lookup
+                request_id,
+                data['rating_quality'],
+                data['rating_professionalism'],
+                data['rating_timeliness'],
+                data['rating_communication'],
+                data['rating_overall'],
+                data.get('comments', '')
+            )
+            print(f"DEBUG: Inserting review with values: {insert_values}")
+            
+            cursor.execute("""
+                INSERT INTO reviews (
+                    customer_id, request_id, rating_quality, rating_professionalism,
+                    rating_timeliness, rating_communication, rating_overall, comments
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING review_id
+            """, insert_values)
+            
+            review_id = cursor.fetchone()[0]
+            print(f"DEBUG: Review inserted successfully with ID: {review_id}")
+            
+            return {"success": True, "message": "Review submitted successfully", "review_id": review_id}, 201
+            
+    except Exception as e:
+        print(f"Error submitting review for request_id {request_id}: {e}")
+        print(f"Exception type: {type(e).__name__}")
+        import traceback
+        print(f"Full traceback: {traceback.format_exc()}")
+        return {"success": False, "error": f"Database error: {str(e)}"}, 500
+
+
+@api_bp.get("/reviews/<int:request_id>")
+def get_review_by_request(request_id):
+    """Get review for a specific service request."""
+    try:
+        with BaseRepository.get_cursor() as cursor:
+            cursor.execute("""
+                SELECT r.review_id, r.customer_id, r.request_id, r.rating_quality,
+                       r.rating_professionalism, r.rating_timeliness, r.rating_communication,
+                       r.rating_overall, r.avg_rating, r.comments,
+                       c.firstname, c.lastname, c.email
+                FROM reviews r
+                JOIN customer c ON r.customer_id = c.customerid
+                WHERE r.request_id = %s
+            """, (request_id,))
+            
+            row = cursor.fetchone()
+            if not row:
+                return {"success": False, "error": "Review not found"}, 404
+            
+            review_data = {
+                "review_id": row[0],
+                "customer_id": row[1],
+                "request_id": row[2],
+                "ratings": {
+                    "quality": row[3],
+                    "professionalism": row[4],
+                    "timeliness": row[5],
+                    "communication": row[6],
+                    "overall": row[7],
+                    "average": float(row[8]) if row[8] else 0.0
+                },
+                "comments": row[9],
+                "customer": {
+                    "first_name": row[10],
+                    "last_name": row[11],
+                    "email": row[12]
+                }
+            }
+            
+            return {"success": True, "data": review_data}, 200
             
     except Exception as e:
         return {"success": False, "error": str(e)}, 500

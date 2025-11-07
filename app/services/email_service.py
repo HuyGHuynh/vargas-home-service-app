@@ -909,3 +909,166 @@ Vargas' Home Services - Excellence in Every Job
 {datetime.now().strftime('%B %d, %Y')}
 """
         return text
+
+    @staticmethod
+    def send_service_completion_email(customer_email: str, customer_name: str, request_id: int, customer_id: int = None) -> bool:
+        """
+        Send service completion email with review link to customer.
+        
+        Args:
+            customer_email: Customer's email address
+            customer_name: Customer's full name
+            request_id: Service request ID
+            
+        Returns:
+            bool: True if sent successfully
+        """
+        try:
+            email_service = EmailService()
+            
+            # Get Gmail service
+            if not email_service.service:
+                email_service.service = email_service.authenticate_gmail()
+            
+            # Create email
+            message = MIMEMultipart('alternative')
+            message['To'] = customer_email
+            message['From'] = f"{email_service.sender_name} <{email_service.sender_email}>"
+            message['Subject'] = f"Service Completed - We'd Love Your Feedback! - Work Order #{request_id}"
+            
+            # Create email content
+            base_url = os.getenv('BASE_URL', 'http://localhost:5000')
+            
+            # Include customer_id in URL if provided
+            if customer_id:
+                review_url = f"{base_url}/review.html?request_id={request_id}&customer_id={customer_id}"
+            else:
+                review_url = f"{base_url}/review.html?request_id={request_id}"
+            
+            html_content = email_service._create_service_completion_html(
+                customer_name, request_id, review_url
+            )
+            text_content = email_service._create_service_completion_text(
+                customer_name, request_id, review_url
+            )
+            
+            # Attach content
+            text_part = MIMEText(text_content, 'plain')
+            html_part = MIMEText(html_content, 'html')
+            message.attach(text_part)
+            message.attach(html_part)
+            
+            # Send email
+            raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+            send_message = {'raw': raw_message}
+            
+            result = email_service.service.users().messages().send(userId='me', body=send_message).execute()
+            print(f"✅ Service completion email sent to {customer_email}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Failed to send service completion email: {e}")
+            return False
+    
+    def _create_service_completion_html(self, customer_name: str, request_id: int, review_url: str) -> str:
+        """Create HTML email content for service completion with review link."""
+        html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }}
+                .header {{ background-color: #2c5282; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
+                .content {{ background-color: #f7fafc; padding: 30px; }}
+                .completion-card {{ background-color: white; margin: 20px 0; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }}
+                .completion-header {{ font-size: 1.4em; font-weight: bold; color: #38a169; margin-bottom: 20px; }}
+                .review-section {{ background-color: #ecfdf5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981; }}
+                .button-container {{ text-align: center; margin: 30px 0; }}
+                .btn {{ display: inline-block; padding: 18px 35px; margin: 10px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 18px; }}
+                .btn-review {{ background-color: #3182ce; color: white; }}
+                .btn:hover {{ opacity: 0.9; }}
+                .stars {{ font-size: 24px; color: #ffd700; margin: 10px 0; }}
+                .thank-you {{ background-color: #fff5f5; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #e53e3e; }}
+                .footer {{ background-color: #2c5282; color: white; padding: 15px; text-align: center; border-radius: 0 0 8px 8px; }}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>🏠 Vargas' Home Services</h1>
+                <h2>Service Completed Successfully!</h2>
+            </div>
+            <div class="content">
+                <p>Dear {customer_name},</p>
+                <p>We're pleased to let you know that your service has been completed successfully!</p>
+                
+                <div class="completion-card">
+                    <div class="completion-header">✅ Work Order #{request_id} - COMPLETED</div>
+                    <p>Our team has finished your service and everything is ready for you to enjoy.</p>
+                </div>
+                
+                <div class="review-section">
+                    <strong>🌟 How did we do?</strong>
+                    <div class="stars">⭐ ⭐ ⭐ ⭐ ⭐</div>
+                    <p>Your feedback is incredibly valuable to us! It helps us maintain our high standards and improve our services for all customers.</p>
+                    <p><strong>Please take just 2 minutes to share your experience:</strong></p>
+                    
+                    <div class="button-container">
+                        <a href="{review_url}" class="btn btn-review">📝 Leave Your Review</a>
+                    </div>
+                    
+                    <p><em>Your review will help other customers and allows us to recognize our outstanding team members.</em></p>
+                </div>
+                
+                <div class="thank-you">
+                    <strong>❤️ Thank You!</strong><br>
+                    Thank you for choosing Vargas' Home Services. We appreciate your trust in our team and hope we exceeded your expectations.
+                </div>
+                
+                <p>If you have any questions about the completed service or need future assistance, please don't hesitate to contact us at support@vargashome.com</p>
+                <p>We look forward to serving you again!</p>
+            </div>
+            <div class="footer">
+                <p>&copy; {datetime.now().year} Vargas' Home Services - Excellence in Every Service</p>
+            </div>
+        </body>
+        </html>
+        """
+        return html
+    
+    def _create_service_completion_text(self, customer_name: str, request_id: int, review_url: str) -> str:
+        """Create plain text email content for service completion with review link."""
+        text = f"""
+VARGAS' HOME SERVICES
+🏠 SERVICE COMPLETED SUCCESSFULLY!
+
+Dear {customer_name},
+
+We're pleased to let you know that your service has been completed successfully!
+
+✅ WORK ORDER #{request_id} - COMPLETED
+=========================================
+Our team has finished your service and everything is ready for you to enjoy.
+
+🌟 HOW DID WE DO?
+================
+⭐ ⭐ ⭐ ⭐ ⭐
+
+Your feedback is incredibly valuable to us! It helps us maintain our high standards and improve our services for all customers.
+
+Please take just 2 minutes to share your experience:
+{review_url}
+
+Your review will help other customers and allows us to recognize our outstanding team members.
+
+❤️ THANK YOU!
+=============
+Thank you for choosing Vargas' Home Services. We appreciate your trust in our team and hope we exceeded your expectations.
+
+If you have any questions about the completed service or need future assistance, please don't hesitate to contact us at support@vargashome.com
+
+We look forward to serving you again!
+
+Vargas' Home Services - Excellence in Every Service
+{datetime.now().strftime('%B %d, %Y')}
+"""
+        return text

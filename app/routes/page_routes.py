@@ -246,6 +246,7 @@ def workorder():
 
 
 @page_bp.get("/review")
+@page_bp.get("/review.html")
 def review():
     """Customer review page."""
     return render_template("customer/review.html")

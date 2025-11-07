@@ -254,10 +254,6 @@
    cursor: pointer;
    font-size: 18px;
    font-weight: bold;
-<<<<<<< HEAD
-   color: #000000;
- }
-=======
    color: #007bff;
  }
 
@@ -354,4 +350,3 @@
      max-height: 150px;
    }
  }
->>>>>>> 3219e5d (Handle image service with Google Cloud Storage)

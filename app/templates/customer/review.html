@@ -10,18 +10,6 @@
 </head>
 
 <body>
-  <!-- Navigation Bar -->
-  <nav class="navbar">
-    <div class="logo">Vargas Home Service</div>
-    <ul class="nav-links">
-      <li><a href="/">Home</a></li>
-      <li><a href="/appointment">Schedule Service</a></li>
-      <li><a href="/warranty">Warranty</a></li>
-      <li><a href="/workorder">Track Order</a></li>
-      <li><a href="/review" class="active">Review</a></li>
-    </ul>
-  </nav>
-
   <!-- Review Form Section -->
   <div class="review-container">
     <div class="review-header">
@@ -29,24 +17,14 @@
       <p>We value your feedback! Please take a moment to rate your experience with our service.</p>
     </div>
 
-    <form id="reviewForm" class="review-form">
-      <!-- Work Order ID -->
-      <div class="form-group">
-        <label for="workOrderId">Work Order ID *</label>
-        <input type="text" id="workOrderId" required placeholder="Enter your work order ID (e.g., WO-2024-001)">
-      </div>
+    <!-- Work Order Information Display (will be populated by JavaScript) -->
+    <div id="workOrderInfo" class="work-order-info" style="display: none;">
+      <!-- This will be populated by JavaScript -->
+    </div>
 
-      <!-- Customer Information -->
-      <div class="form-row">
-        <div class="form-group">
-          <label for="customerName">Your Name *</label>
-          <input type="text" id="customerName" required placeholder="Enter your full name">
-        </div>
-        <div class="form-group">
-          <label for="customerEmail">Email Address *</label>
-          <input type="email" id="customerEmail" required placeholder="your.email@example.com">
-        </div>
-      </div>
+    <form id="reviewForm" class="review-form">
+      <!-- Hidden field for form submission -->
+      <input type="hidden" id="requestId" name="requestId">
 
       <!-- Question 1: Service Quality -->
       <div class="question-group">
@@ -188,7 +166,8 @@
         <label class="question-label">
           <span class="question-number">4.</span> Communication
         </label>
-        <p class="question-text">How well did we communicate before and during the service (e.g., scheduling, updates)?</p>
+        <p class="question-text">How well did we communicate before and during the service (e.g., scheduling, updates)?
+        </p>
         <div class="rating-options">
           <label class="rating-option">
             <input type="radio" name="communication" value="1" required>
@@ -276,7 +255,8 @@
       <!-- Additional Comments -->
       <div class="form-group">
         <label for="comments">Additional Comments (Optional)</label>
-        <textarea id="comments" rows="5" placeholder="Please share any additional feedback or suggestions..."></textarea>
+        <textarea id="comments" rows="5"
+          placeholder="Please share any additional feedback or suggestions..."></textarea>
       </div>
 
       <!-- Submit Button -->
@@ -289,8 +269,9 @@
     <div id="successMessage" class="success-message" style="display: none;">
       <div class="success-icon">✓</div>
       <h2>Thank You for Your Feedback!</h2>
-      <p>Your review has been submitted successfully. We appreciate your time and will use your feedback to improve our services.</p>
-      <button onclick="resetForm()" class="back-btn">Submit Another Review</button>
+      <p>Your review has been submitted successfully. We appreciate your time and will use your feedback to improve our
+        services.</p>
+      <p><em>Your review helps us maintain our high standards and improve our services for all customers.</em></p>
     </div>
   </div>
 
