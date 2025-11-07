@@ -376,6 +376,197 @@ Vargas' Home Services - Built with love for our community
 """
         return text
     
+    @staticmethod
+    def send_warranty_selection_email(customer_email: str, customer_name: str, request_id: int, 
+                                    warranty_id: int, warranty_description: str, warranty_price: float,
+                                    warranty_start_date: str, warranty_end_date: str) -> bool:
+        """
+        Send warranty selection email to customer with accept/decline links.
+        
+        Args:
+            customer_email: Customer's email address
+            customer_name: Customer's full name
+            request_id: Service request ID
+            warranty_id: Warranty ID
+            warranty_description: Warranty description
+            warranty_price: Warranty price
+            warranty_start_date: Warranty start date
+            warranty_end_date: Warranty end date
+            
+        Returns:
+            bool: True if sent successfully
+        """
+        try:
+            email_service = EmailService()
+            
+            # Get Gmail service
+            if not email_service.service:
+                email_service.service = email_service.authenticate_gmail()
+            
+            # Create email
+            message = MIMEMultipart('alternative')
+            message['To'] = customer_email
+            message['From'] = f"{email_service.sender_name} <{email_service.sender_email}>"
+            message['Subject'] = f"Extended Warranty Available - Work Order #{request_id}"
+            
+            # Create email content
+            base_url = os.getenv('BASE_URL', 'http://localhost:5000')
+            warranty_url = f"{base_url}/warranty-selection?request_id={request_id}&warranty_id={warranty_id}"
+            
+            html_content = email_service._create_warranty_selection_html(
+                customer_name, request_id, warranty_description, warranty_price,
+                warranty_start_date, warranty_end_date, warranty_url
+            )
+            text_content = email_service._create_warranty_selection_text(
+                customer_name, request_id, warranty_description, warranty_price,
+                warranty_start_date, warranty_end_date, warranty_url
+            )
+            
+            # Attach content
+            text_part = MIMEText(text_content, 'plain')
+            html_part = MIMEText(html_content, 'html')
+            message.attach(text_part)
+            message.attach(html_part)
+            
+            # Send email
+            raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+            send_message = {'raw': raw_message}
+            
+            result = email_service.service.users().messages().send(userId='me', body=send_message).execute()
+            print(f"✅ Warranty selection email sent to {customer_email}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Failed to send warranty selection email: {e}")
+            return False
+    
+    def _create_warranty_selection_html(self, customer_name: str, request_id: int, 
+                                      warranty_description: str, warranty_price: float,
+                                      warranty_start_date: str, warranty_end_date: str,
+                                      warranty_url: str) -> str:
+        """Create HTML email content for warranty selection."""
+        html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }}
+                .header {{ background-color: #2c5282; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
+                .content {{ background-color: #f7fafc; padding: 30px; }}
+                .warranty-card {{ background-color: white; margin: 20px 0; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
+                .warranty-header {{ font-size: 1.4em; font-weight: bold; color: #2c5282; margin-bottom: 20px; text-align: center; }}
+                .detail {{ margin: 12px 0; }}
+                .label {{ font-weight: bold; color: #4a5568; }}
+                .value {{ color: #2d3748; }}
+                .price {{ font-size: 1.3em; font-weight: bold; color: #38a169; }}
+                .benefits {{ background-color: #ecfdf5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981; }}
+                .benefits ul {{ margin: 10px 0; padding-left: 20px; }}
+                .benefits li {{ margin: 5px 0; }}
+                .button-container {{ text-align: center; margin: 30px 0; }}
+                .btn {{ display: inline-block; padding: 15px 30px; margin: 10px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; }}
+                .btn-accept {{ background-color: #38a169; color: white; }}
+                .btn-decline {{ background-color: #e53e3e; color: white; }}
+                .btn:hover {{ opacity: 0.9; }}
+                .important {{ background-color: #fef3c7; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #f59e0b; }}
+                .footer {{ background-color: #2c5282; color: white; padding: 15px; text-align: center; border-radius: 0 0 8px 8px; }}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>🛡️ Vargas' Home Services</h1>
+                <h2>Extended Warranty Available</h2>
+            </div>
+            <div class="content">
+                <p>Dear {customer_name},</p>
+                <p>Great news! Your recent service has been completed successfully. We're pleased to offer you an extended warranty for your peace of mind.</p>
+                
+                <div class="warranty-card">
+                    <div class="warranty-header">Extended Warranty Offer</div>
+                    <div class="detail"><span class="label">Work Order:</span> <span class="value">#{request_id}</span></div>
+                    <div class="detail"><span class="label">Coverage Period:</span> <span class="value">{warranty_start_date} to {warranty_end_date}</span></div>
+                    <div class="detail"><span class="label">Description:</span> <span class="value">{warranty_description}</span></div>
+                    <div class="detail"><span class="label">Warranty Price:</span> <span class="value price">${warranty_price:.2f}</span></div>
+                </div>
+                
+                <div class="benefits">
+                    <strong>🌟 Warranty Benefits:</strong>
+                    <ul>
+                        <li>✅ Coverage for defects in workmanship</li>
+                        <li>✅ Priority scheduling for warranty repairs</li>
+                        <li>✅ No additional diagnostic fees</li>
+                        <li>✅ Peace of mind protection</li>
+                        <li>✅ Professional service guarantee</li>
+                    </ul>
+                </div>
+                
+                <div class="button-container">
+                    <a href="{warranty_url}" class="btn btn-accept">📋 View Warranty Details & Make Decision</a>
+                </div>
+                
+                <div class="important">
+                    <strong>⏰ Limited Time Offer:</strong><br>
+                    This warranty offer is available for the next 24 hours. After that, this opportunity will expire.
+                </div>
+                
+                <p>Click the button above to review the complete warranty details and decide whether to accept or decline this protection plan.</p>
+                <p>If you have any questions about this warranty offer, please don't hesitate to contact us at support@vargashome.com</p>
+                <p>Thank you for choosing Vargas' Home Services!</p>
+            </div>
+            <div class="footer">
+                <p>&copy; {datetime.now().year} Vargas' Home Services - Your Trusted Service Partner</p>
+            </div>
+        </body>
+        </html>
+        """
+        return html
+    
+    def _create_warranty_selection_text(self, customer_name: str, request_id: int,
+                                      warranty_description: str, warranty_price: float,
+                                      warranty_start_date: str, warranty_end_date: str,
+                                      warranty_url: str) -> str:
+        """Create plain text email content for warranty selection."""
+        text = f"""
+VARGAS' HOME SERVICES
+🛡️ EXTENDED WARRANTY AVAILABLE
+
+Dear {customer_name},
+
+Great news! Your recent service has been completed successfully. We're pleased to offer you an extended warranty for your peace of mind.
+
+EXTENDED WARRANTY OFFER:
+=======================
+Work Order: #{request_id}
+Coverage Period: {warranty_start_date} to {warranty_end_date}
+Description: {warranty_description}
+Warranty Price: ${warranty_price:.2f}
+
+WARRANTY BENEFITS:
+==================
+✅ Coverage for defects in workmanship
+✅ Priority scheduling for warranty repairs
+✅ No additional diagnostic fees
+✅ Peace of mind protection
+✅ Professional service guarantee
+
+MAKE YOUR DECISION:
+==================
+To view complete warranty details and make your decision, visit:
+{warranty_url}
+
+⏰ LIMITED TIME OFFER:
+This warranty offer is available for the next 24 hours. After that, this opportunity will expire.
+
+Click the link above to review the complete warranty details and decide whether to accept or decline this protection plan.
+
+If you have any questions about this warranty offer, please don't hesitate to contact us at support@vargashome.com
+
+Thank you for choosing Vargas' Home Services!
+
+Vargas' Home Services - Your Trusted Service Partner
+{datetime.now().strftime('%B %d, %Y')}
+"""
+        return text
+
     def send_appointment_confirmation_email(self, service_request: Dict[Any, Any]) -> Dict[str, bool]:
         """
         Send appointment confirmation emails to both customer and assigned employee.

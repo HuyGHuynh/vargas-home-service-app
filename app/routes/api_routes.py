@@ -721,8 +721,8 @@ def get_all_warranties():
 
 
 @api_bp.put("/admin/warranties/<int:warranty_id>/status")
-def update_warranty_status(warranty_id):
-    """Update warranty status."""
+def admin_update_warranty_status(warranty_id):
+    """Update warranty status (admin function)."""
     try:
         from repositories.warranty_repository import WarrantyRepository
         
@@ -1017,11 +1017,13 @@ def complete_service_request(request_id):
                 WHERE requestid = %s
             """, (request_id,))
             
-            # If warranty data is provided, create warranty record
+            # If warranty data is provided, create warranty record and send customer email
             if warranty_data and warranty_data.get('start_date'):
+                # Create warranty with 'Pending' status (customer hasn't decided yet)
                 cursor.execute("""
                     INSERT INTO warranties (start_date, end_date, description, price, status, request_id) 
-                    VALUES (%s, %s, %s, %s, 'Active', %s)
+                    VALUES (%s, %s, %s, %s, 'Pending', %s)
+                    RETURNING warranty_id
                 """, (
                     warranty_data['start_date'],
                     warranty_data['end_date'],
@@ -1030,7 +1032,41 @@ def complete_service_request(request_id):
                     request_id
                 ))
                 
-                warranty_message = " with warranty attached"
+                warranty_id = cursor.fetchone()[0]
+                
+                # Get customer email for sending warranty selection email
+                cursor.execute("""
+                    SELECT c.email, c.firstname, c.lastname 
+                    FROM servicerequests sr
+                    JOIN customer c ON sr.customerid = c.customerid
+                    WHERE sr.requestid = %s
+                """, (request_id,))
+                
+                customer_row = cursor.fetchone()
+                if customer_row:
+                    customer_email = customer_row[0]
+                    customer_name = f"{customer_row[1]} {customer_row[2]}"
+                    
+                    # Import and use email service to send warranty selection email
+                    from services.email_service import EmailService
+                    
+                    try:
+                        EmailService.send_warranty_selection_email(
+                            customer_email=customer_email,
+                            customer_name=customer_name,
+                            request_id=request_id,
+                            warranty_id=warranty_id,
+                            warranty_description=warranty_data['description'],
+                            warranty_price=warranty_data['price'],
+                            warranty_start_date=warranty_data['start_date'],
+                            warranty_end_date=warranty_data['end_date']
+                        )
+                        warranty_message = " with warranty offer sent to customer"
+                    except Exception as email_error:
+                        print(f"Failed to send warranty email: {email_error}")
+                        warranty_message = " with warranty created (email sending failed)"
+                else:
+                    warranty_message = " with warranty created (customer not found)"
             else:
                 warranty_message = ""
             
@@ -1063,6 +1099,127 @@ def cancel_service_request(request_id):
             """, (request_id,))
             
             return {"success": True, "message": f"Service request {request_id} cancelled"}, 200
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.get("/warranties/<int:request_id>")
+def get_warranty_by_request_id(request_id):
+    """Get warranty details by service request ID."""
+    try:
+        with BaseRepository.get_cursor() as cursor:
+            cursor.execute("""
+                SELECT w.warranty_id, w.start_date, w.end_date, w.description, w.price, w.status,
+                       sr.requestid, c.firstname, c.lastname, c.email,
+                       s.job_name, st.service_type_name
+                FROM warranties w
+                JOIN servicerequests sr ON w.request_id = sr.requestid
+                JOIN customer c ON sr.customerid = c.customerid
+                JOIN services s ON sr.service_id = s.service_id
+                JOIN service_types st ON s.service_type_id = st.service_type_id
+                WHERE w.request_id = %s
+            """, (request_id,))
+            
+            row = cursor.fetchone()
+            if not row:
+                return {"success": False, "error": "Warranty not found for this request"}, 404
+            
+            warranty_data = {
+                "warranty_id": row[0],
+                "start_date": row[1].strftime('%Y-%m-%d') if row[1] else None,
+                "end_date": row[2].strftime('%Y-%m-%d') if row[2] else None,
+                "description": row[3],
+                "price": float(row[4]) if row[4] else 0.0,
+                "status": row[5],
+                "request_id": row[6],
+                "customer": {
+                    "first_name": row[7],
+                    "last_name": row[8],
+                    "email": row[9]
+                },
+                "service": {
+                    "job_name": row[10],
+                    "service_type": row[11]
+                }
+            }
+            
+            return {"success": True, "data": warranty_data}, 200
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.put("/warranties/<int:warranty_id>/status")
+def update_warranty_status(warranty_id):
+    """Update warranty status (accept/decline)."""
+    try:
+        data = request.get_json()
+        new_status = data.get('status')
+        action = data.get('action')  # 'accept' or 'decline'
+        
+        # Validate status
+        valid_statuses = ['Pending', 'Active', 'Inactive']
+        if new_status not in valid_statuses:
+            return {"success": False, "error": "Invalid status"}, 400
+        
+        with BaseRepository.get_cursor() as cursor:
+            # Check if warranty exists and is in Pending status
+            cursor.execute("SELECT status, request_id FROM warranties WHERE warranty_id = %s", (warranty_id,))
+            row = cursor.fetchone()
+            
+            if not row:
+                return {"success": False, "error": "Warranty not found"}, 404
+            
+            if row[0] != 'Pending':
+                return {"success": False, "error": "Warranty status can only be updated from Pending"}, 400
+            
+            request_id = row[1]
+            
+            if action == 'accept' or new_status == 'Active':
+                # Customer accepted - status becomes 'Active'
+                cursor.execute("""
+                    UPDATE warranties 
+                    SET status = 'Active'
+                    WHERE warranty_id = %s
+                """, (warranty_id,))
+                
+                message = "Warranty accepted successfully. Your warranty is now active."
+                
+            elif action == 'decline' or new_status == 'Inactive':
+                # Customer declined - status becomes 'Inactive' and will be deleted after 24 hours
+                cursor.execute("""
+                    UPDATE warranties 
+                    SET status = 'Inactive'
+                    WHERE warranty_id = %s
+                """, (warranty_id,))
+                
+                message = "Warranty declined successfully. This offer will be removed within 24 hours."
+                
+            else:
+                return {"success": False, "error": "Invalid action"}, 400
+            
+            return {"success": True, "message": message, "request_id": request_id}, 200
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.delete("/warranties/cleanup")
+def cleanup_inactive_warranties():
+    """Delete inactive warranties older than 24 hours."""
+    try:
+        with BaseRepository.get_cursor() as cursor:
+            # Delete warranties that are Inactive and older than 24 hours
+            cursor.execute("""
+                DELETE FROM warranties 
+                WHERE status = 'Inactive' 
+                AND updated_at < NOW() - INTERVAL '24 hours'
+            """)
+            
+            deleted_count = cursor.rowcount
+            
+            return {"success": True, "message": f"Cleaned up {deleted_count} inactive warranties", "deleted_count": deleted_count}, 200
             
     except Exception as e:
         return {"success": False, "error": str(e)}, 500

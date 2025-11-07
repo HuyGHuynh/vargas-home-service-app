@@ -1,19 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Warranty Selection - Vargas Home Service</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/warrantySelection.css') }}">
+    <style>
+        /* Initially hide content until we determine what to show */
+        .main-content {
+            display: none;
+        }
+        .loading-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background-color: #f7fafc;
+        }
+        .loading-content {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+    </style>
 </head>
+
 <body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <div style="font-size: 40px; margin-bottom: 20px;">⏳</div>
+            <h2>Loading Warranty Information...</h2>
+            <p>Please wait while we retrieve your warranty details.</p>
+        </div>
+    </div>
+
+    <!-- Main Content (initially hidden) -->
+    <div class="main-content" id="mainContent">
     <!-- Header Section -->
     <header class="page-header">
         <div class="header-content">
             <h1 class="page-title">Warranty Selection</h1>
             <div class="work-order-id">
                 <span class="label">Work Order:</span>
-                <span class="id-number">#WO-2024-001234</span>
+                <span class="id-number">Loading...</span>
             </div>
         </div>
     </header>
@@ -39,27 +73,23 @@
                 <div class="summary-grid">
                     <div class="summary-item">
                         <span class="item-label">Work Order ID:</span>
-                        <span class="item-value">#WO-2024-001234</span>
+                        <span class="item-value">Loading...</span>
                     </div>
                     <div class="summary-item">
                         <span class="item-label">Service:</span>
-                        <span class="item-value">HVAC System Repair</span>
+                        <span class="item-value">Loading...</span>
                     </div>
                     <div class="summary-item">
-                        <span class="item-label">Service Date:</span>
-                        <span class="item-value">October 28, 2024 at 2:00 PM</span>
+                        <span class="item-label">Service Type:</span>
+                        <span class="item-value">Loading...</span>
                     </div>
                     <div class="summary-item">
-                        <span class="item-label">Location:</span>
-                        <span class="item-value">Newark, NJ</span>
+                        <span class="item-label">Customer:</span>
+                        <span class="item-value">Loading...</span>
                     </div>
                     <div class="summary-item">
-                        <span class="item-label">Technician:</span>
-                        <span class="item-value">Michael Rodriguez</span>
-                    </div>
-                    <div class="summary-item total">
-                        <span class="item-label">Total Paid:</span>
-                        <span class="item-value">$485.00</span>
+                        <span class="item-label">Status:</span>
+                        <span class="item-value">Loading...</span>
                     </div>
                 </div>
             </div>
@@ -73,15 +103,15 @@
             <div class="card-content">
                 <div class="warranty-overview">
                     <div class="warranty-name">
-                        <h3>Premium HVAC Service Warranty</h3>
+                        <h3>Service Warranty</h3>
                     </div>
                     <div class="warranty-id">
                         <span class="id-label">Warranty ID:</span>
-                        <span class="id-value" id="warrantyIdDisplay">WAR-2024-5678</span>
+                        <span class="id-value" id="warrantyIdDisplay">Loading...</span>
                     </div>
                     <div class="warranty-price">
                         <span class="price-label">Price:</span>
-                        <span class="price-value">$75.00</span>
+                        <span class="price-value">Loading...</span>
                     </div>
                 </div>
 
@@ -121,9 +151,9 @@
                     <div class="detail-section fine-print">
                         <h4 class="section-title">Terms & Conditions</h4>
                         <p class="section-content">
-                            This warranty covers defects in workmanship and materials for the specified service. 
-                            Customer must contact Vargas Home Service within the coverage period for warranty claims. 
-                            Warranty is non-transferable and applies only to the original customer and service location. 
+                            This warranty covers defects in workmanship and materials for the specified service.
+                            Customer must contact Vargas Home Service within the coverage period for warranty claims.
+                            Warranty is non-transferable and applies only to the original customer and service location.
                             Additional terms and conditions may apply.
                         </p>
                     </div>
@@ -143,10 +173,10 @@
                     <span class="btn-text">Decline Warranty</span>
                 </button>
             </div>
-            
+
             <div class="action-info">
                 <p class="info-text">
-                    <strong>Important:</strong> If you decline this warranty, the offer will be automatically 
+                    <strong>Important:</strong> If you decline this warranty, the offer will be automatically
                     removed after 24 hours and cannot be recovered.
                 </p>
             </div>
@@ -170,108 +200,301 @@
             console.log('Test function executed successfully');
         }
 
-        // Simple accept warranty function for testing
-        function simpleAcceptWarranty() {
-            console.log('Simple accept function called');
-            
-            // Replace page content immediately
-            document.body.innerHTML = '<div style="padding: 50px; text-align: center; font-family: Arial, sans-serif;">' +
-                '<h1 style="color: #4A70A9;">Thank You!</h1>' +
-                '<p style="font-size: 18px; margin: 20px 0;">Your warranty acceptance has been received successfully.</p>' +
-                '<div style="background: #e8f5e8; padding: 20px; border-radius: 10px; margin: 20px 0;">' +
-                '<h3>What Happens Next</h3>' +
-                '<p>Our company representative will call you within 1-2 business days to discuss the warranty details and arrange payment processing.</p>' +
-                '</div>' +
-                '<div style="background: #4A70A9; color: white; padding: 20px; border-radius: 10px;">' +
-                '<h3>Questions or Concerns?</h3>' +
-                '<p>If you have any questions, please contact us:</p>' +
-                '<p style="font-size: 20px; font-weight: bold;">📞 (555) 123-4567</p>' +
-                '<p>Business Hours: Monday - Friday, 8:00 AM - 6:00 PM</p>' +
-                '</div>' +
-                '</div>';
-            
-            // Prevent going back to warranty selection page
-            preventBackNavigation();
-            
-            // Change URL to indicate acceptance completion
-            window.history.replaceState({}, 'Thank You - Warranty Accepted', window.location.pathname + '?status=accepted&completed=true');
+        // Handle warranty acceptance with API call
+        async function simpleAcceptWarranty() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const warrantyId = urlParams.get('warranty_id');
+            const requestId = urlParams.get('request_id');
+
+            if (!warrantyId || !requestId) {
+                showError('Invalid warranty information. Please use the link from your email.');
+                return;
+            }
+
+            // Double-check warranty status before processing
+            if (await validateWarrantyBeforeAction(requestId, 'accept')) {
+                await handleWarrantyAcceptance(warrantyId, requestId);
+            }
         }
 
-        // Simple decline warranty function for testing
-        function simpleDeclineWarranty() {
-            console.log('Simple decline function called');
-            
-            // Replace page content immediately
-            document.body.innerHTML = '<div style="padding: 50px; text-align: center; font-family: Arial, sans-serif;">' +
-                '<h1 style="color: #4A70A9;">Thank You!</h1>' +
-                '<p style="font-size: 18px; margin: 20px 0;">Your warranty decision has been received and recorded.</p>' +
-                '<div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">' +
-                '<h3>Decision Noted</h3>' +
-                '<p>Your decision to decline the warranty has been processed. No further action is required on your part.</p>' +
-                '</div>' +
-                '<div style="background: #4A70A9; color: white; padding: 20px; border-radius: 10px;">' +
-                '<h3>Questions or Concerns?</h3>' +
-                '<p>If you have any questions, please contact us:</p>' +
-                '<p style="font-size: 20px; font-weight: bold;">📞 (555) 123-4567</p>' +
-                '<p>Business Hours: Monday - Friday, 8:00 AM - 6:00 PM</p>' +
-                '</div>' +
-                '</div>';
-            
-            // Prevent going back to warranty selection page
-            preventBackNavigation();
-            
-            // Change URL to indicate decline completion
-            window.history.replaceState({}, 'Thank You - Warranty Declined', window.location.pathname + '?status=declined&completed=true');
+        // Handle warranty decline with API call
+        async function simpleDeclineWarranty() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const warrantyId = urlParams.get('warranty_id');
+            const requestId = urlParams.get('request_id');
+
+            if (!warrantyId || !requestId) {
+                showError('Invalid warranty information. Please use the link from your email.');
+                return;
+            }
+
+            // Double-check warranty status before processing
+            if (await validateWarrantyBeforeAction(requestId, 'decline')) {
+                await handleWarrantyDecline(warrantyId, requestId);
+            }
+        }
+
+        async function validateWarrantyBeforeAction(requestId, action) {
+            try {
+                console.log(`Validating warranty before ${action} action...`);
+
+                const response = await fetch(`/api/warranties/${requestId}`);
+                const result = await response.json();
+
+                if (!result.success) {
+                    showError('Unable to verify warranty status. Please try again.');
+                    return false;
+                }
+
+                const warrantyData = result.data;
+                const currentStatus = warrantyData.status;
+
+                console.log(`Current warranty status: ${currentStatus}`);
+
+                if (currentStatus === 'Active') {
+                    showWarrantyAlreadyAccepted(warrantyData);
+                    return false;
+                } else if (currentStatus === 'Inactive') {
+                    showWarrantyAlreadyDeclined(warrantyData);
+                    return false;
+                } else if (currentStatus === 'Pending') {
+                    // Show confirmation dialog before proceeding
+                    const actionText = action === 'accept' ? 'accept' : 'decline';
+                    const confirmMessage = `Are you sure you want to ${actionText} this warranty offer? This decision cannot be changed.`;
+
+                    if (confirm(confirmMessage)) {
+                        return true;
+                    } else {
+                        console.log(`User cancelled ${action} action`);
+                        return false;
+                    }
+                } else {
+                    showError(`Invalid warranty status: ${currentStatus}. Please contact support.`);
+                    return false;
+                }
+
+            } catch (error) {
+                console.error('Error validating warranty:', error);
+                showError('Unable to validate warranty status. Please try again.');
+                return false;
+            }
+        }
+
+        // Handle warranty acceptance API call
+        async function handleWarrantyAcceptance(warrantyId, requestId) {
+            try {
+                // Show loading state
+                showLoadingState('Processing your warranty acceptance...');
+
+                const response = await fetch(`/api/warranties/${warrantyId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        status: 'Active',
+                        action: 'accept'
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    showError(result.error || 'Failed to accept warranty. Please try again.');
+                    return;
+                }
+
+                // Get warranty details for confirmation
+                const warrantyResponse = await fetch(`/api/warranties/${requestId}`);
+                const warrantyResult = await warrantyResponse.json();
+
+                if (warrantyResult.success) {
+                    showAcceptanceConfirmation(warrantyResult.data);
+                } else {
+                    showAcceptanceConfirmation({ warranty_id: warrantyId, request_id: requestId });
+                }
+
+                // Prevent going back to warranty selection page
+                preventBackNavigation();
+
+                // Change URL to indicate acceptance completion
+                window.history.replaceState({}, 'Thank You - Warranty Accepted', window.location.pathname + '?status=accepted&completed=true');
+
+            } catch (error) {
+                console.error('Error accepting warranty:', error);
+                showError('Failed to process warranty acceptance. Please contact support.');
+            }
+        }
+
+        // Handle warranty decline API call
+        async function handleWarrantyDecline(warrantyId, requestId) {
+            try {
+                // Show loading state
+                showLoadingState('Processing your warranty decline...');
+
+                const response = await fetch(`/api/warranties/${warrantyId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        status: 'Inactive',
+                        action: 'decline'
+                    })
+                });
+
+                console.log(`Decline API Response status: ${response.status}`);
+                const result = await response.json();
+                console.log('Decline API Response data:', result);
+
+                if (!result.success) {
+                    console.error('Decline API returned error:', result.error);
+                    showError(result.error || 'Failed to decline warranty. Please try again.');
+                    return;
+                }
+
+                showDeclineConfirmation();
+
+                // Prevent going back to warranty selection page
+                preventBackNavigation();
+
+                // Change URL to indicate decline completion
+                window.history.replaceState({}, 'Thank You - Warranty Declined', window.location.pathname + '?status=declined&completed=true');
+
+            } catch (error) {
+                console.error('Error declining warranty:', error);
+                showError('Failed to process warranty decline. Please contact support.');
+            }
+        }
+
+        function showLoadingState(message) {
+            document.body.innerHTML = `
+                <div style="padding: 50px; text-align: center; font-family: Arial, sans-serif;">
+                    <div style="font-size: 40px; margin-bottom: 20px;">⏳</div>
+                    <h2>${message}</h2>
+                    <p>Please wait while we process your request...</p>
+                </div>
+            `;
+        }
+
+        function showAcceptanceConfirmation(warrantyData) {
+            const startDate = warrantyData.start_date ? new Date(warrantyData.start_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'TBD';
+            const endDate = warrantyData.end_date ? new Date(warrantyData.end_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'TBD';
+
+            document.body.innerHTML = `
+                <div style="padding: 50px; text-align: center; font-family: Arial, sans-serif;">
+                    <div style="font-size: 60px; color: #4CAF50; margin-bottom: 20px;">✓</div>
+                    <h1 style="color: #4A70A9;">Warranty Accepted</h1>
+                    <p style="font-size: 18px; margin: 20px 0;">Thank you for your trust in our service quality!</p>
+                    
+                    <div style="background: #e8f5e8; padding: 30px; border-radius: 10px; margin: 30px 0; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto;">
+                        <h3 style="color: #4A70A9; margin-bottom: 20px;">Your Active Warranty Details:</h3>
+                        <div style="margin-bottom: 15px;"><strong>Warranty ID:</strong> WAR-${warrantyData.warranty_id}</div>
+                        <div style="margin-bottom: 15px;"><strong>Work Order ID:</strong> #${warrantyData.request_id}</div>
+                        <div style="margin-bottom: 15px;"><strong>Start Date:</strong> ${startDate}</div>
+                        <div style="margin-bottom: 15px;"><strong>End Date:</strong> ${endDate}</div>
+                    </div>
+                    
+                    <div style="background: #f0f8ff; padding: 30px; border-radius: 10px; margin: 30px 0; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto;">
+                        <h3 style="color: #4A70A9; margin-bottom: 20px;">What Happens Next:</h3>
+                        <ul style="line-height: 1.8;">
+                            <li>We'll email you a digital warranty certificate within 24 hours</li>
+                            <li>Your warranty is immediately active and covers all work performed</li>
+                            <li>For claims, call (555) 123-4567 or email warranty@vargasservice.com</li>
+                            <li>Keep your warranty ID: <strong>WAR-${warrantyData.warranty_id}</strong> for all communications</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="background: #4A70A9; color: white; padding: 30px; border-radius: 10px;">
+                        <h3>Questions or Claims?</h3>
+                        <p style="font-size: 20px; font-weight: bold;">📞 (555) 123-4567</p>
+                        <p style="font-size: 18px;">📧 warranty@vargasservice.com</p>
+                        <p>🕒 Monday - Friday: 8 AM - 6 PM</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showDeclineConfirmation() {
+            document.body.innerHTML = `
+                <div style="padding: 50px; text-align: center; font-family: Arial, sans-serif;">
+                    <div style="font-size: 60px; color: #666; margin-bottom: 20px;">✗</div>
+                    <h1 style="color: #4A70A9;">Warranty Declined</h1>
+                    <p style="font-size: 18px; margin: 20px 0;">Your service is complete without extended warranty coverage.</p>
+                    
+                    <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; margin: 30px 0; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto;">
+                        <h3 style="color: #4A70A9; margin-bottom: 20px;">Standard Coverage Still Applies:</h3>
+                        <p>Even without extended warranty, you still have our standard service guarantee:</p>
+                        <ul style="line-height: 1.8;">
+                            <li><strong>30-day workmanship guarantee</strong> on all performed work</li>
+                            <li><strong>Immediate support</strong> for any service-related issues</li>
+                            <li><strong>Priority scheduling</strong> for follow-up visits if needed</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="background: #fff3cd; padding: 30px; border-radius: 10px; margin: 30px 0; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto;">
+                        <h3 style="color: #856404; margin-bottom: 20px;">Changed Your Mind?</h3>
+                        <p>If you'd like to add warranty coverage in the future, contact us within 7 days of this decision.</p>
+                        <p style="font-size: 18px; font-weight: bold;">📞 (555) 123-4567</p>
+                        <p style="font-size: 16px;">📧 service@vargasservice.com</p>
+                    </div>
+                    
+                    <div style="background: #4A70A9; color: white; padding: 30px; border-radius: 10px;">
+                        <h3>Thank You for Choosing Vargas Home Service</h3>
+                        <p>We appreciate your business and look forward to serving you again!</p>
+                    </div>
+                </div>
+            `;
         }
 
         // Function to prevent back navigation
         function preventBackNavigation() {
             // Clear all browser history and replace with thank you page
             history.replaceState(null, null, window.location.pathname + '?completed=true');
-            
+
             // Clear forward/back history by replacing the entire history stack
             if (window.history && window.history.pushState) {
                 // Replace the entire history with just the thank you page
                 window.history.replaceState({}, 'Thank You', window.location.pathname + '?completed=true');
-                
+
                 // Add multiple entries to prevent navigation
                 for (let i = 0; i < 10; i++) {
                     window.history.pushState({}, 'Thank You', window.location.pathname + '?completed=true');
                 }
             }
-            
+
             // Listen for any navigation attempts and redirect to home or block
-            window.addEventListener('popstate', function(event) {
+            window.addEventListener('popstate', function (event) {
                 // Prevent going back by immediately pushing forward again
                 window.history.pushState({}, 'Thank You', window.location.pathname + '?completed=true');
-                
+
                 // Optional: Redirect to home page instead of blocking
                 // window.location.href = '/';
-                
+
                 console.log('Navigation blocked - warranty decision has been submitted');
             });
-            
+
             // Disable refresh and other navigation attempts
-            window.addEventListener('beforeunload', function(event) {
+            window.addEventListener('beforeunload', function (event) {
                 // This will show browser confirmation dialog when trying to leave
                 event.preventDefault();
                 event.returnValue = 'Your warranty decision has been submitted. Are you sure you want to leave this page?';
                 return event.returnValue;
             });
-            
+
             // Disable keyboard shortcuts that might navigate away
-            document.addEventListener('keydown', function(event) {
+            document.addEventListener('keydown', function (event) {
                 // Disable F5 (refresh)
                 if (event.key === 'F5' || (event.ctrlKey && event.key === 'r')) {
                     event.preventDefault();
                     console.log('Page refresh disabled - warranty decision completed');
                 }
-                
+
                 // Disable Ctrl+W (close tab)
                 if (event.ctrlKey && event.key === 'w') {
                     event.preventDefault();
                 }
-                
+
                 // Disable Alt+Left (back navigation)
                 if (event.altKey && event.key === 'ArrowLeft') {
                     event.preventDefault();
@@ -279,89 +502,263 @@
             });
         }
 
-        // Function to load warranty data and display coverage dates
-        function loadWarrantyData() {
-            // Simulated admin-configured warranty data
-            const adminConfiguredData = {
-                workOrderId: 'WO-2024-001234',
-                warrantyId: 'WAR-2024-5678',
-                adminSetStartDate: '2024-11-15', // Admin selected start date
-                adminSetEndDate: '2025-02-13',   // Admin selected end date
-                configuredBy: 'admin@vargasservice.com',
-                configuredDate: '2024-10-30',
-                warrantyDescription: `This comprehensive HVAC service warranty covers all work performed during your recent system repair on October 28, 2024. Our technician Michael Rodriguez completed a full system diagnostic and replaced the faulty thermostat control unit and cleaned the air filtration system.
+        // Function to load warranty data dynamically from URL parameters
+        async function loadWarrantyData() {
+            try {
+                // Get URL parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                const requestId = urlParams.get('request_id');
+                const warrantyId = urlParams.get('warranty_id');
+                const action = urlParams.get('action');
 
-Key Coverage Details:
-- Complete protection for the thermostat control unit replacement
-- Air filtration system maintenance and cleaning work
-- All associated wiring and connection work
-- System performance optimization adjustments
+                // If action is provided, handle accept/decline immediately
+                if (action && warrantyId) {
+                    if (action === 'accept') {
+                        await handleWarrantyAcceptance(warrantyId, requestId);
+                        return;
+                    } else if (action === 'decline') {
+                        await handleWarrantyDecline(warrantyId, requestId);
+                        return;
+                    }
+                }
 
-This warranty ensures that if any issues arise related to the specific work performed, we will return at no additional charge to address the problem. Our commitment is to ensure your HVAC system operates efficiently and reliably throughout the warranty period.
+                // If no request_id, show error
+                if (!requestId) {
+                    showError('Invalid warranty link. Missing request information.');
+                    return;
+                }
 
-For warranty claims, please contact our service department at (555) 123-4567 or email warranty@vargasservice.com with your warranty ID: WAR-2024-5678.`
-            };
-            
-            // Convert dates
-            const startDate = new Date(adminConfiguredData.adminSetStartDate);
-            const endDate = new Date(adminConfiguredData.adminSetEndDate);
-            
-            // Update coverage period display
-            const coveragePeriodElement = document.getElementById('coveragePeriod');
-            if (coveragePeriodElement) {
-                const startDateFormatted = startDate.toLocaleDateString('en-US', { 
-                    year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' 
-                });
-                const endDateFormatted = endDate.toLocaleDateString('en-US', { 
-                    year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' 
-                });
-                const durationDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-                
-                coveragePeriodElement.innerHTML = 
-                    '<div class="coverage-dates">' +
-                    '<div class="date-item"><strong>Start Date:</strong> ' + startDateFormatted + '</div>' +
-                    '<div class="date-item"><strong>End Date:</strong> ' + endDateFormatted + '</div>' +
-                    '<div class="coverage-duration">' +
-                    '<span style="color: #4A70A9; font-weight: 600;">Total Coverage: ' + durationDays + ' days</span>' +
-                    '</div>' +
-                    '</div>' +
-                    '<div class="admin-note">' +
-                    '<small style="color: #666; font-style: italic;">* Coverage dates configured by service administrator</small>' +
-                    '</div>';
-            }
-            
-            // Update warranty ID display
-            const warrantyIdElement = document.getElementById('warrantyIdDisplay');
-            if (warrantyIdElement) {
-                warrantyIdElement.textContent = adminConfiguredData.warrantyId;
-            }
-            
-            // Update warranty description display
-            const warrantyDescriptionElement = document.getElementById('warrantyDescription');
-            if (warrantyDescriptionElement) {
-                const formattedDescription = adminConfiguredData.warrantyDescription.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
-                
-                warrantyDescriptionElement.innerHTML = 
-                    '<div class="warranty-description-content">' +
-                    '<div class="description-text">' +
-                    '<p>' + formattedDescription + '</p>' +
-                    '</div>' +
-                    '<div class="description-footer">' +
-                    '<small style="color: #666; font-style: italic;">* Details provided by: ' + adminConfiguredData.configuredBy + '</small>' +
-                    '</div>' +
-                    '</div>';
+                // Fetch warranty data from API
+                console.log(`Fetching warranty data for request_id: ${requestId}`);
+                const response = await fetch(`/api/warranties/${requestId}`);
+                console.log(`API Response status: ${response.status}`);
+
+                const result = await response.json();
+                console.log('API Response data:', result);
+
+                if (!result.success) {
+                    console.error('API returned error:', result.error);
+                    showError(result.error || 'Warranty not found.');
+                    return;
+                }
+
+                const warrantyData = result.data;
+
+                // Immediately check warranty status and show appropriate page
+                const status = warrantyData.status;
+                console.log(`Warranty status: ${status}`);
+
+                if (status === 'Active') {
+                    // Customer already accepted - show accepted page immediately
+                    showWarrantyAlreadyAccepted(warrantyData);
+                    return;
+                } else if (status === 'Inactive') {
+                    // Customer already declined - show declined page immediately
+                    showWarrantyAlreadyDeclined(warrantyData);
+                    return;
+                } else if (status === 'Pending') {
+                    // Warranty still pending - show the selection interface
+                    console.log('Warranty is pending - showing selection interface');
+                    
+                    // Hide loading screen and show main content
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                    
+                    // Update work order ID displays
+                    document.querySelectorAll('.id-number').forEach(el => {
+                        el.textContent = `#${requestId}`;
+                    });
+                    
+                    // Update service summary
+                    updateServiceSummary(warrantyData);
+                    
+                    // Update warranty details
+                    updateWarrantyDetails(warrantyData);
+                } else {
+                    // Unknown status
+                    showError(`Invalid warranty status: ${status}. Please contact support.`);
+                    return;
+                }            } catch (error) {
+                console.error('Error loading warranty data:', error);
+                showError('Failed to load warranty information. Please try again later.');
             }
         }
 
+        function showWarrantyAlreadyAccepted(warrantyData) {
+            document.body.innerHTML = `
+                <div style="padding: 50px; text-align: center; font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
+                    <div style="background: #d1fae5; padding: 40px; border-radius: 15px; border: 2px solid #10b981;">
+                        <div style="font-size: 60px; margin-bottom: 20px;">✅</div>
+                        <h1 style="color: #065f46; margin-bottom: 20px;">Warranty Already Active</h1>
+                        <p style="font-size: 18px; color: #047857; margin-bottom: 30px;">
+                            You have already accepted this warranty offer. Your warranty is currently active and protecting your service.
+                        </p>
+                        
+                        <div style="background: white; padding: 25px; border-radius: 10px; margin: 25px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                            <h3 style="color: #065f46; margin-bottom: 15px;">Your Active Warranty Details</h3>
+                            <div style="text-align: left; max-width: 400px; margin: 0 auto;">
+                                <p><strong>Warranty ID:</strong> WAR-${warrantyData.warranty_id}</p>
+                                <p><strong>Work Order:</strong> #${warrantyData.request_id}</p>
+                                <p><strong>Coverage Start:</strong> ${new Date(warrantyData.start_date).toLocaleDateString()}</p>
+                                <p><strong>Coverage End:</strong> ${new Date(warrantyData.end_date).toLocaleDateString()}</p>
+                                <p><strong>Price:</strong> $${warrantyData.price.toFixed(2)}</p>
+                            </div>
+                        </div>
+                        
+                        <div style="background: #ecfdf5; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                            <h3 style="color: #065f46;">Need Help?</h3>
+                            <p>For warranty claims or questions:</p>
+                            <p style="font-size: 20px; font-weight: bold; color: #047857;">📞 (555) 123-4567</p>
+                            <p>Email: warranty@vargashome.com</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showWarrantyAlreadyDeclined(warrantyData) {
+            document.body.innerHTML = `
+                <div style="padding: 50px; text-align: center; font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
+                    <div style="background: #fee2e2; padding: 40px; border-radius: 15px; border: 2px solid #ef4444;">
+                        <div style="font-size: 60px; margin-bottom: 20px;">❌</div>
+                        <h1 style="color: #991b1b; margin-bottom: 20px;">Warranty Offer Declined</h1>
+                        <p style="font-size: 18px; color: #dc2626; margin-bottom: 30px;">
+                            You have already declined this warranty offer. This decision has been recorded in our system.
+                        </p>
+                        
+                        <div style="background: white; padding: 25px; border-radius: 10px; margin: 25px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                            <h3 style="color: #991b1b; margin-bottom: 15px;">Declined Warranty Details</h3>
+                            <div style="text-align: left; max-width: 400px; margin: 0 auto;">
+                                <p><strong>Work Order:</strong> #${warrantyData.request_id}</p>
+                                <p><strong>Decision Date:</strong> ${new Date().toLocaleDateString()}</p>
+                                <p><strong>Status:</strong> Declined</p>
+                            </div>
+                        </div>
+                        
+                        <div style="background: #fef3c7; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+                            <h3 style="color: #92400e;">Standard Coverage Still Applies</h3>
+                            <p style="color: #92400e;">Even without extended warranty, you still have our standard 30-day workmanship guarantee.</p>
+                        </div>
+                        
+                        <div style="background: #f3f4f6; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                            <h3 style="color: #374151;">Questions or Concerns?</h3>
+                            <p>If you have any questions about your service:</p>
+                            <p style="font-size: 20px; font-weight: bold; color: #374151;">📞 (555) 123-4567</p>
+                            <p>Email: support@vargashome.com</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateServiceSummary(warrantyData) {
+            const summaryGrid = document.querySelector('.summary-grid');
+            if (summaryGrid) {
+                summaryGrid.innerHTML = `
+                    <div class="summary-item">
+                        <span class="item-label">Work Order ID:</span>
+                        <span class="item-value">#${warrantyData.request_id}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="item-label">Service:</span>
+                        <span class="item-value">${warrantyData.service.job_name}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="item-label">Service Type:</span>
+                        <span class="item-value">${warrantyData.service.service_type}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="item-label">Customer:</span>
+                        <span class="item-value">${warrantyData.customer.first_name} ${warrantyData.customer.last_name}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="item-label">Status:</span>
+                        <span class="item-value">${warrantyData.status}</span>
+                    </div>
+                `;
+            }
+        }
+
+        function updateWarrantyDetails(warrantyData) {
+            // Update warranty ID
+            const warrantyIdElement = document.getElementById('warrantyIdDisplay');
+            if (warrantyIdElement) {
+                warrantyIdElement.textContent = `WAR-${warrantyData.warranty_id}`;
+            }
+
+            // Update warranty price
+            const priceElement = document.querySelector('.price-value');
+            if (priceElement) {
+                priceElement.textContent = `$${warrantyData.price.toFixed(2)}`;
+            }
+
+            // Update coverage period
+            const coveragePeriodElement = document.getElementById('coveragePeriod');
+            if (coveragePeriodElement) {
+                const startDate = new Date(warrantyData.start_date);
+                const endDate = new Date(warrantyData.end_date);
+
+                const startDateFormatted = startDate.toLocaleDateString('en-US', {
+                    year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
+                });
+                const endDateFormatted = endDate.toLocaleDateString('en-US', {
+                    year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
+                });
+                const durationDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+
+                coveragePeriodElement.innerHTML = `
+                    <div class="coverage-dates">
+                        <div class="date-item"><strong>Start Date:</strong> ${startDateFormatted}</div>
+                        <div class="date-item"><strong>End Date:</strong> ${endDateFormatted}</div>
+                        <div class="coverage-duration">
+                            <span style="color: #4A70A9; font-weight: 600;">Total Coverage: ${durationDays} days</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Update warranty description
+            const warrantyDescriptionElement = document.getElementById('warrantyDescription');
+            if (warrantyDescriptionElement) {
+                const formattedDescription = warrantyData.description.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
+
+                warrantyDescriptionElement.innerHTML = `
+                    <div class="warranty-description-content">
+                        <div class="description-text">
+                            <p>${formattedDescription}</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function showError(message) {
+            document.body.innerHTML = `
+                <div style="padding: 50px; text-align: center; font-family: Arial, sans-serif;">
+                    <h1 style="color: #e53e3e;">Error</h1>
+                    <p style="font-size: 18px; margin: 20px 0;">${message}</p>
+                    <div style="background: #fee2e2; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                        <h3>Need Help?</h3>
+                        <p>Please contact our support team:</p>
+                        <p style="font-size: 20px; font-weight: bold;">📞 (555) 123-4567</p>
+                        <p>Email: support@vargashome.com</p>
+                    </div>
+                </div>
+            `;
+        }
+
         // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             console.log('Warranty selection page loaded successfully');
-            
+
             // Load warranty data after page loads
-            setTimeout(function() {
+            setTimeout(function () {
                 loadWarrantyData();
             }, 500);
         });
     </script>
+    
+    </div> <!-- End main-content -->
 </body>
+
 </html>
