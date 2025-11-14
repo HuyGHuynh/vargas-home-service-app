@@ -883,6 +883,50 @@ def unassign_employee_from_request(request_id):
         return {"success": False, "error": str(e)}, 500
 
 
+@api_bp.put("/service-requests/<int:request_id>/set-final-price")
+def set_final_price(request_id):
+    """Set final price for a service request without changing status."""
+    try:
+        data = request.get_json()
+        final_price = data.get('final_price')
+        
+        if not final_price or final_price <= 0:
+            return {"success": False, "error": "Valid final price is required"}, 400
+        
+        with BaseRepository.get_cursor() as cursor:
+            # Check if request exists
+            cursor.execute("SELECT status FROM servicerequests WHERE requestid = %s", (request_id,))
+            row = cursor.fetchone()
+            
+            if not row:
+                return {"success": False, "error": "Service request not found"}, 404
+            
+            # Check if final price already exists
+            cursor.execute("SELECT finalprice_id FROM finalpricedetails WHERE request_id = %s", (request_id,))
+            existing_price = cursor.fetchone()
+            
+            if existing_price:
+                # Update existing final price
+                cursor.execute("""
+                    UPDATE finalpricedetails 
+                    SET pricetotal = %s 
+                    WHERE request_id = %s
+                """, (final_price, request_id))
+                message = f"Final price updated to ${final_price:.2f} for service request {request_id}"
+            else:
+                # Insert new final price record
+                cursor.execute("""
+                    INSERT INTO finalpricedetails (pricetotal, request_id) 
+                    VALUES (%s, %s)
+                """, (final_price, request_id))
+                message = f"Final price set to ${final_price:.2f} for service request {request_id}"
+            
+            return {"success": True, "message": message}, 200
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
 @api_bp.post("/service-requests/<int:request_id>/accept")
 def accept_service_request(request_id):
     """Accept a pending service request, set final price and change status to In Progress."""
