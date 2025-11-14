@@ -68,3 +68,28 @@ loginForm.addEventListener('submit', async function (event) {
         loginMessage.style.color = '#d9534f';
     }
 });
+
+// Forgot Password Logic -----------------------------------------------------------------------------------
+async function forgotPassword() {
+    const email = document.getElementById('email').value.trim();
+
+    if (!email) {
+        alert("Please enter your email first.");
+        return;
+    }
+
+    try {
+        const response = await fetch("/api/forgot-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+        alert(data.message);
+
+    } catch (error) {
+        console.error("Forgot password error:", error);
+        alert("Unable to process request right now.");
+    }
+}
