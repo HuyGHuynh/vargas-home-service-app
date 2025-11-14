@@ -5,6 +5,17 @@ from flask import Blueprint, request, jsonify, session, render_template, url_for
 from repositories.base_repository import BaseRepository
 from repositories.service_repository import ServiceRepository
 from repositories.employee_repository import EmployeeRepository
+from flask_mail import Mail
+from flask_mail import Message
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'yourgmail@gmail.com'
+app.config['MAIL_PASSWORD'] = 'your-app-password'   # NOT your Gmail password
+
+mail = Mail(app)
+
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -86,37 +97,44 @@ def login():
         
 @api_bp.post("/forgot-password")
 def forgot_password():
-    """Handles forgot password requests and sends a reset link."""
     try:
         data = request.get_json()
-
-        # Get the email from JSON
         email = data.get("email", "").strip() if data else ""
 
-        # If no email was provided
         if not email:
-            return {
-                "success": False,
-                "message": "Email is required for password reset"
-            }, 400
+            return {"success": False, "message": "Email is required"}, 400
 
-        # Generate a password reset token
+        # Create reset token + link
         import uuid
-        reset_token = str(uuid.uuid4())
-        reset_link = f"https://yourwebsite.com/reset-password/{reset_token}"
+        token = str(uuid.uuid4())
+        reset_link = f"https://yourwebsite.com/reset-password/{token}"
 
-        # TODO: Replace print with real email-sending logic
-        print(f"[DEBUG] Send reset link to {email}: {reset_link}")
+        # Send Email
+        msg = Message(
+            subject="Password Reset Request",
+            sender="yourgmail@gmail.com",
+            recipients=[email]
+        )
+        msg.body = f"""
+        You requested a password reset.
+
+        Click the link below to reset your password:
+        {reset_link}
+
+        If you didn't request this, ignore this email.
+        """
+
+        mail.send(msg)
 
         return {
             "success": True,
-            "message": "A password reset link has been sent to your email.",
-            "reset_link": reset_link  # Testing Only -- REMOVE WHEN DONE
+            "message": "A password reset link has been sent to your email."
         }, 200
 
     except Exception as e:
-        print(f"Forgot password error: {e}")
-        return {"success": False, "message": "Server error occurred"}, 500
+        print("Forgot password error:", e)
+        return {"success": False, "message": "Server error"}, 500
+
 
 
 @api_bp.post("/logout")
