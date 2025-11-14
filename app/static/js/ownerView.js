@@ -36,17 +36,17 @@ try {
     // Handle add work order form submission
     const addWorkOrderForm = document.getElementById('addWorkOrderForm');
     if (addWorkOrderForm) {
-      addWorkOrderForm.addEventListener('submit', async function(e) {
+      addWorkOrderForm.addEventListener('submit', async function (e) {
         e.preventDefault();
-        
+
         const formData = new FormData(this);
         const fullAddress = `${formData.get('address')}, ${formData.get('city')}, ${formData.get('state')} ${formData.get('zipCode')}`;
-        
+
         // Get estimated cost from the cost estimate display
         const totalCostElement = document.getElementById('totalCost');
-        const estimatedCost = totalCostElement && totalCostElement.textContent ? 
+        const estimatedCost = totalCostElement && totalCostElement.textContent ?
           parseFloat(totalCostElement.textContent.replace(/[^0-9.]/g, '')) || 0 : 0;
-        
+
         const data = {
           customerData: {
             firstName: formData.get('firstName'),
@@ -73,10 +73,10 @@ try {
             isCompleted: false
           }
         };
-        
+
         try {
           showNotification('Creating work order...', 'info');
-          
+
           const response = await fetch('/workorders/expanded', {
             method: 'POST',
             headers: {
@@ -84,9 +84,9 @@ try {
             },
             body: JSON.stringify(data)
           });
-          
+
           const result = await response.json();
-          
+
           if (result.success) {
             showNotification('Work order created successfully!', 'success');
             closeAddWorkOrderModal();
@@ -127,6 +127,27 @@ async function loadServiceRequests() {
   }
 }
 
+// Convert UTC datetime to display correctly in calendar
+function adjustDateTimeForCalendar(dateTimeString) {
+  if (!dateTimeString) return null;
+
+  // Check if the datetime is stored in UTC format (ends with +00 or Z)
+  const isUTC = dateTimeString.includes('+00') || dateTimeString.endsWith('Z');
+
+  if (isUTC) {
+    // For UTC times, we need to adjust them to display correctly
+    // FullCalendar will apply local timezone, so we counter-adjust
+    const utcDate = new Date(dateTimeString);
+    const timezoneOffset = utcDate.getTimezoneOffset(); // minutes difference from UTC
+
+    // Add the timezone offset to show the UTC time as if it were local
+    const adjustedDate = new Date(utcDate.getTime() + (timezoneOffset * 60000));
+    return adjustedDate.toISOString();
+  }
+
+  return dateTimeString;
+}
+
 // Display service requests on calendar
 function displayServiceRequests() {
   const events = serviceRequests.map(sr => {
@@ -137,7 +158,7 @@ function displayServiceRequests() {
     return {
       id: sr.request_id,
       title: `${customerName} - ${serviceType} (${assignedEmployee})`,
-      start: sr.preferred_datetime,
+      start: adjustDateTimeForCalendar(sr.preferred_datetime),
       backgroundColor: getStatusColor(sr.request_status),
       borderColor: getStatusColor(sr.request_status),
       extendedProps: {
@@ -236,6 +257,17 @@ function showServiceRequestDetails(requestId) {
         <div class="detail-label">Request Description:</div>
         <div class="detail-value">${serviceRequest.request_description || 'No description provided'}</div>
       </div>
+      ${serviceRequest.imageurl ? `
+      <div class="detail-row">
+        <div class="detail-label">Submitted Image:</div>
+        <div class="detail-value">
+          <div class="service-image-container">
+            <img src="${serviceRequest.imageurl}" alt="Service Request Image" class="service-request-image" onclick="openImageModal('${serviceRequest.imageurl}')">
+            <div class="image-caption">Click to view full size</div>
+          </div>
+        </div>
+      </div>
+      ` : ''}
     </div>
     
 
@@ -413,13 +445,13 @@ async function rejectRequest(requestId) {
 async function saveFinalPrice(requestId) {
   const finalPriceInput = document.getElementById('finalPriceInput');
   const finalPrice = parseFloat(finalPriceInput.value);
-  
+
   // Validate input
   if (!finalPrice || finalPrice <= 0) {
     showNotification('Please enter a valid price greater than 0', 'error');
     return;
   }
-  
+
   try {
     const response = await fetch(`/api/service-requests/${requestId}/set-final-price`, {
       method: 'PUT',
@@ -587,13 +619,30 @@ function showErrorState(message) {
 function formatDateTime(dateTimeString) {
   if (!dateTimeString) return 'N/A';
   const date = new Date(dateTimeString);
-  return date.toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+
+  // Check if the datetime is stored in UTC format (ends with +00 or Z)
+  const isUTC = dateTimeString.includes('+00') || dateTimeString.endsWith('Z');
+
+  if (isUTC) {
+    // For UTC times, display them as stored without timezone conversion
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'UTC'
+    });
+  } else {
+    // For local times, display normally
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
 }
 
 // Show notification
@@ -628,31 +677,32 @@ function openAddWorkOrderModal(dateStr) {
   const modal = document.getElementById('addWorkOrderModal');
   const selectedDateInput = document.getElementById('selectedDate');
   const selectedDateDisplay = document.getElementById('selectedDateDisplay');
-  
-  // Format date for display
-  const date = new Date(dateStr);
+
+  // Format date for display - fix timezone issue by parsing as local date
+  const dateParts = dateStr.split('-');
+  const date = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
   const formattedDate = date.toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   });
-  
+
   selectedDateInput.value = dateStr;
   selectedDateDisplay.textContent = formattedDate;
   modal.style.display = 'block';
-  
+
   // Reset form
   document.getElementById('addWorkOrderForm').reset();
   selectedDateInput.value = dateStr; // Set date again after reset
   selectedDateDisplay.textContent = formattedDate; // Set display again after reset
-  
+
   // Ensure state field always shows NJ after reset
   const stateInput = document.getElementById('state');
   if (stateInput) {
     stateInput.value = 'NJ';
   }
-  
+
   // Reset service dropdowns
   const jobSelect = document.getElementById('jobType');
   const serviceIdInput = document.getElementById('serviceId');
@@ -663,10 +713,10 @@ function openAddWorkOrderModal(dateStr) {
   if (serviceIdInput) {
     serviceIdInput.value = '';
   }
-  
+
   // Hide cost estimate
   hideCostEstimateInModal();
-  
+
   // Ensure service types are populated and technicians show all initially
   populateServiceTypeDropdown();
   populateTechnicianDropdown(); // Show all technicians initially
@@ -680,9 +730,9 @@ function closeAddWorkOrderModal() {
 }
 
 // Close modal when clicking outside of it
-window.addEventListener('click', function(event) {
+window.addEventListener('click', function (event) {
   const addWorkOrderModal = document.getElementById('addWorkOrderModal');
-  
+
   if (event.target === addWorkOrderModal) {
     closeAddWorkOrderModal();
   }
@@ -698,10 +748,10 @@ let allTechnicians = []; // Cached technicians
 function initializeServiceTypeHandling() {
   // Preload service data when modal is opened
   preloadServiceData();
-  
+
   // Preload technician data
   preloadTechnicianData();
-  
+
   // Add event listeners for service type and job type changes
   setupServiceTypeEventListeners();
 }
@@ -803,16 +853,16 @@ function populateQualifiedTechniciansDropdown(serviceTypeName) {
     if (!technician.specialties || technician.specialties.length === 0) {
       return false;
     }
-    
+
     // Check if technician has specialty matching the service type
-    return technician.specialties.some(specialty => 
+    return technician.specialties.some(specialty =>
       specialty.toLowerCase() === serviceTypeName.toLowerCase()
     );
   });
 
   // Clear and repopulate dropdown
   technicianSelect.innerHTML = '<option value="">--Select Technician--</option>';
-  
+
   if (qualifiedTechnicians.length > 0) {
     qualifiedTechnicians.forEach(technician => {
       const option = document.createElement('option');
@@ -835,7 +885,7 @@ function populateQualifiedTechniciansDropdown(serviceTypeName) {
 // Setup event listeners for service type and job type
 function setupServiceTypeEventListeners() {
   // Service type change handler
-  document.addEventListener('change', function(e) {
+  document.addEventListener('change', function (e) {
     if (e.target && e.target.id === 'serviceType') {
       const serviceTypeName = e.target.value;
       const jobSelect = document.getElementById('jobType');
@@ -874,7 +924,7 @@ function setupServiceTypeEventListeners() {
   });
 
   // Job type change handler
-  document.addEventListener('change', function(e) {
+  document.addEventListener('change', function (e) {
     if (e.target && e.target.id === 'jobType') {
       const serviceIdInput = document.getElementById('serviceId');
       const serviceId = e.target.value;
@@ -907,25 +957,33 @@ async function fetchAndDisplayCostInModal(serviceId) {
     const result = await response.json();
 
     if (result.success && result.data) {
-      const data = result.data;
-      
-      // Update breakdown display
-      let breakdownHTML = '';
-      if (data.hourly_rate) {
-        breakdownHTML += `<div>Hourly Rate: $${data.hourly_rate}</div>`;
-      }
-      if (data.estimated_hours) {
-        breakdownHTML += `<div>Estimated Hours: ${data.estimated_hours}</div>`;
-      }
-      if (data.material_cost) {
-        breakdownHTML += `<div>Material Cost: $${data.material_cost}</div>`;
-      }
-      
-      costBreakdown.innerHTML = breakdownHTML;
-      
-      // Update total cost
-      const total = data.total_cost || 0;
-      totalCost.innerHTML = `Total: $${total}`;
+      const cost = result.data;
+
+      // Display cost breakdown similar to appointmentForm
+      costBreakdown.innerHTML = `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+          <span><strong>Service:</strong> ${cost.job_name}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+          <span>Duration:</span>
+          <span>${cost.duration_hours} hour${cost.duration_hours !== 1 ? 's' : ''}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+          <span>Rate:</span>
+          <span>$${cost.service_price.toFixed(2)} per hour</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+          <span>Calculation:</span>
+          <span>${cost.duration_hours} × $${cost.service_price.toFixed(2)}</span>
+        </div>
+      `;
+
+      // Display total cost
+      totalCost.innerHTML = `
+        <div style="border-top: 1px solid #dee2e6; padding-top: 10px;">
+          Estimated Total: <span style="color: #28a745; font-size: 1.1em;">$${cost.estimated_cost.toFixed(2)}</span>
+        </div>
+      `;
     } else {
       throw new Error('Failed to fetch cost data');
     }
@@ -939,8 +997,45 @@ async function fetchAndDisplayCostInModal(serviceId) {
 // Hide cost estimate in modal
 function hideCostEstimateInModal() {
   const costEstimate = document.getElementById('costEstimate');
-  
+
   if (costEstimate) {
     costEstimate.style.display = 'none';
+  }
+}
+
+// Image modal functionality
+function openImageModal(imageUrl) {
+  // Create modal if it doesn't exist
+  let imageModal = document.getElementById('imageModal');
+  if (!imageModal) {
+    imageModal = document.createElement('div');
+    imageModal.id = 'imageModal';
+    imageModal.className = 'image-modal';
+    imageModal.innerHTML = `
+      <div class="image-modal-content">
+        <span class="close-image-modal" onclick="closeImageModal()">&times;</span>
+        <img id="modalImage" src="" alt="Service Request Image">
+        <div class="image-modal-caption">Service Request Image</div>
+      </div>
+    `;
+    document.body.appendChild(imageModal);
+
+    // Close modal when clicking outside the image
+    imageModal.addEventListener('click', function (e) {
+      if (e.target === imageModal) {
+        closeImageModal();
+      }
+    });
+  }
+
+  // Set the image source and show modal
+  document.getElementById('modalImage').src = imageUrl;
+  imageModal.style.display = 'block';
+}
+
+function closeImageModal() {
+  const imageModal = document.getElementById('imageModal');
+  if (imageModal) {
+    imageModal.style.display = 'none';
   }
 }

@@ -75,7 +75,7 @@ class ServiceRequestRepository(BaseRepository):
                         'service_id': row[4],
                         'request_description': row[5],
                         'request_status': row[6],
-                        'image_url': row[7],
+                        'imageurl': row[7],
                         'customer': {
                             'first_name': row[8],
                             'last_name': row[9],
@@ -181,7 +181,7 @@ class ServiceRequestRepository(BaseRepository):
                         'service_id': row[4],
                         'request_description': row[5],
                         'request_status': row[6],
-                        'image_url': row[7],
+                        'imageurl': row[7],
                         'customer': {
                             'first_name': row[8],
                             'last_name': row[9],

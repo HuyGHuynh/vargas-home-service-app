@@ -80,7 +80,7 @@ def check_employee_access(employee_id):
     
     # Admin users can access any employee page
     if session.get('is_admin'):
-        employee = EmployeeRepository.get_employee_by_id(employee_id)
+        employee = EmployeeRepository.get_employee_with_specialties(employee_id)
         if not employee:
             return redirect(url_for('pages.home'))
         return employee
@@ -89,8 +89,8 @@ def check_employee_access(employee_id):
     if session.get('user_id') != employee_id:
         return redirect(url_for('pages.home'))
     
-    # Get and return employee data
-    employee = EmployeeRepository.get_employee_by_id(employee_id)
+    # Get and return employee data with specialties
+    employee = EmployeeRepository.get_employee_with_specialties(employee_id)
     if not employee:
         return redirect(url_for('pages.login'))
     
