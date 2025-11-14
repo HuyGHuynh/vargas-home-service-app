@@ -28,8 +28,9 @@
         </a>
       </nav>
       <div class="employee-info-nav">
-        <span class="employee-name" id="employeeName">Michael Thompson</span>
-        <span class="employee-role-badge" id="employeeRole">Technician</span>
+        <span class="employee-name" id="employeeName">{{ employee.firstName }} {{ employee.lastName }}</span>
+        <span class="employee-role-badge" id="employeeRole">{{ 'Admin' if employee.role == 'admin' else 'Employee'
+          }}</span>
         <a href="/" class="logout-btn">Log Out</a>
       </div>
     </div>
@@ -42,8 +43,8 @@
         <span class="avatar-icon">👤</span>
       </div>
       <div class="profile-title">
-        <h2 id="profileFullName">Michael Thompson</h2>
-        <p id="profileRole">Senior HVAC Technician</p>
+        <h2 id="profileFullName">{{ employee.firstName }} {{ employee.lastName }}</h2>
+        <p id="profileRole">{{ 'Administrator' if employee.role == 'admin' else 'Employee' }}</p>
       </div>
     </div>
 
@@ -54,19 +55,25 @@
         <div class="profile-grid">
           <div class="profile-field">
             <label>Employee ID</label>
-            <div class="field-value" id="employeeId">EMP-001</div>
+            <div class="field-value" id="employeeId">{{ employee.employeeId }}</div>
           </div>
           <div class="profile-field">
             <label>Hire Date</label>
-            <div class="field-value" id="hireDate">January 15, 2020</div>
+            <div class="field-value" id="hireDate">
+              {% if employee.hireDate %}
+              {{ employee.hireDate }}
+              {% else %}
+              Not specified
+              {% endif %}
+            </div>
           </div>
           <div class="profile-field">
             <label>First Name</label>
-            <div class="field-value" id="firstName">Michael</div>
+            <div class="field-value" id="firstName">{{ employee.firstName }}</div>
           </div>
           <div class="profile-field">
             <label>Last Name</label>
-            <div class="field-value" id="lastName">Thompson</div>
+            <div class="field-value" id="lastName">{{ employee.lastName }}</div>
           </div>
         </div>
       </div>
@@ -77,51 +84,41 @@
         <div class="profile-grid">
           <div class="profile-field">
             <label>Email Address</label>
-            <div class="field-value" id="email">michael.thompson@vargashome.com</div>
+            <div class="field-value" id="email">{{ employee.email }}</div>
           </div>
           <div class="profile-field">
             <label>Phone Number</label>
-            <div class="field-value" id="phone">(555) 123-4567</div>
+            <div class="field-value" id="phone">{{ employee.phone or 'Not provided' }}</div>
+          </div>
+          <div class="profile-field">
+            <label>Password</label>
+            <div class="field-value" id="password">••••••••</div>
           </div>
         </div>
       </div>
 
-      <!-- Address Section -->
+      <!-- Specialties Section -->
       <div class="profile-section">
-        <h3 class="section-title">Address</h3>
-        <div class="profile-grid">
-          <div class="profile-field full-width">
-            <label>Street Address</label>
-            <div class="field-value" id="street">123 Main Street, Apt 4B</div>
+        <h3 class="section-title">Specialties</h3>
+        <div class="skills-container" id="specialtiesContainer">
+          {% if employee.specialties and employee.specialties|length > 0 %}
+          {% for specialty in employee.specialties %}
+          <div class="skill-badge">
+            <span class="skill-icon">
+              {% if specialty == 'HVAC Electrician' %}❄️⚡
+              {% elif specialty == 'Plumber' %}🔧
+              {% elif specialty == 'Electrician' %}⚡
+              {% elif specialty == 'Landscaper' %}🌿
+              {% elif specialty == 'Painter' %}🎨
+              {% else %}🔧
+              {% endif %}
+            </span>
+            <span>{{ specialty }}</span>
           </div>
-          <div class="profile-field">
-            <label>City</label>
-            <div class="field-value" id="city">Los Angeles</div>
-          </div>
-          <div class="profile-field">
-            <label>State</label>
-            <div class="field-value" id="state">California</div>
-          </div>
-          <div class="profile-field">
-            <label>Zip Code</label>
-            <div class="field-value" id="zip">90001</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Skillset Section -->
-      <div class="profile-section">
-        <h3 class="section-title">Skillset</h3>
-        <div class="skills-container" id="skillsContainer">
-          <!-- Skills will be populated by JavaScript -->
-        </div>
-      </div>
-
-      <!-- Certifications Section -->
-      <div class="profile-section">
-        <h3 class="section-title">Certifications</h3>
-        <div class="certifications-container" id="certificationsContainer">
-          <!-- Certifications will be populated by JavaScript -->
+          {% endfor %}
+          {% else %}
+          <p style="color: #666; font-style: italic;">No specialties assigned</p>
+          {% endif %}
         </div>
       </div>
     </div>

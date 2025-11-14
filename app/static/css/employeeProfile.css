@@ -7,14 +7,14 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #EFECE3 0%, #8FABD4 100%);
   min-height: 100vh;
   color: #333;
 }
 
 /* Navigation Header */
 .employee-header {
-  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  background: linear-gradient(135deg, #8FABD4 0%, #4A70A9 100%);
   padding: 0;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   position: sticky;
@@ -128,7 +128,7 @@ body {
 .profile-avatar {
   width: 100px;
   height: 100px;
-  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  background: linear-gradient(135deg, #8FABD4 0%, #4A70A9 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -148,7 +148,7 @@ body {
 }
 
 .profile-title p {
-  color: #666;
+  color: #333;
   font-size: 1.1rem;
 }
 
@@ -194,7 +194,7 @@ body {
 .profile-field label {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #666;
+  color: #333;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }

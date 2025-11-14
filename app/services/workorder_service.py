@@ -11,6 +11,101 @@ class WorkorderService:
     """Service for workorder business logic."""
     
     @staticmethod
+    def lookup_workorder_details(data):
+        """
+        Look up work order details by customer contact and service type, then email them.
+        
+        Args:
+            data (dict): Request data containing:
+                - email (str, optional): Customer email
+                - phone (str, optional): Customer phone number
+                - service_type (str): Service type name
+                
+        Returns:
+            tuple: (response_dict, status_code)
+        """
+        if not data:
+            return {
+                'error': 'No data provided',
+                'success': False
+            }, 400
+        
+        email = data.get('email', '').strip()
+        phone = data.get('phone', '').strip()
+        service_type = data.get('service_type', '').strip()
+        
+        # Validation
+        if not email and not phone:
+            return {
+                'error': 'Email or phone number required',
+                'success': False
+            }, 400
+        
+        if not service_type:
+            return {
+                'error': 'Service type is required',
+                'success': False
+            }, 400
+        
+        try:
+            # Get work orders from repository
+            work_orders = WorkorderRepository.lookup_workorder_by_contact_and_service_type(
+                email=email, 
+                phone=phone, 
+                service_type=service_type
+            )
+            
+            if not work_orders:
+                return {
+                    'success': False,
+                    'message': f'No work orders found for the provided information and {service_type} service type'
+                }, 404
+            
+            # Get customer email for sending
+            customer_email = email or work_orders[0]['customer']['email']
+            
+            if not customer_email:
+                return {
+                    'success': False,
+                    'error': 'Customer email not found for sending work order details'
+                }, 400
+            
+
+            
+            # Send work order details via email
+            try:
+                from services.email_service import EmailService
+                email_service = EmailService()
+                email_sent = email_service.send_workorder_email(customer_email, work_orders)
+                
+                if email_sent:
+                    return {
+                        'success': True,
+                        'message': f'Work order details sent to {customer_email}. {len(work_orders)} work order(s) processed.',
+                        'workorders_count': len(work_orders)
+                    }, 200
+                else:
+                    return {
+                        'success': True,
+                        'message': f'Work order details found. {len(work_orders)} work order(s) processed. Email delivery may be delayed.',
+                        'workorders_count': len(work_orders)
+                    }, 200
+                    
+            except ImportError:
+                return {
+                    'success': True,
+                    'message': f'Work order details found. {len(work_orders)} work order(s) processed.',
+                    'workorders_count': len(work_orders)
+                }, 200
+            
+        except Exception as e:
+            print(f"Error in lookup_workorder_details: {e}")
+            return {
+                'success': False,
+                'error': 'An error occurred while looking up work orders'
+            }, 500
+    
+    @staticmethod
     def parse_bool(val, default=False):
         """Parse a value to boolean."""
         if val is None:
@@ -258,7 +353,8 @@ class WorkorderService:
         request_data = {
             'description': data.get('description', ''),
             'preferred_datetime': preferred_datetime,
-            'photo_path': data.get('photo_path')  # Will be None if not provided
+            'photo_path': data.get('photo_path'),  # Will be None if not provided
+            'assigned_employee_id': data.get('assignedEmployeeId')  # Optional manual assignment
         }
         
         workorder_data = {
@@ -278,6 +374,58 @@ class WorkorderService:
             result = WorkorderRepository.create_with_expanded_data(
                 customer_data, address_data, service_data, request_data, workorder_data
             )
+            
+            # Handle manual or auto assignment
+            request_id = result.get('request_id')
+            if request_id:
+                # Manual assignment takes priority
+                assigned_employee_id = data.get('assignedEmployeeId')
+                if assigned_employee_id:
+                    try:
+                        from repositories.employee_repository import EmployeeRepository
+                        
+                        # Create manual work assignment (this will override automatic assignment)
+                        assignment_id = EmployeeRepository.create_work_assignment(
+                            request_id, 
+                            int(assigned_employee_id)
+                        )
+                        
+                        if assignment_id:
+                            # Get employee details for the result
+                            employee_details = EmployeeRepository.get_employee_by_id(int(assigned_employee_id))
+                            if employee_details:
+                                result['technician'] = employee_details
+                                result['assignment_id'] = assignment_id
+                                result['assignment_type'] = 'manual'
+                    except Exception as e:
+                        # Log the error but don't fail the whole operation
+                        print(f"Warning: Failed to manually assign technician: {e}")
+                
+                # Auto-assign employee if requested and time data is available (and no manual assignment)
+                elif data.get('autoAssignEmployee') and data.get('scheduledTime24'):
+                    try:
+                        from services.employee_service import EmployeeService
+                        
+                        # Auto-assign employee based on availability
+                        assignment_result = EmployeeService.auto_assign_employee_to_request(
+                            request_id, 
+                            data['scheduledDate'],  # YYYY-MM-DD format
+                            data['scheduledTime24']  # HH:MM format
+                        )
+                        
+                        if assignment_result['success']:
+                            # Add employee assignment info to result
+                            result['technician'] = assignment_result['assigned_employee']
+                            result['assignment_id'] = assignment_result['assignment_id']
+                            result['assignment_type'] = 'automatic'
+                        else:
+                            # Log warning but don't fail the entire request
+                            print(f"Warning: Could not auto-assign employee: {assignment_result['message']}")
+                            
+                    except Exception as assign_error:
+                        # Log error but don't fail the entire request creation
+                        print(f"Error during auto-assignment: {assign_error}")
+            
             return {
                 "ok": True,
                 "message": "Service request created successfully",

@@ -22,6 +22,7 @@
         <a href="/owner" class="active">Dashboard</a>
         <a href="/admin/service">Service</a>
         <a href="/admin/warranty">Warranty</a>
+        <a href="/admin/workorder">Work Order</a>
         <a href="/admin/financial">Financial</a>
         <a href="/admin/employee">Manage Employee</a>
         <a href="/admin/timesheet">Timesheet</a>
@@ -84,6 +85,104 @@ body {
   <h1>Service Requests Calendar</h1>
   <div id="calendar"></div>
   <div id="errorBox">Something went wrong — the calendar could not load.</div>
+
+  <!-- Service Request Details Modal -->
+  <div id="serviceRequestModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeServiceRequestModal()">&times;</span>
+      <h2>Service Request Details</h2>
+
+      <div class="service-request-details" id="serviceRequestDetails">
+        <!-- Details will be populated here -->
+      </div>
+
+      <div class="modal-actions">
+        <!-- Action buttons will be added dynamically based on request status -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Work Order Modal -->
+  <div id="addWorkOrderModal" class="modal">
+    <div class="modal-content appointment-form-style">
+      <span class="close-modal" onclick="closeAddWorkOrderModal()">&times;</span>
+      <h2>Service Appointment Request</h2>
+      
+      <form id="addWorkOrderForm">
+        <div class="selected-date-display">
+          <strong>Selected Date: <span id="selectedDateDisplay"></span></strong>
+          <input type="hidden" id="selectedDate" name="selectedDate" required>
+        </div>
+
+        <label for="firstName">First Name:</label>
+        <input type="text" id="firstName" name="firstName" required>
+
+        <label for="lastName">Last Name:</label>
+        <input type="text" id="lastName" name="lastName" required>
+
+        <label for="customerPhone">Phone Number:</label>
+        <input type="text" id="customerPhone" name="customerPhone" 
+               pattern="^(\+?\d{1,2}[\s-]?)?(\(?\d{3}\)?[\s-]?)?\d{3}[\s-]?\d{4}$" 
+               title="Enter Phone Number" required>
+
+        <label for="customerEmail">Email:</label>
+        <input type="email" id="customerEmail" name="customerEmail" required>
+
+        <label for="address">Address:</label>
+        <input type="text" id="address" name="address" required>
+
+        <label for="city">City:</label>
+        <input type="text" id="city" name="city" required>
+
+        <label for="state">State:</label>
+        <input type="text" id="state" name="state" value="NJ" readonly required>
+
+        <label for="zipCode">ZIP Code:</label>
+        <input type="text" id="zipCode" name="zipCode" pattern="[0-9]{5}" required>
+
+        <label for="serviceType">Type of Service:</label>
+        <select id="serviceType" name="serviceType" required>
+          <option value="">--Select Service Type--</option>
+          <!-- Service types will be loaded dynamically from database -->
+        </select>
+
+        <label for="jobType">Job Type:</label>
+        <select id="jobType" name="jobType" required disabled>
+          <option value="">--Select Service Type First--</option>
+          <!-- Job types will be loaded based on selected service type -->
+        </select>
+
+        <input type="hidden" id="serviceId" name="serviceId">
+
+        <!-- Estimated Cost Display -->
+        <div class="cost-estimate" id="costEstimate" style="display: none;">
+          <h4>Estimated Cost</h4>
+          <div class="cost-details">
+            <div class="cost-breakdown" id="costBreakdown"></div>
+            <div class="total-cost" id="totalCost"></div>
+            <div class="cost-disclaimer">
+              *This is only an estimate. The exact price will be determined after service evaluation.
+            </div>
+          </div>
+        </div>
+
+        <label for="requestDescription">Job Description:</label>
+        <textarea id="requestDescription" name="requestDescription" 
+                  placeholder="Describe the issue or job details..." required></textarea>
+
+        <label for="assignedTechnician">Assign Technician (Optional):</label>
+        <select id="assignedTechnician" name="assignedTechnician">
+          <option value="">--Select Technician--</option>
+          <!-- Technicians will be loaded dynamically from database -->
+        </select>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" onclick="closeAddWorkOrderModal()">Cancel</button>
+          <button type="submit" class="btn-submit">Submit Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Load FullCalendar js -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>

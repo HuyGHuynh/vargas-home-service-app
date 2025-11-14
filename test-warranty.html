@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .btn {
+            padding: 15px 30px;
+            margin: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: white;
+        }
+        .btn-accept { background: #28a745; }
+        .btn-decline { background: #dc3545; }
+        .btn-test { background: #6c757d; }
+    </style>
+</head>
+<body>
+    <h1>JavaScript Test Page</h1>
+    <p>This is a test page to verify JavaScript functionality:</p>
+    
+    <button class="btn btn-test" onclick="testFunction()">Test JavaScript</button>
+    <button class="btn btn-accept" onclick="simpleAcceptWarranty()">Accept Warranty</button>
+    <button class="btn btn-decline" onclick="simpleDeclineWarranty()">Decline Warranty</button>
+    
+    <script>
+        // Test function to verify JavaScript is working
+        function testFunction() {
+            alert('JavaScript is working! Test function called.');
+            console.log('Test function executed successfully');
+        }
+
+        // Simple accept warranty function for testing
+        function simpleAcceptWarranty() {
+            alert('Accept button clicked!');
+            console.log('Simple accept function called');
+            
+            // Replace page content immediately
+            document.body.innerHTML = `
+                <div style="padding: 50px; text-align: center; font-family: Arial, sans-serif;">
+                    <h1 style="color: #4A70A9;">Thank You!</h1>
+                    <p style="font-size: 18px; margin: 20px 0;">Your warranty acceptance has been received successfully.</p>
+                    <div style="background: #e8f5e8; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                        <h3>What Happens Next</h3>
+                        <p>Our company representative will call you within 1-2 business days to discuss the warranty details and arrange payment processing.</p>
+                    </div>
+                    <div style="background: #4A70A9; color: white; padding: 20px; border-radius: 10px;">
+                        <h3>Questions or Concerns?</h3>
+                        <p>If you have any questions, please contact us:</p>
+                        <p style="font-size: 20px; font-weight: bold;">📞 (555) 123-4567</p>
+                        <p>Business Hours: Monday - Friday, 8:00 AM - 6:00 PM</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Simple decline warranty function for testing
+        function simpleDeclineWarranty() {
+            alert('Decline button clicked!');
+            console.log('Simple decline function called');
+            
+            // Replace page content immediately
+            document.body.innerHTML = `
+                <div style="padding: 50px; text-align: center; font-family: Arial, sans-serif;">
+                    <h1 style="color: #4A70A9;">Thank You!</h1>
+                    <p style="font-size: 18px; margin: 20px 0;">Your warranty decision has been received and recorded.</p>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                        <h3>Decision Noted</h3>
+                        <p>Your decision to decline the warranty has been processed. No further action is required on your part.</p>
+                    </div>
+                    <div style="background: #4A70A9; color: white; padding: 20px; border-radius: 10px;">
+                        <h3>Questions or Concerns?</h3>
+                        <p>If you have any questions, please contact us:</p>
+                        <p style="font-size: 20px; font-weight: bold;">📞 (555) 123-4567</p>
+                        <p>Business Hours: Monday - Friday, 8:00 AM - 6:00 PM</p>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

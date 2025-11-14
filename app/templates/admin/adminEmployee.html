@@ -18,6 +18,7 @@
         <a href="/owner">Dashboard</a>
         <a href="/admin/service">Service</a>
         <a href="/admin/warranty">Warranty</a>
+        <a href="/admin/workorder">Work Order</a>
         <a href="/admin/financial">Financial</a>
         <a href="/admin/employee" class="active">Manage Employee</a>
         <a href="/admin/timesheet">Timesheet</a>
@@ -38,8 +39,7 @@
     <!-- Filter Tabs -->
     <div class="filter-tabs">
       <button class="tab-btn active" onclick="filterEmployees('all')">All Employees</button>
-      <button class="tab-btn" onclick="filterEmployees('technician')">Technicians</button>
-      <button class="tab-btn" onclick="filterEmployees('manager')">Managers</button>
+      <button class="tab-btn" onclick="filterEmployees('employee')">Employees</button>
       <button class="tab-btn" onclick="filterEmployees('admin')">Administrators</button>
     </div>
 
@@ -87,8 +87,8 @@
           </div>
 
           <div class="form-group">
-            <label for="address">Address</label>
-            <input type="text" id="address" placeholder="123 Main St, City, State 12345">
+            <label for="password">Password *</label>
+            <input type="password" id="password" required placeholder="Enter password">
           </div>
         </div>
 
@@ -101,10 +101,8 @@
               <label for="employeeRole">Role *</label>
               <select id="employeeRole" required>
                 <option value="">Select Role</option>
-                <option value="technician">Technician</option>
-                <option value="senior-technician">Senior Technician</option>
-                <option value="manager">Manager</option>
-                <option value="admin">Administrator</option>
+                <option value="employee">Employee</option>
+                <option value="admin">Admin</option>
               </select>
             </div>
           </div>
@@ -118,108 +116,29 @@
             <div class="form-group">
               <label for="employmentStatus">Status *</label>
               <select id="employmentStatus" required>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="on-leave">On Leave</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+                <option value="On Leave">On Leave</option>
               </select>
             </div>
           </div>
         </div>
 
-        <!-- Skills & Certifications Section -->
+        <!-- Specialties Section -->
         <div class="form-section">
-          <h3>Skills & Certifications</h3>
+          <h3>Specialties</h3>
 
           <div class="form-group">
-            <label>Skillset *</label>
+            <label>Specialties *</label>
             <div class="checkbox-grid">
-              <label class="checkbox-label">
-                <input type="checkbox" name="skills" value="Plumbing"> Plumbing
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" name="skills" value="Electrical"> Electrical
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" name="skills" value="HVAC"> HVAC
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" name="skills" value="Carpentry"> Carpentry
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" name="skills" value="Painting"> Painting
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" name="skills" value="Roofing"> Roofing
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" name="skills" value="Flooring"> Flooring
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" name="skills" value="Landscaping"> Landscaping
-              </label>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="certifications">Certifications</label>
-            <textarea id="certifications" rows="3"
-              placeholder="List any relevant certifications (e.g., Licensed Electrician, EPA Certified, etc.)"></textarea>
-          </div>
-        </div>
-
-        <!-- Work Availability Section -->
-        <div class="form-section">
-          <h3>Work Availability</h3>
-
-          <div class="form-group">
-            <label>Available Days *</label>
-            <div class="checkbox-grid">
-              <label class="checkbox-label">
-                <input type="checkbox" name="availability" value="Monday" checked> Monday
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" name="availability" value="Tuesday" checked> Tuesday
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" name="availability" value="Wednesday" checked> Wednesday
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" name="availability" value="Thursday" checked> Thursday
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" name="availability" value="Friday" checked> Friday
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" name="availability" value="Saturday"> Saturday
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" name="availability" value="Sunday"> Sunday
-              </label>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="startTime">Start Time *</label>
-              <input type="time" id="startTime" value="08:00" required>
-            </div>
-
-            <div class="form-group">
-              <label for="endTime">End Time *</label>
-              <input type="time" id="endTime" value="17:00" required>
+              <!-- Specialties will be populated dynamically from database -->
             </div>
           </div>
         </div>
 
-        <!-- Additional Notes Section -->
-        <div class="form-section">
-          <h3>Additional Notes</h3>
 
-          <div class="form-group">
-            <label for="notes">Notes</label>
-            <textarea id="notes" rows="3" placeholder="Any additional information about the employee..."></textarea>
-          </div>
-        </div>
+
+
 
         <div class="modal-actions">
           <button type="button" class="cancel-btn" onclick="closeEmployeeModal()">Cancel</button>

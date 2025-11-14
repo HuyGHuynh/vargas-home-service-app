@@ -1,31 +1,51 @@
 /* ---------- Reset + Base ---------- */
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
 body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  color: #213043;
-  background: #f6f9fc;
+  color: #000000;
+  background: #EFECE3;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-.container { width: 92%; max-width: 1200px; margin: 0 auto; }
+
+.container {
+  width: 92%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
 
 /* ---------- Header / Nav ---------- */
 header {
-  background: linear-gradient(90deg, #0b1220, #12213b);
+  background: linear-gradient(90deg, #4A70A9, #8FABD4);
   color: white;
   position: sticky;
   top: 0;
   z-index: 1200;
-  box-shadow: 0 4px 16px rgba(6,10,20,0.18);
+<<<<<<< HEAD
+  box-shadow: 0 4px 16px rgba(74, 112, 169, 0.18);
+=======
+  box-shadow: 0 4px 16px rgba(6, 10, 20, 0.18);
+>>>>>>> a7688f3 (System notify customer and employee when appointment is approved)
 }
+
 .nav-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 14px 0;
 }
+
 .logo-text {
   font-size: 1.15rem;
   letter-spacing: 0.4px;
@@ -39,20 +59,28 @@ header {
   align-items: center;
   margin-left: auto;
 }
+
 .nav-links a {
-  color: #e6eefc;
+  color: white;
   text-decoration: none;
   font-weight: 600;
   padding: 8px 10px;
   border-radius: 8px;
   transition: background 180ms, color 180ms;
 }
+
 .nav-links a:hover {
+<<<<<<< HEAD
   background: rgba(255,255,255,0.04);
+  color: #fff;
+=======
+  background: rgba(255, 255, 255, 0.04);
   color: #cfe6ff;
+>>>>>>> a7688f3 (System notify customer and employee when appointment is approved)
 }
+
 .nav-links a.active {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
 
@@ -67,6 +95,7 @@ header {
   cursor: pointer;
   flex-direction: column;
 }
+
 .hamburger span {
   display: block;
   width: 18px;
@@ -75,9 +104,18 @@ header {
   margin: 3px 0;
   transition: transform 220ms, opacity 220ms;
 }
-.hamburger.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-.hamburger.active span:nth-child(2) { opacity: 0; }
-.hamburger.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+.hamburger.active span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.hamburger.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger.active span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
 
 /* ---------- Main Content ---------- */
 .main-content {
@@ -107,11 +145,13 @@ header {
   max-width: 600px;
   margin: 0 auto 50px;
   display: flex;
+  flex-direction: column;
   gap: 12px;
 }
 
-.search-input {
-  flex: 1;
+.search-input,
+.service-type-select {
+  width: 100%;
   padding: 14px 18px;
   border: 2px solid #e2e8f0;
   border-radius: 8px;
@@ -119,15 +159,21 @@ header {
   transition: border-color 220ms, box-shadow 220ms;
 }
 
-.search-input:focus {
+.search-input:focus,
+.service-type-select:focus {
   outline: none;
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
+.service-type-select {
+  background-color: white;
+  cursor: pointer;
+}
+
 .search-btn {
   padding: 14px 28px;
-  background: linear-gradient(135deg, #2563eb, #1e3a8a);
+  background: linear-gradient(135deg, #8FABD4, #4A70A9);
   color: white;
   border: none;
   border-radius: 8px;
@@ -135,13 +181,13 @@ header {
   font-size: 1rem;
   cursor: pointer;
   transition: all 220ms;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 4px 12px rgba(74, 112, 169, 0.2);
 }
 
 .search-btn:hover {
-  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  background: linear-gradient(135deg, #4A70A9, #8FABD4);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 6px 16px rgba(74, 112, 169, 0.3);
 }
 
 /* ---------- Results Container ---------- */
@@ -168,6 +214,49 @@ header {
 .not-found-message p {
   color: #7f1d1d;
   margin-bottom: 8px;
+}
+
+.success-message {
+  background: #f0fdf4;
+  border: 2px solid #86efac;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  color: #166534;
+  margin-top: 20px;
+}
+
+.success-message h3 {
+  color: #166534;
+  margin-bottom: 16px;
+  font-size: 1.5rem;
+}
+
+.success-message p {
+  color: #15803d;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+.success-message p strong {
+  color: #166534;
+  font-weight: 600;
+}
+
+.loading-message {
+  background: #f0f9ff;
+  border: 1px solid #0ea5e9;
+  border-radius: 12px;
+  padding: 30px;
+  text-align: center;
+  margin: 30px 0;
+}
+
+.loading-message p {
+  color: #0c4a6e;
+  font-size: 1.1rem;
+  margin: 0;
+  font-weight: 500;
 }
 
 .results-header {
@@ -209,8 +298,8 @@ header {
 /* Order Header */
 .order-header {
   padding: 20px 24px;
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-  border-bottom: 2px solid #e2e8f0;
+  background: linear-gradient(135deg, #EFECE3, #8FABD4);
+  border-bottom: 2px solid #4A70A9;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -251,23 +340,23 @@ header {
 }
 
 .status-badge.in-progress {
-  background: #dbeafe;
-  color: #1e40af;
+  background: #e3f2fd;
+  color: #2196f3;
 }
 
 .status-badge.scheduled {
-  background: #fef3c7;
-  color: #92400e;
+  background: #fff3e0;
+  color: #ff9800;
 }
 
 .status-badge.pending {
-  background: #f3f4f6;
-  color: #4b5563;
+  background: #fff3e0;
+  color: #ff9800;
 }
 
 .status-badge.cancelled {
-  background: #fee2e2;
-  color: #991b1b;
+  background: #ffebee;
+  color: #f44336;
 }
 
 .priority-badge {
@@ -291,7 +380,7 @@ header {
 
 .priority-badge.priority-low {
   background: #f3f4f6;
-  color: #6b7280;
+  color: #374151;
 }
 
 /* Order Body */
@@ -372,14 +461,14 @@ header {
 }
 
 .primary-btn {
-  background: linear-gradient(135deg, #2563eb, #1e3a8a);
+  background: linear-gradient(135deg, #8FABD4, #4A70A9);
   color: white;
 }
 
 .primary-btn:hover {
-  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  background: linear-gradient(135deg, #4A70A9, #8FABD4);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 4px 12px rgba(74, 112, 169, 0.3);
 }
 
 .secondary-btn {
@@ -396,7 +485,7 @@ header {
 /* ---------- Footer ---------- */
 footer {
   background: #071026;
-  color: #e6eefc;
+  color: #fff;
   text-align: center;
   padding: 22px 10px;
   margin-top: 40px;
@@ -442,10 +531,14 @@ footer {
     position: absolute;
     right: 12px;
     top: 64px;
-    background: linear-gradient(180deg,#0f2a4b,#081324);
+<<<<<<< HEAD
+    background: linear-gradient(180deg,#4A70A9,#000000);
+=======
+    background: linear-gradient(180deg, #0f2a4b, #081324);
+>>>>>>> a7688f3 (System notify customer and employee when appointment is approved)
     padding: 12px;
     border-radius: 10px;
-    box-shadow: 0 14px 30px rgba(4,10,20,0.45);
+    box-shadow: 0 14px 30px rgba(4, 10, 20, 0.45);
     flex-direction: column;
     min-width: 170px;
   }

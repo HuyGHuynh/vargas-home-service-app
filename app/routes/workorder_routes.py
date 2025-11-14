@@ -77,3 +77,28 @@ def create_workorder_with_expanded_data():
     data = request.get_json(silent=True) or {}
     response, status_code = WorkorderService.create_workorder_with_expanded_data(data)
     return response, status_code
+
+
+@workorder_bp.post("/lookup-details")
+def lookup_workorder_details():
+    """
+    Look up work order details by customer contact and service type.
+    Returns detailed work order information that will be emailed to customer.
+    
+    Required JSON:
+    {
+      "email": "customer@example.com",     # optional (at least one of email/phone required)
+      "phone": "123-456-7890",            # optional (at least one of email/phone required)  
+      "service_type": "HVAC"              # required
+    }
+    """
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({
+            'success': False,
+            'error': 'No data provided'
+        }), 400
+    
+    response, status_code = WorkorderService.lookup_workorder_details(data)
+    return jsonify(response), status_code

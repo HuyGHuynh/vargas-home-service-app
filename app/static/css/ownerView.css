@@ -1,8 +1,8 @@
 /* Admin Navigation Bar Styles */
 .admin-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #8FABD4 0%, #4A70A9 100%);
     padding: 0;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px rgba(74, 112, 169, 0.2);
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -72,58 +72,454 @@
 
 .logout-btn:hover {
     background-color: white !important;
-    color: #667eea !important;
+    color: #000000 !important;
     transform: translateY(-2px);
 }
 
 /* Keep old home button style for backwards compatibility */
 #home {
-    position: absolute;       
-    top: 10px;                
-    left: 10px;            
-    background-color: #f3f0f0; 
-    border: 2px solid black;   
-    color: #050404;           
-    padding: 6px 10px;      
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: #EFECE3;
+    border: 2px solid #4A70A9;
+    color: #000000;
+    padding: 6px 10px;
     border-radius: 6px;
     font-weight: 600;
-    font-size: 0.9rem;       
+    font-size: 0.9rem;
     transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 #home:hover {
-    background-color: #e0dedf; 
-    transform: scale(1.05);     
+    background-color: #8FABD4;
+    color: white;
+    transform: scale(1.05);
 }
 
 body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f7fc;
-      padding: 0;
-      margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #EFECE3;
+    padding: 0;
+    margin: 0;
+}
+
+h1 {
+    text-align: center;
+    color: #000000;
+    margin: 30px 0;
+}
+
+#calendar {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(74, 112, 169, 0.1);
+}
+
+#errorBox {
+    text-align: center;
+    color: red;
+    margin-top: 20px;
+    display: none;
+}
+
+/* Calendar Event Status Colors */
+.fc-event.status-pending {
+    background-color: #ff9800 !important;
+    border-color: #f57c00 !important;
+}
+
+.fc-event.status-in-progress {
+    background-color: #2196f3 !important;
+    border-color: #1976d2 !important;
+}
+
+.fc-event.status-completed {
+    background-color: #4caf50 !important;
+    border-color: #388e3c !important;
+}
+
+.fc-event.status-cancelled {
+    background-color: #f44336 !important;
+    border-color: #d32f2f !important;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
     }
 
-    h1 {
-      text-align: center;
-      color: #333;
-      margin: 30px 0;
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-content {
+    background-color: white;
+    margin: 80px auto;
+    padding: 40px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 700px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    position: relative;
+    animation: modalSlideIn 0.3s ease;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
     }
 
-    #calendar {
-      max-width: 900px;
-      margin: 0 auto;
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.close-modal {
+    color: #555;
+    position: absolute;
+    right: 25px;
+    top: 25px;
+    font-size: 32px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.close-modal:hover {
+    color: #333;
+}
+
+.modal-content h2 {
+    color: #333;
+    font-size: 1.8rem;
+    margin: 0 0 30px 0;
+}
+
+/* Service Request Details in Modal */
+.service-request-details {
+    margin-bottom: 30px;
+}
+
+.detail-section {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.detail-section:last-child {
+    border-bottom: none;
+}
+
+.detail-section h3 {
+    color: #000000;
+    font-size: 1.1rem;
+    margin: 0 0 16px 0;
+}
+
+.detail-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 16px;
+    padding: 10px 0;
+    font-size: 0.95rem;
+}
+
+.detail-label {
+    color: #333;
+    font-weight: 600;
+}
+
+.detail-value {
+    color: #333;
+}
+
+.detail-value.highlight {
+    color: #000000;
+    font-weight: 600;
+}
+
+
+
+/* Status Badge */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.status-badge.pending {
+    background-color: #fff3e0;
+    color: #ff9800;
+}
+
+.status-badge.in-progress {
+    background-color: #e3f2fd;
+    color: #2196f3;
+}
+
+.status-badge.completed {
+    background-color: #e8f5e9;
+    color: #4caf50;
+}
+
+.status-badge.cancelled {
+    background-color: #ffebee;
+    color: #f44336;
+}
+
+/* Employee Assignment Status */
+.employee-assigned {
+    color: #4caf50;
+    font-weight: 600;
+}
+
+.employee-unassigned {
+    color: #ff9800;
+    font-weight: 600;
+    font-style: italic;
+}
+
+.employee-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.employee-status.active {
+    background-color: #e8f5e9;
+    color: #4caf50;
+}
+
+.employee-status.inactive {
+    background-color: #ffebee;
+    color: #f44336;
+}
+
+.employee-status.on-leave {
+    background-color: #fff3e0;
+    color: #f57c00;
+}
+
+/* TBD Price */
+.tbd-price {
+    color: #ff9800;
+    font-weight: 600;
+    font-style: italic;
+}
+
+/* Service Request Image Styles */
+.service-image-container {
+    margin-top: 10px;
+}
+
+.service-request-image {
+    max-width: 300px;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid #dee2e6;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: block;
+}
+
+.service-request-image:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.image-caption {
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+/* Image Modal Styles */
+.image-modal {
+    display: none;
+    position: fixed;
+    z-index: 4000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    animation: fadeIn 0.3s;
+}
+
+.image-modal-content {
+    position: relative;
+    margin: auto;
+    padding: 20px;
+    width: 90%;
+    max-width: 1200px;
+    text-align: center;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.image-modal img {
+    max-width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.close-image-modal {
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 4001;
+}
+
+.close-image-modal:hover {
+    color: #ccc;
+}
+
+.image-modal-caption {
+    color: white;
+    font-size: 16px;
+    margin-top: 15px;
+    font-weight: 500;
+}
+
+/* Price Input */
+.price-input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.price-input-row label {
+    color: #333;
+    font-weight: 600;
+    min-width: 120px;
+}
+
+.price-input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.price-input:focus {
+    outline: none;
+    border-color: #4A70A9;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Modal Actions */
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    justify-content: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.modal-actions .warranty-section {
+    width: 100%;
+    order: -1;
+    margin-bottom: 10px;
+}
+
+.modal-accept-btn,
+.modal-reject-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+    max-width: 180px;
+}
+
+.modal-accept-btn {
+    background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+    color: white;
+}
+
+.modal-accept-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.modal-reject-btn {
+    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+    color: white;
+}
+
+.modal-reject-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+}
+
+/* Notification animations */
+@keyframes slideInRight {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
     }
 
-    #errorBox {
-      text-align: center;
-      color: red;
-      margin-top: 20px;
-      display: none;
+    to {
+        transform: translateX(0);
+        opacity: 1;
     }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
 
 /* Responsive Design for Admin Navigation */
 @media (max-width: 968px) {
@@ -132,17 +528,17 @@ body {
         gap: 1.5rem;
         padding: 1.5rem;
     }
-    
+
     .admin-logo {
         font-size: 1.3rem;
     }
-    
+
     .admin-nav-links {
         flex-wrap: wrap;
         justify-content: center;
         gap: 1rem;
     }
-    
+
     .admin-nav-links a {
         font-size: 0.9rem;
         padding: 0.4rem 0.8rem;
@@ -153,17 +549,398 @@ body {
     .admin-nav-links {
         gap: 0.5rem;
     }
-    
+
     .admin-nav-links a {
         font-size: 0.85rem;
         padding: 0.4rem 0.6rem;
     }
-    
+
     .logout-btn {
         padding: 0.4rem 1rem !important;
     }
-    
+
     #calendar {
         padding: 10px;
+    }
+
+    .modal-content {
+        margin: 20px auto;
+        padding: 30px 20px;
+        width: 95%;
+    }
+
+    .modal-content h2 {
+        font-size: 1.5rem;
+    }
+
+    .detail-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+    }
+
+    .modal-accept-btn,
+    .modal-reject-btn {
+        max-width: none;
+    }
+}
+
+/* Warranty Section Styles */
+.warranty-section {
+    margin: 0 0 20px 0;
+    padding: 20px;
+    background-color: #f8f9ff;
+    border: 2px solid #e3e8ff;
+    border-radius: 12px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.warranty-section h3 {
+    color: #000000;
+    font-size: 1.1rem;
+    margin: 0 0 16px 0;
+    text-align: center;
+    font-weight: 600;
+}
+
+.warranty-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+}
+
+.warranty-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.warranty-form .form-group:nth-child(3) {
+    grid-column: 1 / -1;
+}
+
+.warranty-form .form-group:nth-child(4) {
+    grid-column: 1 / -1;
+}
+
+.warranty-form label {
+    color: #333;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.warranty-form .form-control {
+    padding: 8px 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    background-color: white;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.warranty-form .form-control:focus {
+    outline: none;
+    border-color: #4A70A9;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.warranty-form textarea.form-control {
+    resize: vertical;
+    min-height: 60px;
+}
+
+/* Final Price Section Styles */
+.final-price-section {
+    margin: 0 0 20px 0;
+    padding: 16px;
+    background-color: #f8f9ff;
+    border: 2px solid #e3e8ff;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.price-input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.price-input-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.price-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    background-color: white;
+}
+
+.price-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.save-price-btn {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    min-width: 100px;
+}
+
+.save-price-btn:hover {
+    background: linear-gradient(135deg, #218838, #1eb885);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+.save-price-btn:active {
+    transform: translateY(0);
+}
+
+@media (max-width: 600px) {
+    .warranty-section {
+        margin: 0 0 15px 0;
+        padding: 16px;
+    }
+
+    .warranty-section h3 {
+        font-size: 1rem;
+        margin-bottom: 12px;
+    }
+
+    .warranty-form {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .warranty-form .form-group:nth-child(3),
+    .warranty-form .form-group:nth-child(4) {
+        grid-column: 1;
+    }
+
+    .final-price-section {
+        padding: 12px;
+        margin-bottom: 15px;
+    }
+
+    .price-input-container {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .save-price-btn {
+        width: 100%;
+        min-width: unset;
+    }
+
+    .modal-actions {
+        margin-top: 20px;
+        flex-direction: column;
+    }
+
+    .modal-accept-btn,
+    .modal-reject-btn {
+        width: 100%;
+        max-width: none;
+        flex: none;
+    }
+}
+
+/* Add Work Order Modal Styles - Appointment Form Style */
+#addWorkOrderModal .modal-content.appointment-form-style {
+    max-width: 700px;
+    width: 90%;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+#addWorkOrderModal h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #333;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.selected-date-display {
+    background-color: #e3f2fd;
+    border: 1px solid #1976d2;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+    color: #1565c0;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+#addWorkOrderForm label {
+    font-weight: bold;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    display: block;
+    color: #333;
+}
+
+#addWorkOrderForm input[type="text"],
+#addWorkOrderForm input[type="email"],
+#addWorkOrderForm input[type="number"],
+#addWorkOrderForm select,
+#addWorkOrderForm textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+#addWorkOrderForm input:focus,
+#addWorkOrderForm select:focus,
+#addWorkOrderForm textarea:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+#addWorkOrderForm input[readonly] {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+    border-color: #dee2e6;
+}
+
+#addWorkOrderForm textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Cost Estimate Styling */
+.cost-estimate {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+}
+
+.cost-estimate h4 {
+    margin: 0 0 10px 0;
+    color: #495057;
+}
+
+.cost-breakdown {
+    margin-bottom: 10px;
+}
+
+.total-cost {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #28a745;
+    margin-top: 10px;
+    text-align: right;
+}
+
+.cost-disclaimer {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #dee2e6;
+    font-size: 0.9em;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Button Styling */
+#addWorkOrderModal .modal-actions {
+    margin-top: 25px;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.btn-submit {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    min-width: 150px;
+}
+
+.btn-submit:hover {
+    background: #0056b3;
+}
+
+.btn-cancel {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    min-width: 120px;
+}
+
+.btn-cancel:hover {
+    background: #545b62;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #addWorkOrderModal .modal-content.appointment-form-style {
+        width: 95%;
+        margin: 20px auto;
+        padding: 20px;
+        max-height: 90vh;
+    }
+
+    #addWorkOrderModal .modal-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .btn-submit,
+    .btn-cancel {
+        width: 100%;
+        max-width: 300px;
+        margin-bottom: 10px;
+    }
+
+    .selected-date-display {
+        padding: 12px;
+        font-size: 1rem;
     }
 }
