@@ -104,12 +104,28 @@ def forgot_password():
         if not email:
             return {"success": False, "message": "Email is required"}, 400
 
-        # Create reset token + link
-        import uuid
-        token = str(uuid.uuid4())
-        reset_link = f"https://yourwebsite.com/reset-password/{token}"
+        # check employee exists
+        employee = EmployeeRepository.get_employee_by_email(email)
+        if not employee:
+            return {"success": False, "message": "Email not found"}, 404
 
-        # Send Email
+        # create token
+        import uuid
+        from datetime import datetime, timedelta
+
+        token = str(uuid.uuid4())
+        expires = datetime.utcnow() + timedelta(hours=1)
+
+        # save token
+        with BaseRepository.get_cursor() as cur:
+            cur.execute("""
+                INSERT INTO password_reset_tokens (employee_id, token, expires_at)
+                VALUES (%s, %s, %s)
+            """, (employee["employeeid"], token, expires))
+
+        reset_link = f"http://localhost:5000/reset-password/{token}"
+
+        # send email
         msg = Message(
             subject="Password Reset Request",
             sender="yourgmail@gmail.com",
@@ -123,17 +139,14 @@ def forgot_password():
 
         If you didn't request this, ignore this email.
         """
-
         mail.send(msg)
 
-        return {
-            "success": True,
-            "message": "A password reset link has been sent to your email."
-        }, 200
+        return {"success": True, "message": "Password reset email sent"}, 200
 
     except Exception as e:
         print("Forgot password error:", e)
         return {"success": False, "message": "Server error"}, 500
+
 
 
 
