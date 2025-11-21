@@ -61,7 +61,35 @@ class EmailService:
         
         service = build('gmail', 'v1', credentials=creds)
         return service
-    
+        
+    def send_password_reset_email(self, recipient_email: str, reset_link: str) -> bool:
+    """Send password reset email to a user."""
+    try:
+        if not self.service:
+            self.service = self.authenticate_gmail()
+
+        message = MIMEMultipart('alternative')
+        message['To'] = recipient_email
+        message['From'] = f"{self.sender_name} <{self.sender_email}>"
+        message['Subject'] = "Password Reset Request"
+
+        html_content = self._create_password_reset_html(reset_link)
+        text_content = self._create_password_reset_text(reset_link)
+
+        message.attach(MIMEText(text_content, 'plain'))
+        message.attach(MIMEText(html_content, 'html'))
+
+        raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
+        send_message = {'raw': raw}
+
+        self.service.users().messages().send(userId='me', body=send_message).execute()
+        print(f"✅ Password reset email sent to {recipient_email}")
+        return True
+
+    except Exception as e:
+        print(f"❌ Failed to send password reset email: {e}")
+        return False
+
     def send_warranty_email(self, customer_email: str, warranties: List[Dict[Any, Any]]) -> bool:
         """
         Send warranty details to customer.
