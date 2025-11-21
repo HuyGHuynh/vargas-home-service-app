@@ -62,8 +62,7 @@ class EmailService:
         service = build('gmail', 'v1', credentials=creds)
         return service
         
-    def send_password_reset_email(self, recipient_email: str, reset_link: str) -> bool:
-    """Send password reset email to a user."""
+def send_password_reset_email(self, recipient_email: str, reset_link: str) -> bool:
     try:
         if not self.service:
             self.service = self.authenticate_gmail()
@@ -82,13 +81,18 @@ class EmailService:
         raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
         send_message = {'raw': raw}
 
-        self.service.users().messages().send(userId='me', body=send_message).execute()
+        self.service.users().messages().send(
+            userId='me',
+            body=send_message
+        ).execute()
+
         print(f"✅ Password reset email sent to {recipient_email}")
         return True
 
     except Exception as e:
         print(f"❌ Failed to send password reset email: {e}")
         return False
+
 
     def send_warranty_email(self, customer_email: str, warranties: List[Dict[Any, Any]]) -> bool:
         """
