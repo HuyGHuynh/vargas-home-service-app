@@ -748,6 +748,33 @@ def get_employees_by_service_type(service_type_name):
         return {"success": False, "error": str(e)}, 500
 
 
+@api_bp.get("/admin/qualified-employees/<service_type_name>")
+def get_qualified_employees_for_admin(service_type_name):
+    """Get all qualified employees for admin - ignores availability checks."""
+    try:
+        employees = EmployeeRepository.get_employees_by_service_type(service_type_name)
+        
+        # Format for admin use with additional fields for compatibility
+        formatted_employees = []
+        for emp in employees:
+            formatted_employees.append({
+                'employee_id': emp['employeeid'],
+                'employeeid': emp['employeeid'],  # Keep both for compatibility
+                'first_name': emp['firstname'],
+                'last_name': emp['lastname'],
+                'full_name': emp['full_name'],
+                'email': emp['email'],
+                'phone': emp['phone'],
+                'specialties': emp.get('specialties', []),
+                'status': emp['status'],
+                'available_override': True  # Admin can assign regardless of availability
+            })
+        
+        return {"success": True, "data": formatted_employees}, 200
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
 # Admin Warranty Management Routes
 
 @api_bp.get("/admin/warranties")

@@ -47,32 +47,51 @@ try {
         const estimatedCost = totalCostElement && totalCostElement.textContent ?
           parseFloat(totalCostElement.textContent.replace(/[^0-9.]/g, '')) || 0 : 0;
 
+        // Format data to match backend expectations (flat structure)
         const data = {
-          customerData: {
-            firstName: formData.get('firstName'),
-            lastName: formData.get('lastName'),
-            email: formData.get('customerEmail'),
-            phone: formData.get('customerPhone')
-          },
-          addressData: {
-            address: fullAddress
-          },
-          serviceData: {
-            serviceType: formData.get('serviceType'),
-            serviceId: formData.get('serviceId')
-          },
-          requestData: {
-            preferredDateTime: formData.get('selectedDate'),
-            requestDescription: formData.get('requestDescription'),
-            requestStatus: 'pending',
-            assignedEmployeeId: formData.get('assignedTechnician') || null
-          },
-          workorderData: {
-            scheduledDate: formData.get('selectedDate'),
-            estimatedCost: estimatedCost,
-            isCompleted: false
-          }
+          // Customer info
+          firstName: formData.get('firstName'),
+          lastName: formData.get('lastName'),
+          phone: formData.get('customerPhone'),
+          email: formData.get('customerEmail'),
+
+          // Address info  
+          address: formData.get('address'),
+          city: formData.get('city'),
+          state: formData.get('state'),
+          zipCode: formData.get('zipCode'),
+
+          // Service info
+          serviceId: parseInt(formData.get('serviceId')) || null,
+          description: formData.get('requestDescription'),
+
+          // Scheduling info
+          requestDate: formData.get('selectedDate'),
+          scheduledDate: formData.get('selectedDate'),
+          scheduledTime: "09:00 AM", // Default time since no time picker in form
+          isCompleted: false,
+
+          // Employee assignment (admin feature)
+          assignedEmployeeId: formData.get('assignedTechnician') || null
         };
+
+        // Debug: Log the data being sent
+        console.log('Form data being sent:', data);
+
+        // Check for missing required fields
+        const requiredFields = ['firstName', 'lastName', 'phone', 'email', 'address', 'city', 'state', 'zipCode'];
+        const missingFields = requiredFields.filter(field => !data[field]);
+        if (missingFields.length > 0) {
+          console.error('Missing required fields:', missingFields);
+          showNotification(`Missing required fields: ${missingFields.join(', ')}`, 'error');
+          return;
+        }
+
+        if (!data.serviceId) {
+          console.error('Service ID is missing - make sure a job type is selected');
+          showNotification('Please select a job type', 'error');
+          return;
+        }
 
         try {
           showNotification('Creating work order...', 'info');
@@ -86,8 +105,9 @@ try {
           });
 
           const result = await response.json();
+          console.log('Backend response:', result);
 
-          if (result.success) {
+          if (result.ok || result.success) {
             showNotification('Work order created successfully!', 'success');
             closeAddWorkOrderModal();
             // Reload service requests to show the new work order
@@ -827,6 +847,8 @@ async function preloadTechnicianData() {
 // Populate technician dropdown (all technicians)
 function populateTechnicianDropdown() {
   const technicianSelect = document.getElementById('assignedTechnician');
+  const adminNote = document.getElementById('adminTechnicianNote');
+
   if (technicianSelect && allTechnicians.length > 0) {
     technicianSelect.innerHTML = '<option value="">--Select Technician--</option>';
     allTechnicians.forEach(technician => {
@@ -838,47 +860,77 @@ function populateTechnicianDropdown() {
       technicianSelect.appendChild(option);
     });
   }
+
+  // Hide admin note when showing all technicians
+  if (adminNote) {
+    adminNote.style.display = 'none';
+  }
 }
 
-// Populate technician dropdown with only qualified technicians for selected service type
-function populateQualifiedTechniciansDropdown(serviceTypeName) {
+// Populate technician dropdown with qualified technicians (admin mode - no availability check)
+async function populateQualifiedTechniciansDropdown(serviceTypeName) {
   const technicianSelect = document.getElementById('assignedTechnician');
-  if (!technicianSelect || !allTechnicians.length) {
+  const adminNote = document.getElementById('adminTechnicianNote');
+
+  if (!technicianSelect) {
     return;
   }
 
-  // Filter technicians who have the required specialty for this service type
-  const qualifiedTechnicians = allTechnicians.filter(technician => {
-    // If technician has no specialties, they can't do specialized work
-    if (!technician.specialties || technician.specialties.length === 0) {
-      return false;
+  // Show loading state
+  technicianSelect.innerHTML = '<option value="">Loading qualified technicians...</option>';
+
+  try {
+    // Use admin API endpoint to get ALL qualified technicians (no availability check)
+    const response = await fetch(`/api/admin/qualified-employees/${encodeURIComponent(serviceTypeName)}`);
+    const result = await response.json();
+
+    if (result.success && result.data) {
+      // Clear and repopulate dropdown
+      technicianSelect.innerHTML = '<option value="">--Select Technician--</option>';
+
+      if (result.data.length > 0) {
+        result.data.forEach(technician => {
+          const option = document.createElement('option');
+          option.value = technician.employee_id;
+          const fullName = `${technician.first_name} ${technician.last_name}`;
+          const specialties = technician.specialties ? ` (${technician.specialties.join(', ')})` : '';
+          option.textContent = fullName + specialties;
+          technicianSelect.appendChild(option);
+        });
+
+        // Show admin note
+        if (adminNote) {
+          adminNote.style.display = 'block';
+          adminNote.textContent = `Admin Mode: ${result.data.length} qualified technicians (availability not checked)`;
+        }
+      } else {
+        // If no qualified technicians, show a message
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = `No technicians qualified for ${serviceTypeName}`;
+        option.disabled = true;
+        technicianSelect.appendChild(option);
+
+        if (adminNote) {
+          adminNote.style.display = 'block';
+          adminNote.textContent = `No technicians found with required specialties for ${serviceTypeName}`;
+        }
+      }
+    } else {
+      // Error handling
+      technicianSelect.innerHTML = '<option value="">Error loading technicians</option>';
+      if (adminNote) {
+        adminNote.style.display = 'block';
+        adminNote.textContent = `Error loading technicians: ${result.error || 'Unknown error'}`;
+      }
     }
-
-    // Check if technician has specialty matching the service type
-    return technician.specialties.some(specialty =>
-      specialty.toLowerCase() === serviceTypeName.toLowerCase()
-    );
-  });
-
-  // Clear and repopulate dropdown
-  technicianSelect.innerHTML = '<option value="">--Select Technician--</option>';
-
-  if (qualifiedTechnicians.length > 0) {
-    qualifiedTechnicians.forEach(technician => {
-      const option = document.createElement('option');
-      option.value = technician.employee_id;
-      const fullName = `${technician.first_name} ${technician.last_name}`;
-      const specialties = technician.specialties ? ` (${technician.specialties.join(', ')})` : '';
-      option.textContent = fullName + specialties;
-      technicianSelect.appendChild(option);
-    });
-  } else {
-    // If no qualified technicians, show a message
-    const option = document.createElement('option');
-    option.value = '';
-    option.textContent = `No technicians qualified for ${serviceTypeName}`;
-    option.disabled = true;
-    technicianSelect.appendChild(option);
+  } catch (error) {
+    console.error('Error fetching qualified technicians:', error);
+    technicianSelect.innerHTML = '<option value="">Error loading technicians</option>';
+    if (adminNote) {
+      adminNote.style.display = 'block';
+      adminNote.textContent = 'Network error loading technicians';
+    }
   }
 }
 
@@ -900,6 +952,11 @@ function setupServiceTypeEventListeners() {
       if (!serviceTypeName) {
         // Reset technician dropdown to show all technicians when no service type is selected
         populateTechnicianDropdown();
+        // Hide admin note
+        const adminNote = document.getElementById('adminTechnicianNote');
+        if (adminNote) {
+          adminNote.style.display = 'none';
+        }
         return;
       }
 
