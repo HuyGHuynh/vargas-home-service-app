@@ -212,8 +212,13 @@ function getStatusColor(status) {
 
 // Show service request details in modal
 function showServiceRequestDetails(requestId) {
+  console.log('Opening service request details for:', requestId);
+
   const serviceRequest = serviceRequests.find(sr => sr.request_id === requestId);
-  if (!serviceRequest) return;
+  if (!serviceRequest) {
+    console.log('Service request not found:', requestId);
+    return;
+  }
 
   currentRequestId = requestId;
 
@@ -265,14 +270,12 @@ function showServiceRequestDetails(requestId) {
         <div class="detail-label">Service Price:</div>
         <div class="detail-value">$${serviceRequest.service.service_price?.toFixed(2) || '0.00'}</div>
       </div>
-      ${serviceRequest.request_status !== 'Pending' || serviceRequest.final_price ? `
       <div class="detail-row">
         <div class="detail-label">Final Price:</div>
-        <div class="detail-value" id="finalPriceDisplay" data-field="final_price">
-          ${serviceRequest.final_price ? `$${serviceRequest.final_price.toFixed(2)}` : '<span class="tbd-price">TBD</span>'}
+        <div class="detail-value" id="finalPriceDisplay">
+          ${serviceRequest.final_price && typeof serviceRequest.final_price === 'number' ? `$${serviceRequest.final_price.toFixed(2)}` : '<span class="tbd-price">TBD</span>'}
         </div>
       </div>
-      ` : ''}
       <div class="detail-row">
         <div class="detail-label">Request Description:</div>
         <div class="detail-value">${serviceRequest.request_description || 'No description provided'}</div>
@@ -385,7 +388,9 @@ function showServiceRequestDetails(requestId) {
   }
   // For Completed and Cancelled status, no action buttons (modal can only be closed with X)
 
+  // Always show the modal
   document.getElementById('serviceRequestModal').style.display = 'block';
+  console.log('Modal opened/refreshed for request:', requestId);
 }
 
 // Accept request (Pending -> In Progress with final price)
@@ -423,6 +428,11 @@ async function acceptRequest(requestId) {
       displayServiceRequests();
       closeServiceRequestModal();
       showNotification(`Service request accepted and moved to In Progress!`, 'success');
+
+      // Refresh calendar to show updated status
+      if (window.calendar) {
+        window.calendar.refetchEvents();
+      }
     } else {
       showNotification(`Failed to accept request: ${result.error}`, 'error');
     }
@@ -486,18 +496,21 @@ async function saveFinalPrice(requestId) {
     const result = await response.json();
 
     if (result.success) {
-      // Update local data
+      // Update local data - store as number, not string
       const serviceRequest = serviceRequests.find(sr => sr.request_id === requestId);
       if (serviceRequest) {
-        serviceRequest.final_price = finalPrice.toFixed(2);
+        serviceRequest.final_price = finalPrice;
       }
 
       // Update the final price display in the modal if it exists
-      const finalPriceElement = document.querySelector('.detail-value[data-field="final_price"]');
+      const finalPriceElement = document.getElementById('finalPriceDisplay');
       if (finalPriceElement) {
-        finalPriceElement.textContent = `$${finalPrice.toFixed(2)}`;
-        finalPriceElement.classList.remove('tbd-price');
+        finalPriceElement.innerHTML = `$${finalPrice.toFixed(2)}`;
+        console.log('Updated final price display to:', `$${finalPrice.toFixed(2)}`);
       }
+
+      // Also update the calendar event data
+      displayServiceRequests();
 
       showNotification('Final price saved successfully!', 'success');
     } else {
@@ -564,6 +577,11 @@ async function completeOrder(requestId) {
       displayServiceRequests();
       closeServiceRequestModal();
 
+      // Refresh calendar to show updated status
+      if (window.calendar) {
+        window.calendar.refetchEvents();
+      }
+
       const warrantyMessage = warrantyData.start_date ? ' with warranty attached' : '';
       showNotification(`Service request marked as completed${warrantyMessage}!`, 'success');
     } else {
@@ -613,7 +631,7 @@ async function cancelOrder(requestId) {
 // Close modal
 function closeServiceRequestModal() {
   document.getElementById('serviceRequestModal').style.display = 'none';
-  currentRequestId = null;
+  // Don't reset currentRequestId to null to allow reopening the same request
 }
 
 // Close modal when clicking outside
