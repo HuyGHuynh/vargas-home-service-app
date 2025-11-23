@@ -272,8 +272,13 @@ function showServiceRequestDetails(requestId) {
       </div>
       <div class="detail-row">
         <div class="detail-label">Final Price:</div>
-        <div class="detail-value" id="finalPriceDisplay">
-          ${serviceRequest.final_price && typeof serviceRequest.final_price === 'number' ? `$${serviceRequest.final_price.toFixed(2)}` : '<span class="tbd-price">TBD</span>'}
+        <div class="detail-value" id="finalPriceDisplay" style="display: flex; align-items: center; gap: 10px;">
+          <span>${serviceRequest.final_price && typeof serviceRequest.final_price === 'number' ? `$${serviceRequest.final_price.toFixed(2)}` : '<span class="tbd-price">TBD</span>'}</span>
+          ${serviceRequest.request_status === 'Pending' && serviceRequest.final_price && typeof serviceRequest.final_price === 'number' ?
+      `<button type="button" class="email-notification-btn" onclick="sendFinalPriceEmail(${serviceRequest.request_id})" 
+                     style="background-color: #3182ce; color: white; padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; white-space: nowrap;">
+               📧 Email Customer
+             </button>` : ''}
         </div>
       </div>
       <div class="detail-row">
@@ -502,11 +507,21 @@ async function saveFinalPrice(requestId) {
         serviceRequest.final_price = finalPrice;
       }
 
-      // Update the final price display in the modal if it exists
+      // Update the final price display in the modal with button if it exists
       const finalPriceElement = document.getElementById('finalPriceDisplay');
       if (finalPriceElement) {
-        finalPriceElement.innerHTML = `$${finalPrice.toFixed(2)}`;
-        console.log('Updated final price display to:', `$${finalPrice.toFixed(2)}`);
+        // Check if this is a pending request to show the email button
+        const isPending = serviceRequest && serviceRequest.request_status === 'Pending';
+
+        finalPriceElement.innerHTML = `
+          <span>$${finalPrice.toFixed(2)}</span>
+          ${isPending ?
+            `<button type="button" class="email-notification-btn" onclick="sendFinalPriceEmail(${requestId})" 
+                     style="background-color: #3182ce; color: white; padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; white-space: nowrap; margin-left: 10px;">
+               📧 Email Customer
+             </button>` : ''}
+        `;
+        console.log('Updated final price display with button to:', `$${finalPrice.toFixed(2)}`);
       }
 
       // Also update the calendar event data
@@ -1112,5 +1127,61 @@ function closeImageModal() {
   const imageModal = document.getElementById('imageModal');
   if (imageModal) {
     imageModal.style.display = 'none';
+  }
+}
+
+// Send final price notification email to customer
+async function sendFinalPriceEmail(requestId) {
+  try {
+    // Show loading state
+    const emailBtn = document.querySelector('.email-notification-btn');
+    if (emailBtn) {
+      emailBtn.textContent = '📧 Sending...';
+      emailBtn.disabled = true;
+    }
+
+    const response = await fetch(`/api/service-requests/${requestId}/send-final-price-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Show checkmark for successful send
+      if (emailBtn) {
+        emailBtn.textContent = '✅ Sent!';
+        emailBtn.style.backgroundColor = '#38a169';
+      }
+      showNotification('Final price notification email sent to customer!', 'success');
+
+      // Reset button after 3 seconds
+      setTimeout(() => {
+        if (emailBtn) {
+          emailBtn.textContent = '📧 Email Customer';
+          emailBtn.style.backgroundColor = '#3182ce';
+          emailBtn.disabled = false;
+        }
+      }, 3000);
+    } else {
+      showNotification(`Failed to send email: ${result.error}`, 'error');
+      // Reset button immediately on error
+      if (emailBtn) {
+        emailBtn.textContent = '📧 Email Customer';
+        emailBtn.disabled = false;
+      }
+    }
+
+  } catch (error) {
+    console.error('Error sending final price email:', error);
+    showNotification('Network error sending email notification', 'error');
+    // Reset button immediately on error
+    const emailBtn = document.querySelector('.email-notification-btn');
+    if (emailBtn) {
+      emailBtn.textContent = '📧 Email Customer';
+      emailBtn.disabled = false;
+    }
   }
 }

@@ -1082,6 +1082,49 @@ def accept_service_request(request_id):
         return {"success": False, "error": str(e)}, 500
 
 
+@api_bp.post("/service-requests/<int:request_id>/send-final-price-email")
+def send_final_price_email(request_id):
+    """Send final price notification email to customer."""
+    try:
+        from repositories.servicerequest_repository import ServiceRequestRepository
+        from services.email_service import EmailService
+        
+        # Get service request details
+        service_request = ServiceRequestRepository.get_service_request_by_id(request_id)
+        if not service_request:
+            return {"success": False, "error": "Service request not found"}, 404
+        
+        # Check if request has a final price set
+        if not service_request.get('final_price'):
+            return {"success": False, "error": "No final price set for this request"}, 400
+        
+        # Check if request is still pending (only send notifications for pending requests)
+        if service_request.get('request_status') != 'Pending':
+            return {"success": False, "error": "Final price notifications can only be sent for pending requests"}, 400
+        
+        customer = service_request.get('customer', {})
+        customer_email = customer.get('email')
+        
+        if not customer_email:
+            return {"success": False, "error": "Customer email not found"}, 400
+        
+        # Send the final price notification email
+        email_service = EmailService()
+        success = email_service.send_final_price_notification_email(
+            customer_email=customer_email,
+            service_request=service_request
+        )
+        
+        if success:
+            return {"success": True, "message": f"Final price notification sent to {customer_email}"}, 200
+        else:
+            return {"success": False, "error": "Failed to send email notification"}, 500
+            
+    except Exception as e:
+        print(f"Error sending final price email: {e}")
+        return {"success": False, "error": str(e)}, 500
+
+
 @api_bp.delete("/service-requests/<int:request_id>")
 def delete_service_request(request_id):
     """Delete a service request and all related data."""

@@ -567,6 +567,160 @@ Vargas' Home Services - Your Trusted Service Partner
 """
         return text
 
+    def send_final_price_notification_email(self, customer_email: str, service_request: Dict[Any, Any]) -> bool:
+        """
+        Send final price notification email to customer for pending service request.
+        
+        Args:
+            customer_email: Customer's email address
+            service_request: Service request details from database
+            
+        Returns:
+            bool: True if sent successfully
+        """
+        try:
+            # Get Gmail service
+            if not self.service:
+                self.service = self.authenticate_gmail()
+            
+            # Create email
+            message = MIMEMultipart('alternative')
+            message['To'] = customer_email
+            message['From'] = f"{self.sender_name} <{self.sender_email}>"
+            message['Subject'] = f"Final Price Set - Work Order #{service_request['request_id']}"
+            
+            # Create email content
+            html_content = self._create_final_price_notification_html(service_request)
+            text_content = self._create_final_price_notification_text(service_request)
+            
+            # Attach content
+            text_part = MIMEText(text_content, 'plain')
+            html_part = MIMEText(html_content, 'html')
+            message.attach(text_part)
+            message.attach(html_part)
+            
+            # Send email
+            raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+            send_message = {'raw': raw_message}
+            
+            result = self.service.users().messages().send(userId='me', body=send_message).execute()
+            print(f"✅ Final price notification sent to {customer_email}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Failed to send final price notification: {e}")
+            return False
+    
+    def _create_final_price_notification_html(self, service_request: Dict[Any, Any]) -> str:
+        """Create HTML email content for final price notification."""
+        customer = service_request['customer']
+        service = service_request['service']
+        address = service_request['address']
+        
+        html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }}
+                .header {{ background-color: #2c5282; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
+                .content {{ background-color: #f7fafc; padding: 20px; }}
+                .price-card {{ background-color: white; margin: 20px 0; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
+                .price-header {{ font-size: 1.3em; font-weight: bold; color: #2c5282; margin-bottom: 15px; text-align: center; }}
+                .detail {{ margin: 10px 0; }}
+                .label {{ font-weight: bold; color: #4a5568; }}
+                .value {{ color: #2d3748; }}
+                .final-price {{ font-size: 1.4em; font-weight: bold; color: #38a169; text-align: center; background-color: #ecfdf5; padding: 15px; border-radius: 8px; margin: 20px 0; }}
+                .status {{ padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; background: #fef3c7; color: #92400e; }}
+                .next-steps {{ background-color: #dbeafe; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #3b82f6; }}
+                .footer {{ background-color: #2c5282; color: white; padding: 15px; text-align: center; border-radius: 0 0 8px 8px; }}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>💰 Vargas' Home Services</h1>
+                <h2>Final Price Set for Your Service Request</h2>
+            </div>
+            <div class="content">
+                <p>Dear {customer.get('first_name', '')} {customer.get('last_name', '')},</p>
+                <p>We've reviewed your service request and have set the final price for your upcoming appointment.</p>
+                
+                <div class="price-card">
+                    <div class="price-header">Work Order #{service_request['request_id']}</div>
+                    <div class="detail"><span class="label">Service:</span> <span class="value">{service['job_name']}</span></div>
+                    <div class="detail"><span class="label">Service Type:</span> <span class="value">{service['service_type']}</span></div>
+                    <div class="detail"><span class="label">Status:</span> <span class="status">Pending</span></div>
+                    <div class="detail"><span class="label">Scheduled Date:</span> <span class="value">{service_request['preferred_datetime']}</span></div>
+                    <div class="detail"><span class="label">Service Address:</span> <span class="value">{address['street']}, {address['city']}, {address['state']} {address['zip_code']}</span></div>
+                    <div class="detail"><span class="label">Description:</span> <span class="value">{service_request['request_description']}</span></div>
+                    
+                    <div class="final-price">
+                        <div>Final Price</div>
+                        <div>${service_request.get('final_price', 0):.2f}</div>
+                    </div>
+                </div>
+                
+                <div class="next-steps">
+                    <strong>📋 What's Next:</strong><br>
+                    • Your service request is now priced and pending acceptance<br>
+                    • Our team will contact you to confirm the appointment<br>
+                    • Payment will be collected upon completion of service<br>
+                    • You'll receive a confirmation email once the appointment is scheduled
+                </div>
+                
+                <p>If you have any questions about this pricing or need to discuss the service details, please don't hesitate to contact us at support@vargashome.com</p>
+                <p>Thank you for choosing Vargas' Home Services!</p>
+            </div>
+            <div class="footer">
+                <p>&copy; {datetime.now().year} Vargas' Home Services - Transparent. Professional. Reliable.</p>
+            </div>
+        </body>
+        </html>
+        """
+        return html
+    
+    def _create_final_price_notification_text(self, service_request: Dict[Any, Any]) -> str:
+        """Create plain text email content for final price notification."""
+        customer = service_request['customer']
+        service = service_request['service']
+        address = service_request['address']
+        
+        text = f"""
+VARGAS' HOME SERVICES
+💰 FINAL PRICE SET FOR YOUR SERVICE REQUEST
+
+Dear {customer.get('first_name', '')} {customer.get('last_name', '')},
+
+We've reviewed your service request and have set the final price for your upcoming appointment.
+
+SERVICE DETAILS:
+================
+Work Order #: {service_request['request_id']}
+Service: {service['job_name']}
+Service Type: {service['service_type']}
+Status: PENDING
+Scheduled Date: {service_request['preferred_datetime']}
+Service Address: {address['street']}, {address['city']}, {address['state']} {address['zip_code']}
+Description: {service_request['request_description']}
+
+FINAL PRICE: ${service_request.get('final_price', 0):.2f}
+
+WHAT'S NEXT:
+============
+• Your service request is now priced and pending acceptance
+• Our team will contact you to confirm the appointment
+• Payment will be collected upon completion of service  
+• You'll receive a confirmation email once the appointment is scheduled
+
+If you have any questions about this pricing or need to discuss the service details, please don't hesitate to contact us at support@vargashome.com
+
+Thank you for choosing Vargas' Home Services!
+
+Vargas' Home Services - Transparent. Professional. Reliable.
+{datetime.now().strftime('%B %d, %Y')}
+"""
+        return text
+
     def send_appointment_confirmation_email(self, service_request: Dict[Any, Any]) -> Dict[str, bool]:
         """
         Send appointment confirmation emails to both customer and assigned employee.
