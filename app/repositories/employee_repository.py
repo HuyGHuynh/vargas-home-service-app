@@ -96,7 +96,7 @@ class EmployeeRepository:
             print(f"Error getting employee by ID: {e}")
             return None
             
-        @staticmethod
+    @staticmethod
     def get_employee_by_email(email):
         """Retrieve a single employee by their email."""
         try:
