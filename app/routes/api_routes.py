@@ -8,15 +8,6 @@ from repositories.employee_repository import EmployeeRepository
 from flask_mail import Mail
 from flask_mail import Message
 
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'yourgmail@gmail.com'
-app.config['MAIL_PASSWORD'] = 'your-app-password'   # NOT your Gmail password
-
-mail = Mail(app)
-
-
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
 
