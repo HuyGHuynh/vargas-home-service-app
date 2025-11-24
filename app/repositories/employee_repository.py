@@ -96,31 +96,35 @@ class EmployeeRepository:
             print(f"Error getting employee by ID: {e}")
             return None
             
-    @staticmethod
+        @staticmethod
     def get_employee_by_email(email):
-        """Retrieve a single employee by their email."""
         try:
-            conn = get_connection()
-            cursor = conn.cursor(dictionary=True)
+            with BaseRepository.get_cursor() as cur:
+                query = """
+                    SELECT employeeid, firstname, lastname, phone, email, password, isadmin
+                    FROM employee
+                    WHERE email = %s
+                    LIMIT 1
+                """
+                cur.execute(query, (email,))
+                result = cur.fetchone()
 
-            query = """
-                SELECT e.employee_id, e.first_name, e.last_name, e.email, 
-                       e.phone, e.password_hash, e.role
-                FROM employees e
-                WHERE e.email = %s
-                LIMIT 1;
-            """
+                if result:
+                    employee_data = {
+                        'employeeid': result[0],
+                        'firstname': result[1],
+                        'lastname': result[2],
+                        'phone': result[3],
+                        'email': result[4],
+                        'password': result[5],
+                        'isadmin': result[6]
+                    }
+                    return employee_data
 
-            cursor.execute(query, (email,))
-            employee = cursor.fetchone()
-
-            cursor.close()
-            conn.close()
-
-            return employee
+                return None
 
         except Exception as e:
-            print("Error in get_employee_by_email:", e)
+            print(f"Error in get_employee_by_email: {e}")
             return None
 
     @staticmethod
