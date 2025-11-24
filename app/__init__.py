@@ -4,12 +4,6 @@ Creates and configures the Flask application with all blueprints.
 """
 from flask import Flask
 from config import get_config
-from flask_mail import Mail
-import os
-
-# Create the Mail instance (importable by routes)
-mail = Mail()
-
 
 def create_app(config_name=None):
     """
