@@ -96,8 +96,17 @@ class EmployeeRepository:
             print(f"Error getting employee by ID: {e}")
             return None
             
-        @staticmethod
+    @staticmethod
     def get_employee_by_email(email):
+        """
+        Retrieve a single employee by their email.
+        
+        Args:
+            email (str): Employee's email address
+            
+        Returns:
+            dict or None: Employee data if found, None otherwise
+        """
         try:
             with BaseRepository.get_cursor() as cur:
                 query = """
