@@ -1443,6 +1443,44 @@ def get_review_details(request_id):
         return {"success": False, "error": f"Database error: {str(e)}"}, 500
 
 
+@api_bp.get("/reviews/<int:request_id>/get")
+def get_review(request_id):
+    """Get review for a specific request."""
+    try:
+        with BaseRepository.get_cursor() as cursor:
+            cursor.execute("""
+                SELECT r.review_id, r.customer_id, r.comments, r.request_id,
+                       r.rating_quality, r.rating_professionalism, r.rating_timeliness, 
+                       r.rating_communication, r.rating_overall, r.avg_rating
+                FROM reviews r
+                WHERE r.request_id = %s
+            """, (request_id,))
+            
+            review_row = cursor.fetchone()
+            
+            if not review_row:
+                return {"success": False, "error": "Review not found"}, 404
+            
+            review_data = {
+                'review_id': review_row[0],
+                'customer_id': review_row[1],
+                'comments': review_row[2],
+                'request_id': review_row[3],
+                'rating_quality': review_row[4],
+                'rating_professionalism': review_row[5],
+                'rating_timeliness': review_row[6],
+                'rating_communication': review_row[7],
+                'rating_overall': review_row[8],
+                'avg_rating': float(review_row[9]) if review_row[9] else 0.0
+            }
+            
+            return {"success": True, "review": review_data}, 200
+            
+    except Exception as e:
+        print(f"Error getting review for request_id {request_id}: {e}")
+        return {"success": False, "error": str(e)}, 500
+
+
 @api_bp.post("/reviews/<int:request_id>")
 def submit_review(request_id):
     """Submit a customer review for a specific request."""
