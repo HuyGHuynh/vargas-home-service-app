@@ -4,6 +4,11 @@ Creates and configures the Flask application with all blueprints.
 """
 from flask import Flask
 from config import get_config
+from flask_mail import Mail
+import os
+
+# Create the Mail instance (importable by routes)
+mail = Mail()
 
 
 def create_app(config_name=None):
@@ -31,18 +36,3 @@ def create_app(config_name=None):
     if not app.config.get('DATABASE_URL'):
         raise ValueError("DATABASE_URL environment variable is not set")
     
-    # Setup Google Cloud Storage credentials
-    from config import Config
-    Config.setup_gcs_credentials()
-    
-    # Register blueprints
-    from routes import api_bp, workorder_bp, warranty_bp, page_bp
-    from routes.image_routes import image_bp
-    
-    app.register_blueprint(page_bp)      # Frontend pages (must be first for / route)
-    app.register_blueprint(api_bp)
-    app.register_blueprint(workorder_bp)
-    app.register_blueprint(warranty_bp)
-    app.register_blueprint(image_bp)
-    
-    return app
