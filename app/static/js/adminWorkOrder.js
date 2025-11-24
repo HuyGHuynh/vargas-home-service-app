@@ -271,10 +271,6 @@ function filterWorkOrders(status) {
   // Filter orders
   if (status === 'all') {
     renderWorkOrders();
-  } else if (status === 'reviews') {
-    // Show only completed orders with ratings
-    const filtered = workOrders.filter(order => order.status === 'Completed' && order.rating);
-    renderWorkOrders(filtered);
   } else {
     // Map filter status to database status
     const statusMap = {
@@ -296,20 +292,25 @@ function searchWorkOrders() {
   let filtered = workOrders;
 
   // Apply status filter
-  if (currentFilter === 'reviews') {
-    // Filter for completed orders with ratings
-    filtered = filtered.filter(order => order.status === 'Completed' && order.rating);
-  } else if (currentFilter !== 'all') {
-    filtered = filtered.filter(order => order.status === currentFilter);
+  if (currentFilter !== 'all') {
+    // Map filter status to database status
+    const statusMap = {
+      'scheduled': 'Pending',
+      'in-progress': 'In Progress',
+      'completed': 'Completed'
+    };
+    const dbStatus = statusMap[currentFilter] || currentFilter;
+    filtered = filtered.filter(order => order.status === dbStatus);
   }
 
   // Apply search term filter
   if (searchTerm) {
     filtered = filtered.filter(order =>
-      order.id.toLowerCase().includes(searchTerm) ||
+      order.id.toString().toLowerCase().includes(searchTerm) ||
       order.customerName.toLowerCase().includes(searchTerm) ||
       order.customerPhone.includes(searchTerm) ||
-      order.customerEmail.toLowerCase().includes(searchTerm)
+      order.customerEmail.toLowerCase().includes(searchTerm) ||
+      (order.technician && order.technician.toLowerCase().includes(searchTerm))
     );
   }
 
