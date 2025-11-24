@@ -240,9 +240,18 @@ function showServiceRequestDetails(requestId) {
       <div class="detail-row">
         <div class="detail-label">Assigned Technician:</div>
         <div class="detail-value">
-          ${serviceRequest.assigned_employee ?
-      `<span class="employee-assigned">${serviceRequest.assigned_employee.first_name} ${serviceRequest.assigned_employee.last_name}</span>` :
-      '<span class="employee-unassigned">Not Assigned</span>'
+          ${serviceRequest.request_status === 'Pending' ?
+      `<div class="technician-assignment">
+              <select id="technicianSelect" class="technician-dropdown">
+                <option value="">Loading technicians...</option>
+              </select>
+              <button type="button" class="save-technician-btn" onclick="saveAssignedTechnician(${serviceRequest.request_id})" style="margin-left: 8px; padding: 4px 12px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                Save
+              </button>
+            </div>` :
+      (serviceRequest.assigned_employee ?
+        `<span class="employee-assigned">${serviceRequest.assigned_employee.first_name} ${serviceRequest.assigned_employee.last_name}</span>` :
+        '<span class="employee-unassigned">Not Assigned</span>')
     }
         </div>
       </div>
@@ -396,6 +405,11 @@ function showServiceRequestDetails(requestId) {
   // Always show the modal
   document.getElementById('serviceRequestModal').style.display = 'block';
   console.log('Modal opened/refreshed for request:', requestId);
+
+  // Populate technician dropdown for pending requests
+  if (serviceRequest.request_status === 'Pending') {
+    populateTechnicianDropdownForRequest(serviceRequest);
+  }
 }
 
 // Accept request (Pending -> In Progress with final price)
@@ -1182,6 +1196,172 @@ async function sendFinalPriceEmail(requestId) {
     if (emailBtn) {
       emailBtn.textContent = '📧 Email Customer';
       emailBtn.disabled = false;
+    }
+  }
+}
+
+// Populate technician dropdown for service request based on service type
+async function populateTechnicianDropdownForRequest(serviceRequest) {
+  const technicianSelect = document.getElementById('technicianSelect');
+
+  if (!technicianSelect) {
+    return;
+  }
+
+  try {
+    // Get the service type from the service request
+    const serviceTypeName = serviceRequest.service.service_type;
+
+    if (!serviceTypeName) {
+      technicianSelect.innerHTML = '<option value="">No service type specified</option>';
+      return;
+    }
+
+    // Fetch qualified technicians for this service type
+    const response = await fetch(`/api/admin/qualified-employees/${encodeURIComponent(serviceTypeName)}`);
+    const result = await response.json();
+
+    if (result.success && result.data) {
+      // Clear and repopulate dropdown
+      technicianSelect.innerHTML = '<option value="">--Select Technician--</option>';
+
+      if (result.data.length > 0) {
+        result.data.forEach(technician => {
+          const option = document.createElement('option');
+          option.value = technician.employee_id;
+          const fullName = `${technician.first_name} ${technician.last_name}`;
+          const specialties = technician.specialties ? ` (${technician.specialties.join(', ')})` : '';
+          option.textContent = fullName + specialties;
+
+          // Pre-select if this technician is currently assigned
+          if (serviceRequest.assigned_employee &&
+            serviceRequest.assigned_employee.employee_id === technician.employee_id) {
+            option.selected = true;
+          }
+
+          technicianSelect.appendChild(option);
+        });
+      } else {
+        // If no qualified technicians, show a message
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = `No technicians qualified for ${serviceTypeName}`;
+        option.disabled = true;
+        technicianSelect.appendChild(option);
+      }
+    } else {
+      // Error handling
+      technicianSelect.innerHTML = '<option value="">Error loading technicians</option>';
+    }
+  } catch (error) {
+    console.error('Error fetching qualified technicians for request:', error);
+    technicianSelect.innerHTML = '<option value="">Error loading technicians</option>';
+  }
+}
+
+// Save assigned technician for service request
+async function saveAssignedTechnician(requestId) {
+  const technicianSelect = document.getElementById('technicianSelect');
+  const saveBtn = document.querySelector('.save-technician-btn');
+
+  if (!technicianSelect) {
+    return;
+  }
+
+  const selectedTechnicianId = technicianSelect.value;
+
+  try {
+    // Show loading state
+    if (saveBtn) {
+      saveBtn.textContent = 'Saving...';
+      saveBtn.disabled = true;
+    }
+
+    let response, result;
+
+    if (selectedTechnicianId) {
+      // Assign technician
+      response = await fetch(`/api/service-requests/${requestId}/assign`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          employee_id: selectedTechnicianId
+        })
+      });
+    } else {
+      // Unassign technician
+      response = await fetch(`/api/service-requests/${requestId}/assign`, {
+        method: 'DELETE'
+      });
+    }
+
+    result = await response.json();
+
+    if (result.success) {
+      // Update local service request data
+      const serviceRequest = serviceRequests.find(sr => sr.request_id === requestId);
+      if (serviceRequest) {
+        if (selectedTechnicianId) {
+          // Find the selected technician from the dropdown options
+          const selectedOption = technicianSelect.options[technicianSelect.selectedIndex];
+          if (selectedOption && selectedOption.value) {
+            // Extract name from option text (before the parentheses if they exist)
+            const fullName = selectedOption.textContent.split(' (')[0];
+            const [firstName, ...lastNameParts] = fullName.split(' ');
+
+            serviceRequest.assigned_employee = {
+              employee_id: parseInt(selectedTechnicianId),
+              first_name: firstName,
+              last_name: lastNameParts.join(' ')
+            };
+          }
+        } else {
+          serviceRequest.assigned_employee = null;
+        }
+      }
+
+      // Update calendar display
+      displayServiceRequests();
+
+      // Show success message
+      if (saveBtn) {
+        saveBtn.textContent = '✅ Saved!';
+        saveBtn.style.backgroundColor = '#38a169';
+      }
+
+      const technicianName = selectedTechnicianId ?
+        technicianSelect.options[technicianSelect.selectedIndex].textContent.split(' (')[0] :
+        'None';
+
+      showNotification(`Technician assignment updated: ${technicianName}`, 'success');
+
+      // Reset button after 2 seconds
+      setTimeout(() => {
+        if (saveBtn) {
+          saveBtn.textContent = 'Save';
+          saveBtn.style.backgroundColor = '#4CAF50';
+          saveBtn.disabled = false;
+        }
+      }, 2000);
+
+    } else {
+      showNotification(`Failed to assign technician: ${result.error}`, 'error');
+      // Reset button immediately on error
+      if (saveBtn) {
+        saveBtn.textContent = 'Save';
+        saveBtn.disabled = false;
+      }
+    }
+
+  } catch (error) {
+    console.error('Error assigning technician:', error);
+    showNotification('Network error assigning technician', 'error');
+    // Reset button immediately on error
+    if (saveBtn) {
+      saveBtn.textContent = 'Save';
+      saveBtn.disabled = false;
     }
   }
 }
