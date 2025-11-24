@@ -113,30 +113,18 @@ def forgot_password():
             cur.execute("""
                 INSERT INTO password_reset_tokens (employeeid, token, expires_at)
                 VALUES (%s, %s, %s)
+
             """, (employee["employeeid"], token, expires))
 
         reset_link = f"http://localhost:5000/reset-password/{token}"
 
-        # send email
-        from flask_mail import Message  # ensure this is imported at the top of your file
-        msg = Message(
-            subject="Password Reset Request",
-            sender="yourgmail@gmail.com",
-            recipients=[email]
-        )
-        msg.body = f"""
-                    Hello {employee.get('firstname', '')},
-
-                    You requested a password reset.
-
-                    Click the link below to reset your password:
-                    {reset_link}
-
-                    If you didn't request this, you can safely ignore this email.
-        """
-        mail.send(msg)
-
-        return {"success": True, "message": "Password reset email sent"}, 200
+        # SEND EMAIL USING EMAILSERVICE
+        from services.emailservice import EmailService  # make sure this is imported
+        email_service = EmailService()
+        if email_service.send_password_reset_email(email, reset_link):
+            return {"success": True, "message": "Password reset email sent"}, 200
+        else:
+            return {"success": False, "message": "Failed to send email"}, 500
 
     except Exception as e:
         print("Forgot password error:", e)
