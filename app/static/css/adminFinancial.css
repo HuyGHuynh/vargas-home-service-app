@@ -448,13 +448,13 @@ tfoot td {
         flex-direction: column;
         gap: 12px;
     }
-    
+
     .stat-item {
         flex-direction: row;
         justify-content: space-between;
         text-align: left;
     }
-    
+
     .stat-label {
         margin-bottom: 0;
     }
@@ -593,6 +593,21 @@ tfoot td {
 .status-badge.status-paid {
     background-color: #e8f5e9;
     color: #4caf50;
+}
+
+.status-badge.status-cleared {
+    background-color: #e8f5e9;
+    color: #4caf50;
+}
+
+.status-badge.status-unpaid {
+    background-color: #ffebee;
+    color: #f44336;
+}
+
+.status-badge.status-cancelled {
+    background-color: #f3e5f5;
+    color: #9c27b0;
 }
 
 /* Financial Table */
