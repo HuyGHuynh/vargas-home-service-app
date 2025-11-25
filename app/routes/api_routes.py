@@ -27,6 +27,7 @@ def db_check():
         return {"ok": False, "error": str(e)}, 500
 
 
+
 @api_bp.post("/login")
 def login():
     """Database-integrated login endpoint for authentication."""
@@ -83,7 +84,7 @@ def login():
         # Handle any server errors
         print(f"Login error: {e}")
         return {"success": False, "message": "Server error occurred"}, 500
-        
+
 @api_bp.post("/forgot-password")
 def forgot_password():
     try:
@@ -93,39 +94,85 @@ def forgot_password():
         if not email:
             return {"success": False, "message": "Email is required"}, 400
 
-        # Create reset token + link
+        # check employee exists
+        employee = EmployeeRepository.get_employee_by_email(email)
+        if not employee:
+            return {"success": False, "message": "Email not found"}, 404
+
+        # create token
         import uuid
+        from datetime import datetime, timedelta
+
         token = str(uuid.uuid4())
-        reset_link = f"https://yourwebsite.com/reset-password/{token}"
+        expires = datetime.utcnow() + timedelta(hours=1)
 
-        # Send Email
-        msg = Message(
-            subject="Password Reset Request",
-            sender="yourgmail@gmail.com",
-            recipients=[email]
-        )
-        msg.body = f"""
-        You requested a password reset.
+        # save token (create table if it doesn't exist)
+        with BaseRepository.get_cursor() as cur:
+            # Delete any existing tokens for this employee
+            cur.execute("DELETE FROM password_reset_tokens WHERE employeeid = %s", (employee["employeeid"],))
+            
+            # Insert new token
+            cur.execute("""
+                INSERT INTO password_reset_tokens (employeeid, token, expires_at)
+                VALUES (%s, %s, %s)
+            """, (employee["employeeid"], token, expires))
 
-        Click the link below to reset your password:
-        {reset_link}
+        reset_link = f"http://127.0.0.1:5000/reset-password/{token}"
 
-        If you didn't request this, ignore this email.
-        """
-
-        mail.send(msg)
-
-        return {
-            "success": True,
-            "message": "A password reset link has been sent to your email."
-        }, 200
+        # SEND EMAIL USING EMAILSERVICE
+        from services.email_service import EmailService  # Fixed import path
+        email_service = EmailService()
+        if email_service.send_password_reset_email(email, reset_link):
+            return {"success": True, "message": "Password reset email sent successfully"}, 200
+        else:
+            return {"success": False, "message": "Failed to send email"}, 500
 
     except Exception as e:
         print("Forgot password error:", e)
         return {"success": False, "message": "Server error"}, 500
 
+@api_bp.route("/reset-password/<token>", methods=["POST"])
+def reset_password(token):
+    try:
+        data = request.get_json()
+        new_password = data.get("new_password", "").strip() if data else ""
 
+        if not new_password:
+            return {"success": False, "message": "Password is required"}, 400
 
+        from datetime import datetime
+
+        # get token record
+        with BaseRepository.get_cursor() as cur:
+            cur.execute("""
+                SELECT employeeid, expires_at
+                FROM password_reset_tokens
+                WHERE token = %s
+            """, (token,))
+            record = cur.fetchone()
+
+        if not record:
+            return {"success": False, "message": "Invalid or expired token"}, 400
+
+        employee_id, expires_at = record
+        if expires_at < datetime.utcnow():
+            return {"success": False, "message": "Token has expired"}, 400
+
+        # update employee password
+        success = EmployeeRepository.update_employee_password(employee_id, new_password)
+        if not success:
+            return {"success": False, "message": "Failed to update password"}, 500
+
+        # delete token after use
+        with BaseRepository.get_cursor() as cur:
+            cur.execute("DELETE FROM password_reset_tokens WHERE token = %s", (token,))
+
+        return {"success": True, "message": "Password has been reset successfully"}, 200
+
+    except Exception as e:
+        print("Reset password error:", e)
+        return {"success": False, "message": "Server error"}, 500
+        
 @api_bp.post("/logout")
 def logout():
     """Logout endpoint - clears user session."""

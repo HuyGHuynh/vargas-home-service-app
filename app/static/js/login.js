@@ -68,3 +68,43 @@ loginForm.addEventListener('submit', async function (event) {
         loginMessage.style.color = '#d9534f';
     }
 });
+
+// Forgot Password Logic -----------------------------------------------------------------------------------
+async function forgotPassword() {
+    const email = document.getElementById('email').value.trim();
+
+    if (!email) {
+        loginMessage.textContent = 'Please enter your email to reset your password.';
+        loginMessage.style.color = '#d9534f';   // same alert style as login error
+        return;
+    }
+
+    // Show loading message
+    loginMessage.textContent = 'Sending password reset email...';
+    loginMessage.style.color = '#007bff';        // info blue
+
+    try {
+        const response = await fetch("/api/forgot-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Success message (same style as login success)
+            loginMessage.textContent = "A password reset email has been sent to you.";
+            loginMessage.style.color = "#28a745";    // same green as login success
+        } else {
+            // Error message
+            loginMessage.textContent = data.message || "Unable to send reset email.";
+            loginMessage.style.color = "#d9534f";
+        }
+
+    } catch (error) {
+        console.error("Forgot password error:", error);
+        loginMessage.textContent = "Something went wrong. Try again later.";
+        loginMessage.style.color = "#d9534f";
+    }
+}

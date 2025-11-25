@@ -95,6 +95,46 @@ class EmployeeRepository:
         except Exception as e:
             print(f"Error getting employee by ID: {e}")
             return None
+            
+    @staticmethod
+    def get_employee_by_email(email):
+        """
+        Retrieve a single employee by their email.
+        
+        Args:
+            email (str): Employee's email address
+            
+        Returns:
+            dict or None: Employee data if found, None otherwise
+        """
+        try:
+            with BaseRepository.get_cursor() as cur:
+                query = """
+                    SELECT employeeid, firstname, lastname, phone, email, password, isadmin
+                    FROM employee
+                    WHERE email = %s
+                    LIMIT 1
+                """
+                cur.execute(query, (email,))
+                result = cur.fetchone()
+
+                if result:
+                    employee_data = {
+                        'employeeid': result[0],
+                        'firstname': result[1],
+                        'lastname': result[2],
+                        'phone': result[3],
+                        'email': result[4],
+                        'password': result[5],
+                        'isadmin': result[6]
+                    }
+                    return employee_data
+
+                return None
+
+        except Exception as e:
+            print(f"Error in get_employee_by_email: {e}")
+            return None
 
     @staticmethod
     def get_all_employees():
