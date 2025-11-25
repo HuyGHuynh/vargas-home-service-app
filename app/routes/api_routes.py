@@ -5,8 +5,6 @@ from flask import Blueprint, request, jsonify, session, render_template, url_for
 from repositories.base_repository import BaseRepository
 from repositories.service_repository import ServiceRepository
 from repositories.employee_repository import EmployeeRepository
-from flask_mail import Mail
-from flask_mail import Message
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -794,6 +792,33 @@ def get_employees_by_service_type(service_type_name):
         return {"success": False, "error": str(e)}, 500
 
 
+@api_bp.get("/admin/qualified-employees/<service_type_name>")
+def get_qualified_employees_for_admin(service_type_name):
+    """Get all qualified employees for admin - ignores availability checks."""
+    try:
+        employees = EmployeeRepository.get_employees_by_service_type(service_type_name)
+        
+        # Format for admin use with additional fields for compatibility
+        formatted_employees = []
+        for emp in employees:
+            formatted_employees.append({
+                'employee_id': emp['employeeid'],
+                'employeeid': emp['employeeid'],  # Keep both for compatibility
+                'first_name': emp['firstname'],
+                'last_name': emp['lastname'],
+                'full_name': emp['full_name'],
+                'email': emp['email'],
+                'phone': emp['phone'],
+                'specialties': emp.get('specialties', []),
+                'status': emp['status'],
+                'available_override': True  # Admin can assign regardless of availability
+            })
+        
+        return {"success": True, "data": formatted_employees}, 200
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
 # Admin Warranty Management Routes
 
 @api_bp.get("/admin/warranties")
@@ -970,6 +995,50 @@ def unassign_employee_from_request(request_id):
         return {"success": False, "error": str(e)}, 500
 
 
+@api_bp.put("/service-requests/<int:request_id>/set-final-price")
+def set_final_price(request_id):
+    """Set final price for a service request without changing status."""
+    try:
+        data = request.get_json()
+        final_price = data.get('final_price')
+        
+        if not final_price or final_price <= 0:
+            return {"success": False, "error": "Valid final price is required"}, 400
+        
+        with BaseRepository.get_cursor() as cursor:
+            # Check if request exists
+            cursor.execute("SELECT status FROM servicerequests WHERE requestid = %s", (request_id,))
+            row = cursor.fetchone()
+            
+            if not row:
+                return {"success": False, "error": "Service request not found"}, 404
+            
+            # Check if final price already exists
+            cursor.execute("SELECT finalprice_id FROM finalpricedetails WHERE request_id = %s", (request_id,))
+            existing_price = cursor.fetchone()
+            
+            if existing_price:
+                # Update existing final price
+                cursor.execute("""
+                    UPDATE finalpricedetails 
+                    SET pricetotal = %s 
+                    WHERE request_id = %s
+                """, (final_price, request_id))
+                message = f"Final price updated to ${final_price:.2f} for service request {request_id}"
+            else:
+                # Insert new final price record
+                cursor.execute("""
+                    INSERT INTO finalpricedetails (pricetotal, request_id) 
+                    VALUES (%s, %s)
+                """, (final_price, request_id))
+                message = f"Final price set to ${final_price:.2f} for service request {request_id}"
+            
+            return {"success": True, "message": message}, 200
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
 @api_bp.post("/service-requests/<int:request_id>/accept")
 def accept_service_request(request_id):
     """Accept a pending service request, set final price and change status to In Progress."""
@@ -1054,6 +1123,49 @@ def accept_service_request(request_id):
             return {"success": True, "message": f"Service request {request_id} accepted and moved to In Progress. Note: Email notifications could not be sent."}, 200
             
     except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
+@api_bp.post("/service-requests/<int:request_id>/send-final-price-email")
+def send_final_price_email(request_id):
+    """Send final price notification email to customer."""
+    try:
+        from repositories.servicerequest_repository import ServiceRequestRepository
+        from services.email_service import EmailService
+        
+        # Get service request details
+        service_request = ServiceRequestRepository.get_service_request_by_id(request_id)
+        if not service_request:
+            return {"success": False, "error": "Service request not found"}, 404
+        
+        # Check if request has a final price set
+        if not service_request.get('final_price'):
+            return {"success": False, "error": "No final price set for this request"}, 400
+        
+        # Check if request is still pending (only send notifications for pending requests)
+        if service_request.get('request_status') != 'Pending':
+            return {"success": False, "error": "Final price notifications can only be sent for pending requests"}, 400
+        
+        customer = service_request.get('customer', {})
+        customer_email = customer.get('email')
+        
+        if not customer_email:
+            return {"success": False, "error": "Customer email not found"}, 400
+        
+        # Send the final price notification email
+        email_service = EmailService()
+        success = email_service.send_final_price_notification_email(
+            customer_email=customer_email,
+            service_request=service_request
+        )
+        
+        if success:
+            return {"success": True, "message": f"Final price notification sent to {customer_email}"}, 200
+        else:
+            return {"success": False, "error": "Failed to send email notification"}, 500
+            
+    except Exception as e:
+        print(f"Error sending final price email: {e}")
         return {"success": False, "error": str(e)}, 500
 
 
@@ -1373,6 +1485,44 @@ def get_review_details(request_id):
         import traceback
         print(f"Full traceback: {traceback.format_exc()}")
         return {"success": False, "error": f"Database error: {str(e)}"}, 500
+
+
+@api_bp.get("/reviews/<int:request_id>/get")
+def get_review(request_id):
+    """Get review for a specific request."""
+    try:
+        with BaseRepository.get_cursor() as cursor:
+            cursor.execute("""
+                SELECT r.review_id, r.customer_id, r.comments, r.request_id,
+                       r.rating_quality, r.rating_professionalism, r.rating_timeliness, 
+                       r.rating_communication, r.rating_overall, r.avg_rating
+                FROM reviews r
+                WHERE r.request_id = %s
+            """, (request_id,))
+            
+            review_row = cursor.fetchone()
+            
+            if not review_row:
+                return {"success": False, "error": "Review not found"}, 404
+            
+            review_data = {
+                'review_id': review_row[0],
+                'customer_id': review_row[1],
+                'comments': review_row[2],
+                'request_id': review_row[3],
+                'rating_quality': review_row[4],
+                'rating_professionalism': review_row[5],
+                'rating_timeliness': review_row[6],
+                'rating_communication': review_row[7],
+                'rating_overall': review_row[8],
+                'avg_rating': float(review_row[9]) if review_row[9] else 0.0
+            }
+            
+            return {"success": True, "review": review_data}, 200
+            
+    except Exception as e:
+        print(f"Error getting review for request_id {request_id}: {e}")
+        return {"success": False, "error": str(e)}, 500
 
 
 @api_bp.post("/reviews/<int:request_id>")

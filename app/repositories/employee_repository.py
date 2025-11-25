@@ -1016,6 +1016,7 @@ class EmployeeRepository:
     def get_employees_by_service_type(service_type_name):
         """
         Get all employees who can perform a specific service type based on their specialties.
+        Uses database tables: service_types, service_type_specialties, specialties
         
         Args:
             service_type_name (str): The service type name to match against specialties
@@ -1024,41 +1025,9 @@ class EmployeeRepository:
             list: List of employee dictionaries who can perform the service
         """
         try:
-            # Define mapping between service types and required specialties
-            service_specialty_mapping = {
-                'hvac': ['HVAC Electrician'],
-                'heating': ['HVAC Electrician'], 
-                'cooling': ['HVAC Electrician'],
-                'air conditioning': ['HVAC Electrician'],
-                'plumbing': ['Plumber'],
-                'pipes': ['Plumber'],
-                'water heater': ['Plumber'],
-                'drain cleaning': ['Plumber'],
-                'electrical': ['Electrician', 'HVAC Electrician'],
-                'wiring': ['Electrician', 'HVAC Electrician'],
-                'outlets': ['Electrician', 'HVAC Electrician'],
-                'lighting': ['Electrician', 'HVAC Electrician'],
-                'landscaping': ['Landscaper'],
-                'lawn care': ['Landscaper'],
-                'tree service': ['Landscaper'],
-                'gardening': ['Landscaper'],
-                'painting': ['Painter'],
-                'interior painting': ['Painter'],
-                'exterior painting': ['Painter']
-            }
-            
-            # Get matching specialties for the service type
-            matching_specialties = service_specialty_mapping.get(service_type_name.lower(), [])
-            
-            if not matching_specialties:
-                # If no mapping found, return all active employees
-                return EmployeeRepository.get_all_employees()
-            
             with BaseRepository.get_cursor() as cur:
-                # Create placeholders for the IN clause
-                placeholders = ','.join(['%s'] * len(matching_specialties))
-                
-                query = f"""
+                # Query to get employees with required specialties for the service type
+                query = """
                     SELECT DISTINCT
                         e.employeeid,
                         e.firstname,
@@ -1066,19 +1035,21 @@ class EmployeeRepository:
                         e.phone,
                         e.email,
                         e.isadmin,
-                        e.hiredate,
-                        e.status,
-                        COALESCE(array_agg(s2.specialty_name) FILTER (WHERE s2.specialty_name IS NOT NULL), ARRAY[]::varchar[]) as specialties
+                        COALESCE(array_agg(s_all.specialty_name) FILTER (WHERE s_all.specialty_name IS NOT NULL), ARRAY[]::varchar[]) as specialties
                     FROM employee e
                     JOIN employee_specialties es ON e.employeeid = es.employeeid
                     JOIN specialties s ON es.specialty_id = s.specialty_id
-                    LEFT JOIN employee_specialties es2 ON e.employeeid = es2.employeeid
-                    LEFT JOIN specialties s2 ON es2.specialty_id = s2.specialty_id
-                    WHERE s.specialty_name IN ({placeholders}) AND e.status = 'Active' AND e.isadmin = FALSE
-                    GROUP BY e.employeeid, e.firstname, e.lastname, e.phone, e.email, e.isadmin, e.hiredate, e.status
+                    JOIN service_type_specialties sts ON s.specialty_id = sts.specialty_id
+                    JOIN service_types st ON sts.service_type_id = st.service_type_id
+                    -- Get all specialties for each employee (for display)
+                    LEFT JOIN employee_specialties es_all ON e.employeeid = es_all.employeeid
+                    LEFT JOIN specialties s_all ON es_all.specialty_id = s_all.specialty_id
+                    WHERE st.service_type_name = %s AND e.isadmin = FALSE
+                    GROUP BY e.employeeid, e.firstname, e.lastname, e.phone, e.email, e.isadmin
                     ORDER BY e.firstname, e.lastname
                 """
-                cur.execute(query, matching_specialties)
+                
+                cur.execute(query, (service_type_name,))
                 results = cur.fetchall()
                 
                 employees = []
@@ -1090,15 +1061,20 @@ class EmployeeRepository:
                         'phone': result[3],
                         'email': result[4],
                         'role': 'admin' if result[5] else 'employee',
-                        'hireDate': result[6].strftime('%Y-%m-%d') if result[6] else None,
-                        'status': result[7],
-                        'specialties': result[8] if result[8] else [],
+                        'status': 'Active',  # Assume active employees
+                        'specialties': result[6] if result[6] else [],
                         'full_name': f"{result[1]} {result[2]}"
                     }
                     employees.append(employee_data)
+                
+                # If no employees found for this service type, return all employees
+                if not employees:
+                    print(f"No employees found for service type '{service_type_name}', returning all employees")
+                    return EmployeeRepository.get_all_employees()
                 
                 return employees
                 
         except Exception as e:
             print(f"Error getting employees by service type: {e}")
-            return []
+            # Fallback to all employees if there's an error
+            return EmployeeRepository.get_all_employees()

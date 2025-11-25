@@ -4,6 +4,7 @@ Handles validation and orchestrates repository calls.
 """
 from datetime import datetime
 from repositories.workorder_repository import WorkorderRepository
+from repositories.base_repository import BaseRepository
 import psycopg2
 
 
@@ -378,13 +379,18 @@ class WorkorderService:
             # Handle manual or auto assignment
             request_id = result.get('request_id')
             if request_id:
-                # Manual assignment takes priority
+                # Manual assignment takes priority - replace any existing assignment
                 assigned_employee_id = data.get('assignedEmployeeId')
                 if assigned_employee_id:
                     try:
                         from repositories.employee_repository import EmployeeRepository
                         
-                        # Create manual work assignment (this will override automatic assignment)
+                        # First, delete any existing auto-assignments for this request
+                        with BaseRepository.get_cursor() as cur:
+                            cur.execute("DELETE FROM work_assignments WHERE requestid = %s", (request_id,))
+                            print(f"DEBUG: Cleared auto-assignments for request {request_id}")
+                        
+                        # Create manual work assignment
                         assignment_id = EmployeeRepository.create_work_assignment(
                             request_id, 
                             int(assigned_employee_id)
@@ -397,6 +403,9 @@ class WorkorderService:
                                 result['technician'] = employee_details
                                 result['assignment_id'] = assignment_id
                                 result['assignment_type'] = 'manual'
+                                print(f"DEBUG: Manual assignment successful - {employee_details.get('firstname', '')} {employee_details.get('lastname', '')} (ID: {assigned_employee_id})")
+                        else:
+                            print(f"DEBUG: Failed to create manual assignment for employee {assigned_employee_id}")
                     except Exception as e:
                         # Log the error but don't fail the whole operation
                         print(f"Warning: Failed to manually assign technician: {e}")

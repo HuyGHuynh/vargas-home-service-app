@@ -107,7 +107,7 @@ body {
     <div class="modal-content appointment-form-style">
       <span class="close-modal" onclick="closeAddWorkOrderModal()">&times;</span>
       <h2>Service Appointment Request</h2>
-      
+
       <form id="addWorkOrderForm">
         <div class="selected-date-display">
           <strong>Selected Date: <span id="selectedDateDisplay"></span></strong>
@@ -121,9 +121,8 @@ body {
         <input type="text" id="lastName" name="lastName" required>
 
         <label for="customerPhone">Phone Number:</label>
-        <input type="text" id="customerPhone" name="customerPhone" 
-               pattern="^(\+?\d{1,2}[\s-]?)?(\(?\d{3}\)?[\s-]?)?\d{3}[\s-]?\d{4}$" 
-               title="Enter Phone Number" required>
+        <input type="text" id="customerPhone" name="customerPhone"
+          pattern="^(\+?\d{1,2}[\s-]?)?(\(?\d{3}\)?[\s-]?)?\d{3}[\s-]?\d{4}$" title="Enter Phone Number" required>
 
         <label for="customerEmail">Email:</label>
         <input type="email" id="customerEmail" name="customerEmail" required>
@@ -167,14 +166,17 @@ body {
         </div>
 
         <label for="requestDescription">Job Description:</label>
-        <textarea id="requestDescription" name="requestDescription" 
-                  placeholder="Describe the issue or job details..." required></textarea>
+        <textarea id="requestDescription" name="requestDescription" placeholder="Describe the issue or job details..."
+          required></textarea>
 
         <label for="assignedTechnician">Assign Technician (Optional):</label>
         <select id="assignedTechnician" name="assignedTechnician">
           <option value="">--Select Technician--</option>
           <!-- Technicians will be loaded dynamically from database -->
         </select>
+        <div id="adminTechnicianNote" style="display: none; font-size: 12px; color: #007bff; margin-top: 4px;">
+          Admin Mode: Showing qualified technicians (availability not checked)
+        </div>
 
         <div class="modal-actions">
           <button type="button" class="btn-cancel" onclick="closeAddWorkOrderModal()">Cancel</button>
