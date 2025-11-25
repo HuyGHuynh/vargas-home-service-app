@@ -62,7 +62,7 @@ class EmailService:
         service = build('gmail', 'v1', credentials=creds)
         return service
 
-        def send_password_reset_email(self, recipient_email: str, reset_link: str) -> bool:
+    def send_password_reset_email(self, recipient_email: str, reset_link: str) -> bool:
         try:
             if not self.service:
                 self.service = self.authenticate_gmail()
