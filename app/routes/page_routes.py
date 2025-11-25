@@ -23,6 +23,12 @@ def login():
     return render_template("login.html")
 
 
+@page_bp.get("/reset-password/<token>")
+def reset_password(token):
+    """Reset password page."""
+    return render_template("reset_password.html", token=token)
+
+
 @page_bp.get("/owner")
 def owner_view():
     """Owner view page."""

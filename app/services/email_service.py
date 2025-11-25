@@ -61,7 +61,38 @@ class EmailService:
         
         service = build('gmail', 'v1', credentials=creds)
         return service
-    
+
+    def send_password_reset_email(self, recipient_email: str, reset_link: str) -> bool:
+        try:
+            if not self.service:
+                self.service = self.authenticate_gmail()
+
+            message = MIMEMultipart('alternative')
+            message['To'] = recipient_email
+            message['From'] = f"{self.sender_name} <{self.sender_email}>"
+            message['Subject'] = "Password Reset Request"
+
+            html_content = self._create_password_reset_html(reset_link)
+            text_content = self._create_password_reset_text(reset_link)
+
+            message.attach(MIMEText(text_content, 'plain'))
+            message.attach(MIMEText(html_content, 'html'))
+
+            raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
+            send_message = {'raw': raw}
+
+            self.service.users().messages().send(
+              userId='me',
+             body=send_message
+            ).execute()
+
+            print(f"✅ Password reset email sent to {recipient_email}")
+            return True
+
+        except Exception as e:
+            print(f"❌ Failed to send password reset email: {e}")
+            return False
+            
     def send_warranty_email(self, customer_email: str, warranties: List[Dict[Any, Any]]) -> bool:
         """
         Send warranty details to customer.
@@ -1224,5 +1255,78 @@ We look forward to serving you again!
 
 Vargas' Home Services - Excellence in Every Service
 {datetime.now().strftime('%B %d, %Y')}
+"""
+        return text
+
+    def _create_password_reset_html(self, reset_link: str) -> str:
+        """Create HTML content for password reset email."""
+        html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: linear-gradient(135deg, #8FABD4 0%, #4A70A9 100%); color: white; padding: 30px; text-align: center; }}
+                .content {{ background: #f9f9f9; padding: 30px; }}
+                .button {{ display: inline-block; background: #4A70A9; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; }}
+                .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🔒 Password Reset Request</h1>
+                </div>
+                <div class="content">
+                    <h2>Reset Your Password</h2>
+                    <p>We received a request to reset your password for your Vargas' Home Services account.</p>
+                    <p>Click the button below to reset your password:</p>
+                    <p style="text-align: center; margin: 30px 0;">
+                        <a href="{reset_link}" class="button">Reset Password</a>
+                    </p>
+                    <p><strong>This link will expire in 1 hour for security reasons.</strong></p>
+                    <p>If you didn't request this password reset, please ignore this email. Your password will remain unchanged.</p>
+                    <p>If the button doesn't work, copy and paste this link into your browser:</p>
+                    <p style="word-break: break-all; color: #4A70A9;">{reset_link}</p>
+                </div>
+                <div class="footer">
+                    <p>© {datetime.now().year} Vargas' Home Services - Professional Home Services</p>
+                    <p>If you have any questions, contact us at support@vargashome.com</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        return html
+
+    def _create_password_reset_text(self, reset_link: str) -> str:
+        """Create plain text content for password reset email."""
+        text = f"""
+🔒 PASSWORD RESET REQUEST
+=========================
+
+Hello,
+
+We received a request to reset your password for your Vargas' Home Services account.
+
+RESET YOUR PASSWORD
+===================
+Click this link to reset your password: {reset_link}
+
+⏰ IMPORTANT: This link will expire in 1 hour for security reasons.
+
+DIDN'T REQUEST THIS?
+====================
+If you didn't request this password reset, please ignore this email. 
+Your password will remain unchanged and secure.
+
+NEED HELP?
+==========
+If you have any questions or need assistance, please contact us at:
+Email: support@vargashome.com
+
+© {datetime.now().year} Vargas' Home Services - Professional Home Services
 """
         return text
