@@ -106,21 +106,24 @@ def forgot_password():
         token = str(uuid.uuid4())
         expires = datetime.utcnow() + timedelta(hours=1)
 
-        # save token
+        # save token (create table if it doesn't exist)
         with BaseRepository.get_cursor() as cur:
+            # Delete any existing tokens for this employee
+            cur.execute("DELETE FROM password_reset_tokens WHERE employeeid = %s", (employee["employeeid"],))
+            
+            # Insert new token
             cur.execute("""
                 INSERT INTO password_reset_tokens (employeeid, token, expires_at)
                 VALUES (%s, %s, %s)
-
             """, (employee["employeeid"], token, expires))
 
-        reset_link = f"http://localhost:5000/reset-password/{token}"
+        reset_link = f"http://127.0.0.1:5000/reset-password/{token}"
 
         # SEND EMAIL USING EMAILSERVICE
-        from services.emailservice import EmailService  # make sure this is imported
+        from services.email_service import EmailService  # Fixed import path
         email_service = EmailService()
         if email_service.send_password_reset_email(email, reset_link):
-            return {"success": True, "message": "Password reset email sent"}, 200
+            return {"success": True, "message": "Password reset email sent successfully"}, 200
         else:
             return {"success": False, "message": "Failed to send email"}, 500
 
@@ -132,7 +135,7 @@ def forgot_password():
 def reset_password(token):
     try:
         data = request.get_json()
-        new_password = data.get("password", "").strip() if data else ""
+        new_password = data.get("new_password", "").strip() if data else ""
 
         if not new_password:
             return {"success": False, "message": "Password is required"}, 400
