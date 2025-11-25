@@ -102,8 +102,21 @@ class FinanceService:
         
         for txn in transactions:
             direction = 'Income' if txn['direction'] == 'IN' else 'Expense'
+            
+            # Format date to be more Excel-friendly (MM/DD/YYYY)
+            date_str = txn['txn_date']
+            if date_str:
+                try:
+                    from datetime import datetime
+                    date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+                    formatted_date = date_obj.strftime('%m/%d/%Y')
+                except:
+                    formatted_date = date_str
+            else:
+                formatted_date = ''
+            
             csv_lines.append(
-                f'"TXN-{txn["txn_id"]}","{txn["txn_date"]}","{txn["category"]}","'
+                f'"TXN-{txn["txn_id"]}","{formatted_date}","{txn["category"]}","'
                 f'{direction}","{txn["amount"]}","{txn["status"]}","'
                 f'{txn["description"]}","{txn["employee_name"]}","{txn["request_order"]}"'
             )

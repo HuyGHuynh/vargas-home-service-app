@@ -311,3 +311,56 @@ class FinanceRepository(BaseRepository):
         except Exception as e:
             print(f"Error creating transaction: {e}")
             return None
+    
+    @classmethod
+    def get_categories_with_ids(cls) -> List[Dict[str, Any]]:
+        """Get all finance categories with their IDs for form population."""
+        try:
+            with cls.get_cursor() as cur:
+                cur.execute("""
+                    SELECT category_id, category_name, category_direction_type, description
+                    FROM finance_categories
+                    ORDER BY category_name
+                """)
+                rows = cur.fetchall()
+                
+                categories = []
+                for row in rows:
+                    categories.append({
+                        'id': row[0],
+                        'name': row[1],
+                        'direction_type': row[2],
+                        'description': row[3]
+                    })
+                
+                return categories
+                
+        except Exception as e:
+            print(f"Error fetching categories with IDs: {e}")
+            return []
+    
+    @classmethod
+    def get_employees_list(cls) -> List[Dict[str, Any]]:
+        """Get all employees for form population."""
+        try:
+            with cls.get_cursor() as cur:
+                cur.execute("""
+                    SELECT employeeid, firstname, lastname
+                    FROM employee
+                    WHERE status = 'active'
+                    ORDER BY firstname, lastname
+                """)
+                rows = cur.fetchall()
+                
+                employees = []
+                for row in rows:
+                    employees.append({
+                        'id': row[0],
+                        'name': f"{row[1]} {row[2]}"
+                    })
+                
+                return employees
+                
+        except Exception as e:
+            print(f"Error fetching employees: {e}")
+            return []

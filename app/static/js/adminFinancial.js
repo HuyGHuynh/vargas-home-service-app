@@ -630,3 +630,127 @@ async function exportToCSV() {
     alert('Error exporting data. Please try again.');
   }
 }
+
+// Modal Functions
+function openAddTransactionModal() {
+  const modal = document.getElementById('addTransactionModal');
+  modal.style.display = 'flex';
+
+  // Initialize form data
+  initializeTransactionForm();
+
+  // Set default date to today
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('transactionDate').value = today;
+}
+
+function closeAddTransactionModal() {
+  const modal = document.getElementById('addTransactionModal');
+  modal.style.display = 'none';
+
+  // Reset form
+  document.getElementById('addTransactionForm').reset();
+}
+
+async function initializeTransactionForm() {
+  try {
+    // Fetch form data from API
+    const response = await fetch('/api/admin/financial/form-data');
+    const result = await response.json();
+
+    if (result.success) {
+      // Populate categories
+      const categorySelect = document.getElementById('transactionCategory');
+      categorySelect.innerHTML = '<option value="">Select Category</option>';
+
+      result.data.categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category.id;
+        option.textContent = category.name;
+        categorySelect.appendChild(option);
+      });
+
+      // Populate employees
+      const employeeSelect = document.getElementById('transactionEmployee');
+      employeeSelect.innerHTML = '<option value="">No Employee</option>';
+
+      result.data.employees.forEach(employee => {
+        const option = document.createElement('option');
+        option.value = employee.id;
+        option.textContent = employee.name;
+        employeeSelect.appendChild(option);
+      });
+    }
+
+  } catch (error) {
+    console.error('Error initializing form:', error);
+  }
+}
+
+async function submitTransaction(event) {
+  event.preventDefault();
+
+  try {
+    const form = document.getElementById('addTransactionForm');
+    const formData = new FormData(form);
+
+    // Convert form data to JSON
+    const data = {};
+    for (let [key, value] of formData.entries()) {
+      if (value) {
+        data[key] = value;
+      }
+    }
+
+    // Validate required fields
+    if (!data.category_id || !data.direction || !data.amount || !data.description) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    // Convert numeric fields
+    data.amount = parseFloat(data.amount);
+    if (data.category_id) {
+      data.category_id = parseInt(data.category_id);
+    }
+    if (data.employeeid) {
+      data.employeeid = parseInt(data.employeeid);
+    }
+    if (data.request_id) {
+      data.request_id = parseInt(data.request_id);
+    }
+
+    // Submit to API
+    const response = await fetch('/api/admin/financial/transaction', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      alert('Transaction added successfully!');
+      closeAddTransactionModal();
+
+      // Refresh the data
+      await loadFinancialData();
+    } else {
+      alert(`Error: ${result.message}`);
+    }
+
+  } catch (error) {
+    console.error('Error submitting transaction:', error);
+    alert('Error adding transaction. Please try again.');
+  }
+}
+
+// Close modal when clicking outside
+window.onclick = function (event) {
+  const modal = document.getElementById('addTransactionModal');
+  if (event.target === modal) {
+    closeAddTransactionModal();
+  }
+}

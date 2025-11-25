@@ -32,9 +32,14 @@
   <div class="financial-container">
     <div class="financial-header">
       <h1>Financial Reports</h1>
-      <button class="export-csv-btn" onclick="exportToCSV()">
-        <span>📊</span> Export to CSV
-      </button>
+      <div class="header-buttons">
+        <button class="add-transaction-btn" onclick="openAddTransactionModal()">
+          <span>➕</span> Add Transaction
+        </button>
+        <button class="export-csv-btn" onclick="exportToCSV()">
+          <span>📊</span> Export to CSV
+        </button>
+      </div>
     </div>
 
     <!-- Report Filters -->
@@ -90,7 +95,7 @@
       </div>
 
       <div class="summary-card expense">
-        <div class="card-icon">�</div>
+        <div class="card-icon">💸</div>
         <div class="card-content">
           <h3>Total Expense</h3>
           <div class="card-value" id="totalExpense">$0.00</div>
@@ -114,7 +119,7 @@
       </div>
 
       <div class="summary-card payables">
-        <div class="card-icon">�</div>
+        <div class="card-icon">📤</div>
         <div class="card-content">
           <h3>Payables</h3>
           <div class="card-value" id="payables">$0.00</div>
@@ -195,6 +200,87 @@
         </div>
       </div>
     </div>
+
+    <!-- Add Transaction Modal -->
+    <div id="addTransactionModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Add Financial Transaction</h2>
+          <span class="close-btn" onclick="closeAddTransactionModal()">&times;</span>
+        </div>
+
+        <form id="addTransactionForm" onsubmit="submitTransaction(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="transactionCategory">Category *</label>
+              <select id="transactionCategory" name="category_id" required>
+                <option value="">Select Category</option>
+                <!-- Categories will be populated dynamically -->
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="transactionDirection">Direction *</label>
+              <select id="transactionDirection" name="direction" required>
+                <option value="">Select Direction</option>
+                <option value="Income">Income</option>
+                <option value="Expense">Expense</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="transactionAmount">Amount *</label>
+              <input type="number" id="transactionAmount" name="amount" step="0.01" min="0" required>
+            </div>
+
+            <div class="form-group">
+              <label for="transactionDate">Date *</label>
+              <input type="date" id="transactionDate" name="txn_date" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="transactionStatus">Status</label>
+              <select id="transactionStatus" name="status">
+                <option value="Cleared">Cleared</option>
+                <option value="Pending">Pending</option>
+                <option value="Unpaid">Unpaid</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="transactionEmployee">Employee</label>
+              <select id="transactionEmployee" name="employeeid">
+                <option value="">No Employee</option>
+                <!-- Employees will be populated dynamically -->
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group full-width">
+            <label for="transactionDescription">Description *</label>
+            <textarea id="transactionDescription" name="description" rows="3" required
+              placeholder="Enter transaction description..."></textarea>
+          </div>
+
+          <div class="form-group full-width">
+            <label for="transactionRequestId">Related Service Request ID (Optional)</label>
+            <input type="number" id="transactionRequestId" name="request_id"
+              placeholder="Enter request ID if this transaction relates to a service request">
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="cancel-btn" onclick="closeAddTransactionModal()">Cancel</button>
+            <button type="submit" class="submit-btn">Add Transaction</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
   </div>
 
   <script src="{{ url_for('static', filename='js/adminFinancial.js') }}"></script>

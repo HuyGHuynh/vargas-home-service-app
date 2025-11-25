@@ -1788,3 +1788,31 @@ def create_financial_transaction():
             "success": False,
             "message": "Failed to create transaction"
         }, 500
+
+
+@api_bp.route("/admin/financial/form-data", methods=["GET"])
+def get_financial_form_data():
+    """Get categories and employees for the add transaction form."""
+    try:
+        from repositories.finance_repository import FinanceRepository
+        
+        # Get categories with IDs
+        categories = FinanceRepository.get_categories_with_ids()
+        
+        # Get employees
+        employees = FinanceRepository.get_employees_list()
+        
+        return {
+            "success": True,
+            "data": {
+                "categories": categories,
+                "employees": employees
+            }
+        }, 200
+        
+    except Exception as e:
+        print(f"Error fetching form data: {e}")
+        return {
+            "success": False,
+            "message": "Failed to fetch form data"
+        }, 500
