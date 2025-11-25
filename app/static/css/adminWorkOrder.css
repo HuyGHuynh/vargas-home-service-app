@@ -173,7 +173,8 @@
   text-align: center;
 }
 
-.status-scheduled {
+.status-scheduled,
+.status-pending {
   background-color: #fff3e0;
   color: #ff9800;
 }
@@ -277,6 +278,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -298,6 +300,7 @@
     transform: translateY(-50px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -541,6 +544,72 @@
   margin-bottom: 20px;
 }
 
+/* Loading and Error States */
+.loading-state,
+.error-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: #333;
+}
+
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 4px solid #4A70A9;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 30px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-state h3,
+.error-state h3 {
+  color: #333;
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.loading-state p,
+.error-state p {
+  color: #666;
+  font-size: 1rem;
+  margin-bottom: 20px;
+}
+
+.error-icon {
+  font-size: 3rem;
+  margin-bottom: 20px;
+  opacity: 0.6;
+}
+
+.retry-btn {
+  background: linear-gradient(135deg, #4A70A9 0%, #1976d2 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retry-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 112, 169, 0.4);
+}
+
 /* Review Stars - Clickable */
 .review-stars {
   color: #ff9800;
@@ -689,4 +758,3 @@
 .review-metadata p {
   margin: 5px 0;
 }
-
