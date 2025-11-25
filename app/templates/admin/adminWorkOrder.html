@@ -39,26 +39,18 @@
     <!-- Filter Tabs -->
     <div class="filter-tabs">
       <button class="tab-btn active" onclick="filterWorkOrders('all')">All Orders</button>
-      <button class="tab-btn" onclick="filterWorkOrders('scheduled')">Scheduled</button>
+      <button class="tab-btn" onclick="filterWorkOrders('scheduled')">Pending</button>
       <button class="tab-btn" onclick="filterWorkOrders('in-progress')">In Progress</button>
       <button class="tab-btn" onclick="filterWorkOrders('completed')">Completed</button>
-      <button class="tab-btn" onclick="filterWorkOrders('cancelled')">Cancelled</button>
-      <button class="tab-btn" onclick="filterWorkOrders('reviews')">Reviews</button>
     </div>
 
     <!-- Search and Filter Bar -->
     <div class="search-filter-bar">
-      <input type="text" id="searchInput" placeholder="Search by customer name, phone, or order ID..." class="search-input">
+      <input type="text" id="searchInput" placeholder="Search by customer name, phone, employee name, or order ID..."
+        class="search-input">
       <select id="serviceTypeFilter" class="filter-select">
         <option value="">All Service Types</option>
-        <option value="Kitchen Remodel">Kitchen Remodel</option>
-        <option value="Bathroom Renovation">Bathroom Renovation</option>
-        <option value="Roof Repair">Roof Repair</option>
-        <option value="HVAC Installation">HVAC Installation</option>
-        <option value="Plumbing Repair">Plumbing Repair</option>
-        <option value="Electrical">Electrical</option>
-        <option value="Outdoor Projects">Outdoor Projects</option>
-        <option value="Other">Other</option>
+        <!-- Options will be loaded dynamically from database -->
       </select>
       <button class="search-btn" onclick="searchWorkOrders()">Search</button>
     </div>
@@ -109,7 +101,7 @@
     <div class="modal-content review-modal">
       <span class="close-modal" onclick="closeReviewModal()">&times;</span>
       <h2>Customer Review</h2>
-      
+
       <div class="review-details" id="reviewDetailsContent">
         <!-- Review details will be populated here -->
       </div>
@@ -164,20 +156,9 @@
           <textarea id="description" rows="4" required></textarea>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="dateScheduled">Scheduled Date *</label>
-            <input type="date" id="dateScheduled" required>
-          </div>
-          <div class="form-group">
-            <label for="priority">Priority *</label>
-            <select id="priority" required>
-              <option value="Low">Low</option>
-              <option value="Normal" selected>Normal</option>
-              <option value="High">High</option>
-              <option value="Urgent">Urgent</option>
-            </select>
-          </div>
+        <div class="form-group">
+          <label for="dateScheduled">Scheduled Date *</label>
+          <input type="date" id="dateScheduled" required>
         </div>
 
         <div class="form-row">
