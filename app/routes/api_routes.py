@@ -1664,3 +1664,155 @@ def get_review_by_request(request_id):
             
     except Exception as e:
         return {"success": False, "error": str(e)}, 500
+
+
+# ==================== Admin Financial API Routes ====================
+
+@api_bp.route("/admin/financial/data", methods=["GET"])
+def get_financial_data():
+    """Get financial data for admin dashboard."""
+    try:
+        from services.finance_service import FinanceService
+        
+        # Get query parameters
+        category_filter = request.args.get('category', 'all')
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        
+        # Get financial data
+        data = FinanceService.get_financial_data(
+            category_filter=category_filter if category_filter != 'all' else None,
+            start_date=start_date,
+            end_date=end_date
+        )
+        
+        return {
+            "success": True,
+            "data": data
+        }, 200
+        
+    except Exception as e:
+        print(f"Error fetching financial data: {e}")
+        return {
+            "success": False,
+            "message": "Failed to fetch financial data"
+        }, 500
+
+
+@api_bp.route("/admin/financial/charts", methods=["GET"])
+def get_financial_charts():
+    """Get chart data for admin financial dashboard."""
+    try:
+        from services.finance_service import FinanceService
+        
+        # Get query parameters
+        category_filter = request.args.get('category', 'all')
+        
+        # Get chart data
+        data = FinanceService.get_chart_data(
+            category_filter=category_filter if category_filter != 'all' else None
+        )
+        
+        return {
+            "success": True,
+            "data": data
+        }, 200
+        
+    except Exception as e:
+        print(f"Error fetching chart data: {e}")
+        return {
+            "success": False,
+            "message": "Failed to fetch chart data"
+        }, 500
+
+
+@api_bp.route("/admin/financial/export", methods=["GET"])
+def export_financial_data():
+    """Export financial data as CSV."""
+    try:
+        from flask import make_response
+        from services.finance_service import FinanceService
+        
+        # Get query parameters
+        category_filter = request.args.get('category', 'all')
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        
+        # Generate CSV content
+        csv_content = FinanceService.export_transactions_csv(
+            category_filter=category_filter if category_filter != 'all' else None,
+            start_date=start_date,
+            end_date=end_date
+        )
+        
+        # Create response with CSV content
+        response = make_response(csv_content)
+        response.headers['Content-Type'] = 'text/csv'
+        response.headers['Content-Disposition'] = f'attachment; filename=financial_report_{category_filter or "all"}.csv'
+        
+        return response
+        
+    except Exception as e:
+        print(f"Error exporting financial data: {e}")
+        return {
+            "success": False,
+            "message": "Failed to export data"
+        }, 500
+
+
+@api_bp.route("/admin/financial/transaction", methods=["POST"])
+def create_financial_transaction():
+    """Create a new financial transaction."""
+    try:
+        from services.finance_service import FinanceService
+        
+        # Get request data
+        data = request.get_json()
+        if not data:
+            return {
+                "success": False,
+                "message": "No data provided"
+            }, 400
+        
+        # Create transaction
+        result = FinanceService.create_transaction(data)
+        
+        if result['success']:
+            return result, 201
+        else:
+            return result, 400
+        
+    except Exception as e:
+        print(f"Error creating transaction: {e}")
+        return {
+            "success": False,
+            "message": "Failed to create transaction"
+        }, 500
+
+
+@api_bp.route("/admin/financial/form-data", methods=["GET"])
+def get_financial_form_data():
+    """Get categories and employees for the add transaction form."""
+    try:
+        from repositories.finance_repository import FinanceRepository
+        
+        # Get categories with IDs
+        categories = FinanceRepository.get_categories_with_ids()
+        
+        # Get employees
+        employees = FinanceRepository.get_employees_list()
+        
+        return {
+            "success": True,
+            "data": {
+                "categories": categories,
+                "employees": employees
+            }
+        }, 200
+        
+    except Exception as e:
+        print(f"Error fetching form data: {e}")
+        return {
+            "success": False,
+            "message": "Failed to fetch form data"
+        }, 500
