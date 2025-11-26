@@ -122,10 +122,68 @@ let availabilityRequests = [
 ];
 */
 
-// Sample availability data for biweekly period
-let availabilityData = [
-    // Week 1 - Michael Thompson
-    {
+// Employee availability data - loaded from API
+let availabilityData = [];
+
+// Load availability data from API
+async function loadAvailabilityData() {
+    try {
+        // Calculate date range for current biweekly period
+        const startDate = formatDateForAPI(currentPeriodStart);
+        const endDate = new Date(currentPeriodStart);
+        endDate.setDate(endDate.getDate() + 13); // 14 days total
+        const endDateFormatted = formatDateForAPI(endDate);
+
+        const response = await fetch(`/api/employees/availability?start_date=${startDate}&end_date=${endDateFormatted}`);
+        const result = await response.json();
+
+        if (result.success) {
+            // Transform API data to match expected format
+            availabilityData = result.data.map(item => ({
+                id: item.availability_id,
+                technicianId: item.employee_id,
+                technicianName: item.employee_name,
+                date: item.availdate,
+                startTime: item.starttime,
+                endTime: item.endtime,
+                status: item.status, // Use actual status from API (available/assigned)
+                employee_email: item.employee_email,
+                employee_phone: item.employee_phone,
+                // Include work assignment details if assigned
+                workOrderId: item.work_assignment?.request_id ? `SR-${item.work_assignment.request_id}` : null,
+                customer: item.work_assignment?.customer_name || null,
+                service: item.work_assignment?.service_name || null
+            }));
+
+            // Refresh calendar with new data
+            if (calendar) {
+                calendar.removeAllEventSources();
+                calendar.addEventSource(getFilteredEvents());
+            }
+
+            // Update technician filter dropdown
+            populateTechnicianFilter();
+        } else {
+            console.error('Failed to load availability data:', result.message);
+            availabilityData = []; // Fallback to empty array
+        }
+    } catch (error) {
+        console.error('Error loading availability data:', error);
+        availabilityData = []; // Fallback to empty array
+    }
+}
+
+// Helper function to format date for API
+function formatDateForAPI(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// Sample commented out for reference - now using real data
+/*
+{
         id: 1,
         technicianId: 1,
         technicianName: "Michael Thompson",
@@ -136,335 +194,19 @@ let availabilityData = [
         workOrderId: "WO-2025-101",
         customer: "John Smith",
         service: "HVAC Repair"
-    },
-    {
-        id: 2,
-        technicianId: 1,
-        technicianName: "Michael Thompson",
-        date: "2025-10-21",
-        startTime: "09:00",
-        endTime: "17:00",
-        status: "available"
-    },
-    {
-        id: 3,
-        technicianId: 1,
-        technicianName: "Michael Thompson",
-        date: "2025-10-22",
-        startTime: "13:00",
-        endTime: "17:00",
-        status: "assigned",
-        workOrderId: "WO-2025-102",
-        customer: "Sarah Johnson",
-        service: "Plumbing Installation"
-    },
-    {
-        id: 4,
-        technicianId: 1,
-        technicianName: "Michael Thompson",
-        date: "2025-10-23",
-        startTime: "09:00",
-        endTime: "17:00",
-        status: "available"
-    },
-    {
-        id: 5,
-        technicianId: 1,
-        technicianName: "Michael Thompson",
-        date: "2025-10-24",
-        startTime: "09:00",
-        endTime: "17:00",
-        status: "available"
-    },
-
-    // Week 2 - Michael Thompson
-    {
-        id: 6,
-        technicianId: 1,
-        technicianName: "Michael Thompson",
-        date: "2025-10-27",
-        startTime: "09:00",
-        endTime: "12:00",
-        status: "assigned",
-        workOrderId: "WO-2025-110",
-        customer: "David Chen",
-        service: "Electrical Inspection"
-    },
-    {
-        id: 7,
-        technicianId: 1,
-        technicianName: "Michael Thompson",
-        date: "2025-10-28",
-        startTime: "09:00",
-        endTime: "17:00",
-        status: "available"
-    },
-    {
-        id: 8,
-        technicianId: 1,
-        technicianName: "Michael Thompson",
-        date: "2025-10-29",
-        startTime: "09:00",
-        endTime: "17:00",
-        status: "available"
-    },
-
-    // Week 1 - Sarah Martinez
-    {
-        id: 9,
-        technicianId: 2,
-        technicianName: "Sarah Martinez",
-        date: "2025-10-20",
-        startTime: "08:00",
-        endTime: "16:00",
-        status: "available"
-    },
-    {
-        id: 10,
-        technicianId: 2,
-        technicianName: "Sarah Martinez",
-        date: "2025-10-21",
-        startTime: "08:00",
-        endTime: "16:00",
-        status: "assigned",
-        workOrderId: "WO-2025-105",
-        customer: "Emily Davis",
-        service: "Interior Painting"
-    },
-    {
-        id: 11,
-        technicianId: 2,
-        technicianName: "Sarah Martinez",
-        date: "2025-10-22",
-        startTime: "08:00",
-        endTime: "16:00",
-        status: "assigned",
-        workOrderId: "WO-2025-105",
-        customer: "Emily Davis",
-        service: "Interior Painting"
-    },
-    {
-        id: 12,
-        technicianId: 2,
-        technicianName: "Sarah Martinez",
-        date: "2025-10-23",
-        startTime: "08:00",
-        endTime: "16:00",
-        status: "available"
-    },
-    {
-        id: 13,
-        technicianId: 2,
-        technicianName: "Sarah Martinez",
-        date: "2025-10-24",
-        startTime: "08:00",
-        endTime: "16:00",
-        status: "available"
-    },
-
-    // Week 2 - Sarah Martinez
-    {
-        id: 14,
-        technicianId: 2,
-        technicianName: "Sarah Martinez",
-        date: "2025-10-27",
-        startTime: "08:00",
-        endTime: "16:00",
-        status: "available"
-    },
-    {
-        id: 15,
-        technicianId: 2,
-        technicianName: "Sarah Martinez",
-        date: "2025-10-28",
-        startTime: "08:00",
-        endTime: "16:00",
-        status: "assigned",
-        workOrderId: "WO-2025-112",
-        customer: "Robert Lee",
-        service: "Deck Repair"
-    },
-    {
-        id: 16,
-        technicianId: 2,
-        technicianName: "Sarah Martinez",
-        date: "2025-10-29",
-        startTime: "08:00",
-        endTime: "12:00",
-        status: "unavailable",
-        unavailableType: "Personal Day",
-        reason: "Doctor's appointment"
-    },
-    {
-        id: 17,
-        technicianId: 2,
-        technicianName: "Sarah Martinez",
-        date: "2025-10-30",
-        startTime: "08:00",
-        endTime: "16:00",
-        status: "available"
-    },
-
-    // Week 1 - Jessica Williams
-    {
-        id: 18,
-        technicianId: 3,
-        technicianName: "Jessica Williams",
-        date: "2025-10-20",
-        startTime: "10:00",
-        endTime: "18:00",
-        status: "assigned",
-        workOrderId: "WO-2025-108",
-        customer: "Patricia Wilson",
-        service: "Bathroom Renovation"
-    },
-    {
-        id: 19,
-        technicianId: 3,
-        technicianName: "Jessica Williams",
-        date: "2025-10-21",
-        startTime: "10:00",
-        endTime: "18:00",
-        status: "available"
-    },
-    {
-        id: 20,
-        technicianId: 3,
-        technicianName: "Jessica Williams",
-        date: "2025-10-22",
-        startTime: "10:00",
-        endTime: "18:00",
-        status: "available"
-    },
-    {
-        id: 21,
-        technicianId: 3,
-        technicianName: "Jessica Williams",
-        date: "2025-10-23",
-        startTime: "10:00",
-        endTime: "18:00",
-        status: "assigned",
-        workOrderId: "WO-2025-109",
-        customer: "Mark Anderson",
-        service: "HVAC Installation"
-    },
-    {
-        id: 22,
-        technicianId: 3,
-        technicianName: "Jessica Williams",
-        date: "2025-10-24",
-        startTime: "10:00",
-        endTime: "18:00",
-        status: "available"
-    },
-
-    // Week 2 - Jessica Williams
-    {
-        id: 23,
-        technicianId: 3,
-        technicianName: "Jessica Williams",
-        date: "2025-10-27",
-        startTime: "10:00",
-        endTime: "18:00",
-        status: "available"
-    },
-    {
-        id: 24,
-        technicianId: 3,
-        technicianName: "Jessica Williams",
-        date: "2025-10-28",
-        startTime: "10:00",
-        endTime: "18:00",
-        status: "available"
-    },
-    {
-        id: 25,
-        technicianId: 3,
-        technicianName: "Jessica Williams",
-        date: "2025-10-29",
-        startTime: "10:00",
-        endTime: "18:00",
-        status: "available"
-    },
-    {
-        id: 26,
-        technicianId: 3,
-        technicianName: "Jessica Williams",
-        date: "2025-10-30",
-        startTime: "10:00",
-        endTime: "18:00",
-        status: "assigned",
-        workOrderId: "WO-2025-115",
-        customer: "Linda Martinez",
-        service: "Kitchen Plumbing"
-    },
-
-    // Robert Johnson - On Leave entire period
-    {
-        id: 27,
-        technicianId: 4,
-        technicianName: "Robert Johnson",
-        date: "2025-10-20",
-        startTime: "09:00",
-        endTime: "17:00",
-        status: "unavailable",
-        unavailableType: "Sick Leave",
-        reason: "Medical leave"
-    },
-    {
-        id: 28,
-        technicianId: 4,
-        technicianName: "Robert Johnson",
-        date: "2025-10-21",
-        startTime: "09:00",
-        endTime: "17:00",
-        status: "unavailable",
-        unavailableType: "Sick Leave",
-        reason: "Medical leave"
-    },
-    {
-        id: 29,
-        technicianId: 4,
-        technicianName: "Robert Johnson",
-        date: "2025-10-22",
-        startTime: "09:00",
-        endTime: "17:00",
-        status: "unavailable",
-        unavailableType: "Sick Leave",
-        reason: "Medical leave"
-    },
-    {
-        id: 30,
-        technicianId: 4,
-        technicianName: "Robert Johnson",
-        date: "2025-10-23",
-        startTime: "09:00",
-        endTime: "17:00",
-        status: "unavailable",
-        unavailableType: "Sick Leave",
-        reason: "Medical leave"
-    },
-    {
-        id: 31,
-        technicianId: 4,
-        technicianName: "Robert Johnson",
-        date: "2025-10-24",
-        startTime: "09:00",
-        endTime: "17:00",
-        status: "unavailable",
-        unavailableType: "Sick Leave",
-        reason: "Medical leave"
-    }
-];
+*/
 
 let calendar;
 let currentFilter = { technician: 'all', status: 'all' };
 
 // Initialize calendar on page load
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function () {
     initializeCalendar();
     updatePeriodDisplay();
-    populateTechnicianFilter();
+
+    // Load real availability data from API
+    await loadAvailabilityData();
+
     // updateSummaryCards(); // Removed - summary cards no longer displayed
     // displayAvailabilityRequests(); // Removed - availability requests section removed
 });
@@ -472,10 +214,10 @@ document.addEventListener('DOMContentLoaded', function() {
 // Initialize FullCalendar
 function initializeCalendar() {
     const calendarEl = document.getElementById('calendar');
-    
+
     const periodEnd = new Date(currentPeriodStart);
     periodEnd.setDate(periodEnd.getDate() + 13); // 14 days (biweekly)
-    
+
     calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridTwoWeek',
         views: {
@@ -496,50 +238,58 @@ function initializeCalendar() {
         },
         height: 'auto',
         events: getFilteredEvents(),
-        eventClick: function(info) {
+        eventClick: function (info) {
             showAvailabilityDetails(info.event);
         },
-        eventContent: function(arg) {
+        eventContent: function (arg) {
+            const status = arg.event.extendedProps.status;
+            const statusIcon = getStatusIcon(status);
+            const statusClass = `status-${status}`;
+
             return {
-                html: `<div style="padding: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                html: `<div class="event-content ${statusClass}" style="padding: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        <span class="status-icon">${statusIcon}</span>
                         <strong>${arg.event.title}</strong><br>
                         <small>${arg.event.extendedProps.timeRange}</small>
                        </div>`
             };
         }
     });
-    
+
     calendar.render();
 }
 
 // Get filtered events based on current filters
 function getFilteredEvents() {
     let filteredData = availabilityData;
-    
+
     // Filter out unavailable/time-off entries
     filteredData = filteredData.filter(item => item.status !== 'unavailable');
-    
+
     // Filter by technician
     if (currentFilter.technician !== 'all') {
-        filteredData = filteredData.filter(item => 
+        filteredData = filteredData.filter(item =>
             item.technicianId === parseInt(currentFilter.technician)
         );
     }
-    
+
     // Filter by status
     if (currentFilter.status !== 'all') {
-        filteredData = filteredData.filter(item => 
+        filteredData = filteredData.filter(item =>
             item.status === currentFilter.status
         );
     }
-    
+
+    // Group overlapping availabilities for better display
+    const groupedData = groupOverlappingAvailabilities(filteredData);
+
     // Convert to FullCalendar events
-    return filteredData.map(item => ({
+    return groupedData.map(item => ({
         id: item.id,
-        title: item.technicianName,
+        title: item.title || item.technicianName,
         start: `${item.date}T${item.startTime}`,
         end: `${item.date}T${item.endTime}`,
-        classNames: [item.status],
+        classNames: [item.status, `priority-${getPriorityClass(item.status)}`],
         extendedProps: {
             technicianId: item.technicianId,
             status: item.status,
@@ -548,12 +298,29 @@ function getFilteredEvents() {
             customer: item.customer,
             service: item.service,
             unavailableType: item.unavailableType,
-            reason: item.reason
+            reason: item.reason,
+            employeeCount: item.employeeCount || 1,
+            isGrouped: item.isGrouped || false
         }
     }));
 }
 
-// Format time to 12-hour format
+// Group overlapping availabilities to reduce visual clutter
+function groupOverlappingAvailabilities(data) {
+    // For now, return data as-is, but this function can be enhanced
+    // to group employees with identical time slots on the same day
+    return data;
+}
+
+// Get priority class for event ordering (assigned events should appear first)
+function getPriorityClass(status) {
+    switch (status) {
+        case 'assigned': return '1';
+        case 'available': return '2';
+        case 'unavailable': return '3';
+        default: return '4';
+    }
+}// Format time to 12-hour format
 function formatTime(time) {
     const [hours, minutes] = time.split(':');
     const hour = parseInt(hours);
@@ -562,35 +329,52 @@ function formatTime(time) {
     return `${displayHour}:${minutes} ${ampm}`;
 }
 
+// Get status icon for visual indication
+function getStatusIcon(status) {
+    switch (status) {
+        case 'available':
+            return '✓'; // Green checkmark
+        case 'assigned':
+            return '📋'; // Clipboard icon
+        case 'unavailable':
+            return '❌'; // Red X
+        default:
+            return '●'; // Default dot
+    }
+}
+
 // Update period display
 function updatePeriodDisplay() {
     const periodEnd = new Date(currentPeriodStart);
     periodEnd.setDate(periodEnd.getDate() + 13);
-    
-    const startStr = currentPeriodStart.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric' 
+
+    const startStr = currentPeriodStart.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
     });
-    const endStr = periodEnd.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric' 
+    const endStr = periodEnd.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
     });
-    
+
     document.getElementById('currentPeriod').textContent = `${startStr} - ${endStr}`;
 }
 
 // Change period (previous/next)
-function changePeriod(direction) {
+async function changePeriod(direction) {
     currentPeriodStart.setDate(currentPeriodStart.getDate() + (direction * 14));
     updatePeriodDisplay();
-    
+
+    // Reload availability data for new period
+    await loadAvailabilityData();
+
     // Update calendar
     if (calendar) {
         const periodEnd = new Date(currentPeriodStart);
         periodEnd.setDate(periodEnd.getDate() + 13);
-        
+
         calendar.setOption('validRange', {
             start: currentPeriodStart,
             end: periodEnd
@@ -603,7 +387,7 @@ function changePeriod(direction) {
 // Populate technician filter dropdown
 function populateTechnicianFilter() {
     const select = document.getElementById('technicianFilter');
-    
+
     technicians.forEach(tech => {
         const option = document.createElement('option');
         option.value = tech.id;
@@ -635,14 +419,17 @@ function refreshCalendarEvents() {
 }
 
 // Refresh entire timesheet
-function refreshTimesheet() {
+async function refreshTimesheet() {
     currentFilter = { technician: 'all', status: 'all' };
     document.getElementById('technicianFilter').value = 'all';
     document.getElementById('statusFilter').value = 'all';
-    
+
+    // Reload availability data from API
+    await loadAvailabilityData();
+
     refreshCalendarEvents();
     // updateSummaryCards(); // Removed - summary cards no longer displayed
-    showNotification('Timesheet refreshed successfully!');
+    showNotification('Timesheet refreshed with latest data!');
 }
 
 // Update summary cards - FUNCTION DISABLED (summary cards removed from UI)
@@ -694,10 +481,10 @@ function updateSummaryCards() {
 function calculateHours(startTime, endTime) {
     const [startHour, startMin] = startTime.split(':').map(Number);
     const [endHour, endMin] = endTime.split(':').map(Number);
-    
+
     const startMinutes = startHour * 60 + startMin;
     const endMinutes = endHour * 60 + endMin;
-    
+
     return Math.round((endMinutes - startMinutes) / 60);
 }
 
@@ -705,7 +492,7 @@ function calculateHours(startTime, endTime) {
 function showAvailabilityDetails(event) {
     const modal = document.getElementById('availabilityModal');
     const props = event.extendedProps;
-    
+
     // Set basic info
     document.getElementById('modalTechName').textContent = event.title;
     document.getElementById('modalDate').textContent = event.start.toLocaleDateString('en-US', {
@@ -715,34 +502,34 @@ function showAvailabilityDetails(event) {
         day: 'numeric'
     });
     document.getElementById('modalTime').textContent = props.timeRange;
-    
+
     // Set status badge
     const statusBadge = document.getElementById('modalStatus');
     statusBadge.textContent = props.status;
     statusBadge.className = `detail-value status-badge ${props.status}`;
-    
+
     // Show/hide sections based on status
     const jobSection = document.getElementById('jobDetailsSection');
     const unavailableSection = document.getElementById('unavailableDetailsSection');
-    
+
     if (props.status === 'assigned') {
         jobSection.style.display = 'block';
         unavailableSection.style.display = 'none';
-        
+
         document.getElementById('modalWorkOrder').textContent = props.workOrderId || '-';
         document.getElementById('modalCustomer').textContent = props.customer || '-';
         document.getElementById('modalService').textContent = props.service || '-';
     } else if (props.status === 'unavailable') {
         jobSection.style.display = 'none';
         unavailableSection.style.display = 'block';
-        
+
         document.getElementById('modalUnavailableType').textContent = props.unavailableType || '-';
         document.getElementById('modalUnavailableReason').textContent = props.reason || '-';
     } else {
         jobSection.style.display = 'none';
         unavailableSection.style.display = 'none';
     }
-    
+
     modal.style.display = 'block';
 }
 
@@ -777,9 +564,9 @@ function showNotification(message, type = 'success') {
         font-weight: 600;
         animation: slideInRight 0.3s ease;
     `;
-    
+
     document.body.appendChild(notification);
-    
+
     setTimeout(() => {
         notification.style.animation = 'slideOutRight 0.3s ease';
         setTimeout(() => notification.remove(), 300);

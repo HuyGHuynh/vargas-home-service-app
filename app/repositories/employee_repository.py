@@ -310,6 +310,137 @@ class EmployeeRepository:
             return []
 
     @staticmethod
+    def get_all_employees_availability(start_date=None, end_date=None):
+        """
+        Get availability records for all employees within a date range,
+        including work assignment status to determine if employee is assigned or available.
+        
+        Args:
+            start_date (str): Start date in YYYY-MM-DD format (optional)
+            end_date (str): End date in YYYY-MM-DD format (optional)
+            
+        Returns:
+            list: List of availability records with employee information and assignment status
+        """
+        try:
+            with BaseRepository.get_cursor() as cur:
+                # First, get basic availability records
+                base_query = """
+                    SELECT ea.availability_id, ea.employee_id, ea.availdate, 
+                           ea.starttime, ea.endtime,
+                           e.firstname, e.lastname, e.email, e.phone
+                    FROM empavailability ea
+                    JOIN employee e ON ea.employee_id = e.employeeid
+                    WHERE e.isadmin = FALSE
+                """
+                
+                params = []
+                
+                if start_date:
+                    base_query += " AND ea.availdate >= %s"
+                    params.append(start_date)
+                
+                if end_date:
+                    base_query += " AND ea.availdate <= %s"
+                    params.append(end_date)
+                    
+                base_query += " ORDER BY ea.availdate, ea.starttime, e.lastname, e.firstname"
+                
+                cur.execute(base_query, params)
+                availability_results = cur.fetchall()
+                
+                # Then get work assignments for the same date range
+                assignment_query = """
+                    SELECT wa.employeeid, wa.requestid, sr.preferred_datetime,
+                           c.firstname, c.lastname, s.job_name
+                    FROM work_assignments wa
+                    JOIN servicerequests sr ON wa.requestid = sr.requestid
+                    LEFT JOIN customer c ON sr.customerid = c.customerid
+                    LEFT JOIN services s ON sr.service_id = s.service_id
+                    WHERE 1=1
+                """
+                
+                assignment_params = []
+                if start_date:
+                    assignment_query += " AND DATE(sr.preferred_datetime) >= %s"
+                    assignment_params.append(start_date)
+                
+                if end_date:
+                    assignment_query += " AND DATE(sr.preferred_datetime) <= %s"
+                    assignment_params.append(end_date)
+                
+                cur.execute(assignment_query, assignment_params)
+                assignment_results = cur.fetchall()
+                
+                # Create a lookup map for assignments
+                assignments_by_employee = {}
+                for assign in assignment_results:
+                    employee_id = assign[0]
+                    assign_date = assign[2].date() if assign[2] else None
+                    assign_time = assign[2].time() if assign[2] else None
+                    customer_name = f"{assign[3]} {assign[4]}" if assign[3] and assign[4] else (assign[3] or assign[4] or "Unknown")
+                    
+                    if employee_id not in assignments_by_employee:
+                        assignments_by_employee[employee_id] = []
+                    
+                    assignments_by_employee[employee_id].append({
+                        'request_id': assign[1],
+                        'datetime': assign[2],
+                        'date': assign_date,
+                        'time': assign_time,
+                        'customer_name': customer_name,
+                        'service_name': assign[5]  # job_name is now at index 5
+                    })
+                
+                # Process availability records and check for assignments
+                availability_records = []
+                for result in availability_results:
+                    employee_id = result[1]
+                    avail_date = result[2]
+                    start_time = result[3]
+                    end_time = result[4]
+                    
+                    # Check if this employee has any assignments on this date and time
+                    status = "available"
+                    work_assignment = None
+                    
+                    if employee_id in assignments_by_employee:
+                        for assignment in assignments_by_employee[employee_id]:
+                            if (assignment['date'] == avail_date and 
+                                assignment['time'] and start_time and end_time and
+                                start_time <= assignment['time'] < end_time):
+                                status = "assigned"
+                                work_assignment = {
+                                    'request_id': assignment['request_id'],
+                                    'customer_name': assignment['customer_name'],
+                                    'service_name': assignment['service_name'],
+                                    'preferred_datetime': assignment['datetime'].isoformat() if assignment['datetime'] else None
+                                }
+                                break
+                    
+                    record = {
+                        'availability_id': result[0],
+                        'employee_id': result[1],
+                        'availdate': result[2].strftime('%Y-%m-%d') if result[2] else None,
+                        'starttime': str(result[3]) if result[3] else None,
+                        'endtime': str(result[4]) if result[4] else None,
+                        'employee_name': f"{result[5]} {result[6]}",
+                        'employee_firstname': result[5],
+                        'employee_lastname': result[6],
+                        'employee_email': result[7],
+                        'employee_phone': result[8],
+                        'status': status,
+                        'work_assignment': work_assignment
+                    }
+                    availability_records.append(record)
+                
+                return availability_records
+                
+        except Exception as e:
+            print(f"Error getting all employees availability: {e}")
+            return []
+
+    @staticmethod
     def update_availability(availability_id, avail_date=None, start_time=None, end_time=None):
         """
         Update an existing availability record.

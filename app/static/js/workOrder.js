@@ -209,8 +209,37 @@ function lookupWorkOrders() {
         });
 }
 
+// Load service types from database
+async function loadServiceTypes() {
+    try {
+        const response = await fetch('/api/service-types');
+        const result = await response.json();
+
+        if (result.success) {
+            const serviceTypeSelect = document.getElementById('serviceTypeSelect');
+
+            // Clear existing options except the default
+            serviceTypeSelect.innerHTML = '<option value="">Select Service Type</option>';
+
+            // Add service types from database
+            result.data.forEach(serviceType => {
+                const option = document.createElement('option');
+                option.value = serviceType.service_type_name;
+                option.textContent = serviceType.service_type_name;
+                serviceTypeSelect.appendChild(option);
+            });
+        } else {
+            console.error('Failed to load service types:', result.message);
+        }
+    } catch (error) {
+        console.error('Error loading service types:', error);
+    }
+}
+
 // Allow Enter key to trigger search
 document.addEventListener('DOMContentLoaded', function () {
+    // Load service types on page load
+    loadServiceTypes();
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('keypress', function (event) {

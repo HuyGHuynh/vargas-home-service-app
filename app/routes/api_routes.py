@@ -2,6 +2,7 @@
 Utility API routes (health check, database check, etc.).
 """
 from flask import Blueprint, request, jsonify, session, render_template, url_for
+from datetime import datetime
 from repositories.base_repository import BaseRepository
 from repositories.service_repository import ServiceRepository
 from repositories.employee_repository import EmployeeRepository
@@ -461,6 +462,44 @@ def get_availability_for_month(year, month):
         
     except Exception as e:
         print(f"Error getting month availability: {e}")
+        return {"success": False, "message": "Server error occurred"}, 500
+
+
+@api_bp.get("/employees/availability")
+def get_all_employees_availability():
+    """Get availability records for all employees within a date range."""
+    try:
+        # Get query parameters for date filtering
+        start_date = request.args.get('start_date')  # YYYY-MM-DD format
+        end_date = request.args.get('end_date')      # YYYY-MM-DD format
+        
+        # Validate date formats if provided
+        if start_date:
+            try:
+                datetime.strptime(start_date, '%Y-%m-%d')
+            except ValueError:
+                return {"success": False, "message": "Invalid start_date format. Use YYYY-MM-DD"}, 400
+                
+        if end_date:
+            try:
+                datetime.strptime(end_date, '%Y-%m-%d')
+            except ValueError:
+                return {"success": False, "message": "Invalid end_date format. Use YYYY-MM-DD"}, 400
+        
+        # Get availability records
+        availability_records = EmployeeRepository.get_all_employees_availability(
+            start_date=start_date,
+            end_date=end_date
+        )
+        
+        return {
+            "success": True,
+            "data": availability_records,
+            "count": len(availability_records)
+        }, 200
+        
+    except Exception as e:
+        print(f"Error getting all employees availability: {e}")
         return {"success": False, "message": "Server error occurred"}, 500
 
 

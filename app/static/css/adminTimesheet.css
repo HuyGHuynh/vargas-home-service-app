@@ -315,6 +315,94 @@ body {
     transform: scale(1.02);
 }
 
+/* Enhanced event content styling */
+.event-content {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.status-icon {
+    font-size: 0.8rem;
+    display: inline-block;
+    min-width: 12px;
+}
+
+/* More events link styling */
+.fc-more-link {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    color: #333;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.fc-more-link:hover {
+    background: rgba(0, 0, 0, 0.2);
+    color: #000;
+}
+
+/* Popover styling for overflow events */
+.fc-popover {
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e0e0e0;
+}
+
+.fc-popover-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 8px 12px;
+    font-weight: 600;
+    border-radius: 8px 8px 0 0;
+}
+
+.fc-popover-body {
+    padding: 8px 0;
+}
+
+/* Status-specific event styling enhancements */
+.fc-event.status-available .status-icon {
+    color: #2e7d32;
+}
+
+.fc-event.status-assigned .status-icon {
+    color: #1565c0;
+}
+
+.fc-event.status-unavailable .status-icon {
+    color: #c62828;
+}
+
+/* Priority ordering for events */
+.fc-event.priority-1 {
+    order: 1;
+    z-index: 3;
+}
+
+.fc-event.priority-2 {
+    order: 2;
+    z-index: 2;
+}
+
+.fc-event.priority-3 {
+    order: 3;
+    z-index: 1;
+}
+
+/* Better spacing between events */
+.fc-daygrid-event {
+    margin: 1px 0;
+    min-height: 20px;
+}
+
+/* Enhance day cells to handle multiple events better */
+.fc-daygrid-day-events {
+    min-height: 80px;
+}
+
 /* Legend Section */
 .legend-section {
     background: white;
@@ -619,6 +707,7 @@ body {
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -629,6 +718,7 @@ body {
         transform: translateY(-50px);
         opacity: 0;
     }
+
     to {
         transform: translateY(0);
         opacity: 1;
