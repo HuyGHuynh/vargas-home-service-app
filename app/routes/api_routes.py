@@ -2,6 +2,7 @@
 Utility API routes (health check, database check, etc.).
 """
 from flask import Blueprint, request, jsonify, session, render_template, url_for
+from datetime import datetime
 from repositories.base_repository import BaseRepository
 from repositories.service_repository import ServiceRepository
 from repositories.employee_repository import EmployeeRepository
@@ -461,6 +462,117 @@ def get_availability_for_month(year, month):
         
     except Exception as e:
         print(f"Error getting month availability: {e}")
+        return {"success": False, "message": "Server error occurred"}, 500
+
+
+@api_bp.get("/employee/<int:employee_id>/jobs")
+def get_employee_jobs(employee_id):
+    """Get all jobs/work assignments for a specific employee."""
+    try:
+        with BaseRepository.get_cursor() as cursor:
+            query = """
+                SELECT 
+                    sr.requestid,
+                    sr.preferred_datetime,
+                    sr.description as request_description,
+                    sr.status as request_status,
+                    c.firstname,
+                    c.lastname,
+                    c.phone as customer_phone,
+                    c.email as customer_email,
+                    ab.address,
+                    ab.city,
+                    ab.state,
+                    ab.zip_code,
+                    s.job_name,
+                    s.service_price,
+                    st.service_type_name,
+                    fpd.pricetotal as final_price,
+                    s.duration_hours
+                FROM work_assignments wa
+                JOIN servicerequests sr ON wa.requestid = sr.requestid
+                LEFT JOIN customer c ON sr.customerid = c.customerid
+                LEFT JOIN addressbook ab ON sr.addressid = ab.address_id
+                LEFT JOIN services s ON sr.service_id = s.service_id
+                LEFT JOIN service_types st ON s.service_type_id = st.service_type_id
+                LEFT JOIN finalpricedetails fpd ON sr.requestid = fpd.request_id
+                WHERE wa.employeeid = %s
+                ORDER BY sr.preferred_datetime DESC;
+            """
+            
+            cursor.execute(query, (employee_id,))
+            results = cursor.fetchall()
+            
+            jobs = []
+            for row in results:
+                job = {
+                    'id': row[0],  # requestid
+                    'workOrderId': f'SR-{row[0]}',  # requestid with prefix
+                    'title': row[12],  # job_name
+                    'customer': f'{row[4]} {row[5]}' if row[4] and row[5] else 'Unknown Customer',
+                    'customerPhone': row[6] or 'N/A',
+                    'customerEmail': row[7] or 'N/A',
+                    'address': f'{row[8]}, {row[9]}, {row[10]} {row[11]}' if row[8] else 'N/A',
+                    'date': row[1].strftime('%Y-%m-%d') if row[1] else None,
+                    'startTime': row[1].strftime('%H:%M') if row[1] else None,
+                    'status': row[3] or 'pending',  # request_status
+                    'description': row[2] or 'No description available',
+                    'estimatedCost': float(row[13]) if row[13] else 0.0,  # service_price
+                    'actualCost': float(row[15]) if row[15] else None,  # final_price
+                    'serviceType': row[14] or 'General Service',  # service_type_name
+                    'durationHours': float(row[16]) if row[16] else 0.0  # duration_hours
+                }
+                jobs.append(job)
+            
+            return {
+                'success': True,
+                'data': jobs,
+                'count': len(jobs)
+            }, 200
+            
+    except Exception as e:
+        print(f'Error getting employee jobs: {e}')
+        return {
+            'success': False,
+            'message': 'Failed to retrieve employee jobs',
+            'error': str(e)
+        }, 500
+
+@api_bp.get("/employees/availability")
+def get_all_employees_availability():
+    """Get availability records for all employees within a date range."""
+    try:
+        # Get query parameters for date filtering
+        start_date = request.args.get('start_date')  # YYYY-MM-DD format
+        end_date = request.args.get('end_date')      # YYYY-MM-DD format
+        
+        # Validate date formats if provided
+        if start_date:
+            try:
+                datetime.strptime(start_date, '%Y-%m-%d')
+            except ValueError:
+                return {"success": False, "message": "Invalid start_date format. Use YYYY-MM-DD"}, 400
+                
+        if end_date:
+            try:
+                datetime.strptime(end_date, '%Y-%m-%d')
+            except ValueError:
+                return {"success": False, "message": "Invalid end_date format. Use YYYY-MM-DD"}, 400
+        
+        # Get availability records
+        availability_records = EmployeeRepository.get_all_employees_availability(
+            start_date=start_date,
+            end_date=end_date
+        )
+        
+        return {
+            "success": True,
+            "data": availability_records,
+            "count": len(availability_records)
+        }, 200
+        
+    except Exception as e:
+        print(f"Error getting all employees availability: {e}")
         return {"success": False, "message": "Server error occurred"}, 500
 
 
@@ -1664,3 +1776,155 @@ def get_review_by_request(request_id):
             
     except Exception as e:
         return {"success": False, "error": str(e)}, 500
+
+
+# ==================== Admin Financial API Routes ====================
+
+@api_bp.route("/admin/financial/data", methods=["GET"])
+def get_financial_data():
+    """Get financial data for admin dashboard."""
+    try:
+        from services.finance_service import FinanceService
+        
+        # Get query parameters
+        category_filter = request.args.get('category', 'all')
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        
+        # Get financial data
+        data = FinanceService.get_financial_data(
+            category_filter=category_filter if category_filter != 'all' else None,
+            start_date=start_date,
+            end_date=end_date
+        )
+        
+        return {
+            "success": True,
+            "data": data
+        }, 200
+        
+    except Exception as e:
+        print(f"Error fetching financial data: {e}")
+        return {
+            "success": False,
+            "message": "Failed to fetch financial data"
+        }, 500
+
+
+@api_bp.route("/admin/financial/charts", methods=["GET"])
+def get_financial_charts():
+    """Get chart data for admin financial dashboard."""
+    try:
+        from services.finance_service import FinanceService
+        
+        # Get query parameters
+        category_filter = request.args.get('category', 'all')
+        
+        # Get chart data
+        data = FinanceService.get_chart_data(
+            category_filter=category_filter if category_filter != 'all' else None
+        )
+        
+        return {
+            "success": True,
+            "data": data
+        }, 200
+        
+    except Exception as e:
+        print(f"Error fetching chart data: {e}")
+        return {
+            "success": False,
+            "message": "Failed to fetch chart data"
+        }, 500
+
+
+@api_bp.route("/admin/financial/export", methods=["GET"])
+def export_financial_data():
+    """Export financial data as CSV."""
+    try:
+        from flask import make_response
+        from services.finance_service import FinanceService
+        
+        # Get query parameters
+        category_filter = request.args.get('category', 'all')
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        
+        # Generate CSV content
+        csv_content = FinanceService.export_transactions_csv(
+            category_filter=category_filter if category_filter != 'all' else None,
+            start_date=start_date,
+            end_date=end_date
+        )
+        
+        # Create response with CSV content
+        response = make_response(csv_content)
+        response.headers['Content-Type'] = 'text/csv'
+        response.headers['Content-Disposition'] = f'attachment; filename=financial_report_{category_filter or "all"}.csv'
+        
+        return response
+        
+    except Exception as e:
+        print(f"Error exporting financial data: {e}")
+        return {
+            "success": False,
+            "message": "Failed to export data"
+        }, 500
+
+
+@api_bp.route("/admin/financial/transaction", methods=["POST"])
+def create_financial_transaction():
+    """Create a new financial transaction."""
+    try:
+        from services.finance_service import FinanceService
+        
+        # Get request data
+        data = request.get_json()
+        if not data:
+            return {
+                "success": False,
+                "message": "No data provided"
+            }, 400
+        
+        # Create transaction
+        result = FinanceService.create_transaction(data)
+        
+        if result['success']:
+            return result, 201
+        else:
+            return result, 400
+        
+    except Exception as e:
+        print(f"Error creating transaction: {e}")
+        return {
+            "success": False,
+            "message": "Failed to create transaction"
+        }, 500
+
+
+@api_bp.route("/admin/financial/form-data", methods=["GET"])
+def get_financial_form_data():
+    """Get categories and employees for the add transaction form."""
+    try:
+        from repositories.finance_repository import FinanceRepository
+        
+        # Get categories with IDs
+        categories = FinanceRepository.get_categories_with_ids()
+        
+        # Get employees
+        employees = FinanceRepository.get_employees_list()
+        
+        return {
+            "success": True,
+            "data": {
+                "categories": categories,
+                "employees": employees
+            }
+        }, 200
+        
+    except Exception as e:
+        print(f"Error fetching form data: {e}")
+        return {
+            "success": False,
+            "message": "Failed to fetch form data"
+        }, 500
