@@ -402,7 +402,7 @@ class EmployeeRepository:
                     
                     # Check if this employee has any assignments on this date and time
                     status = "available"
-                    work_assignment = None
+                    work_assignments = []
                     
                     if employee_id in assignments_by_employee:
                         for assignment in assignments_by_employee[employee_id]:
@@ -410,29 +410,50 @@ class EmployeeRepository:
                                 assignment['time'] and start_time and end_time and
                                 start_time <= assignment['time'] < end_time):
                                 status = "assigned"
-                                work_assignment = {
+                                work_assignments.append({
                                     'request_id': assignment['request_id'],
                                     'customer_name': assignment['customer_name'],
                                     'service_name': assignment['service_name'],
                                     'preferred_datetime': assignment['datetime'].isoformat() if assignment['datetime'] else None
-                                }
-                                break
+                                })
+                                # Don't break - collect all assignments for this time slot
                     
-                    record = {
-                        'availability_id': result[0],
-                        'employee_id': result[1],
-                        'availdate': result[2].strftime('%Y-%m-%d') if result[2] else None,
-                        'starttime': str(result[3]) if result[3] else None,
-                        'endtime': str(result[4]) if result[4] else None,
-                        'employee_name': f"{result[5]} {result[6]}",
-                        'employee_firstname': result[5],
-                        'employee_lastname': result[6],
-                        'employee_email': result[7],
-                        'employee_phone': result[8],
-                        'status': status,
-                        'work_assignment': work_assignment
-                    }
-                    availability_records.append(record)
+                    # Create separate records for each assignment, or one record if no assignments
+                    if work_assignments:
+                        # Create one record per assignment
+                        for work_assignment in work_assignments:
+                            record = {
+                                'availability_id': result[0],
+                                'employee_id': result[1],
+                                'availdate': result[2].strftime('%Y-%m-%d') if result[2] else None,
+                                'starttime': str(result[3]) if result[3] else None,
+                                'endtime': str(result[4]) if result[4] else None,
+                                'employee_name': f"{result[5]} {result[6]}",
+                                'employee_firstname': result[5],
+                                'employee_lastname': result[6],
+                                'employee_email': result[7],
+                                'employee_phone': result[8],
+                                'status': status,
+                                'work_assignment': work_assignment
+                            }
+                            availability_records.append(record)
+                    else:
+                        # No assignments - create single availability record
+                        record = {
+                            'availability_id': result[0],
+                            'employee_id': result[1],
+                            'availdate': result[2].strftime('%Y-%m-%d') if result[2] else None,
+                            'starttime': str(result[3]) if result[3] else None,
+                            'endtime': str(result[4]) if result[4] else None,
+                            'employee_name': f"{result[5]} {result[6]}",
+                            'employee_firstname': result[5],
+                            'employee_lastname': result[6],
+                            'employee_email': result[7],
+                            'employee_phone': result[8],
+                            'status': status,
+                            'work_assignment': None
+                        }
+                        availability_records.append(record)
                 
                 return availability_records
                 

@@ -678,6 +678,84 @@ body {
 }
 */
 
+/* Multiple Assignments Styles */
+.multiple-assignments {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 16px;
+}
+
+.multiple-assignments h4 {
+    color: #333;
+    font-size: 1.1rem;
+    margin: 0 0 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.multiple-assignments h4::before {
+    content: "📋";
+    font-size: 1.2rem;
+}
+
+.assignments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.assignment-item {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    border-left: 4px solid #2196F3;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.assignment-item:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.assignment-header {
+    font-weight: 600;
+    color: #333;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.assignment-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.assignment-details>div {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 0.9rem;
+}
+
+.assignment-details strong {
+    color: #333;
+    font-weight: 600;
+    min-width: 100px;
+}
+
+.assignment-details span {
+    color: #555;
+}
+
+.job-details-original {
+    /* Styles for single assignment display */
+}
+
 /* Modal Styles */
 .modal {
     display: none;

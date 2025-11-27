@@ -138,31 +138,51 @@ async function loadAvailabilityData() {
         const result = await response.json();
 
         if (result.success) {
-            // Transform API data to match expected format
-            availabilityData = result.data.map(item => ({
-                id: item.availability_id,
-                technicianId: item.employee_id,
-                technicianName: item.employee_name,
-                date: item.availdate,
-                startTime: item.starttime,
-                endTime: item.endtime,
-                status: item.status, // Use actual status from API (available/assigned)
-                employee_email: item.employee_email,
-                employee_phone: item.employee_phone,
-                // Include work assignment details if assigned
-                workOrderId: item.work_assignment?.request_id ? `SR-${item.work_assignment.request_id}` : null,
-                customer: item.work_assignment?.customer_name || null,
-                service: item.work_assignment?.service_name || null
-            }));
+            // Group multiple assignments by employee + date + time
+            const groupedAssignments = {};
+
+            result.data.forEach(item => {
+                const key = `${item.employee_id}_${item.availdate}_${item.starttime}_${item.endtime}`;
+
+                if (!groupedAssignments[key]) {
+                    groupedAssignments[key] = {
+                        id: item.availability_id,
+                        technicianId: item.employee_id,
+                        technicianName: item.employee_name,
+                        date: item.availdate,
+                        startTime: item.starttime,
+                        endTime: item.endtime,
+                        status: item.status,
+                        employee_email: item.employee_email,
+                        employee_phone: item.employee_phone,
+                        assignments: []
+                    };
+                }
+
+                // Add work assignment if it exists
+                if (item.work_assignment) {
+                    groupedAssignments[key].assignments.push({
+                        workOrderId: `SR-${item.work_assignment.request_id}`,
+                        customer: item.work_assignment.customer_name,
+                        service: item.work_assignment.service_name,
+                        requestId: item.work_assignment.request_id
+                    });
+                    // Update status to assigned if there are assignments
+                    groupedAssignments[key].status = 'assigned';
+                }
+            });
+
+            // Convert back to array format
+            availabilityData = Object.values(groupedAssignments);
+
+            // Update technician filter dropdown first
+            populateTechnicianFilter();
 
             // Refresh calendar with new data
             if (calendar) {
                 calendar.removeAllEventSources();
                 calendar.addEventSource(getFilteredEvents());
             }
-
-            // Update technician filter dropdown
-            populateTechnicianFilter();
         } else {
             console.error('Failed to load availability data:', result.message);
             availabilityData = []; // Fallback to empty array
@@ -245,11 +265,19 @@ function initializeCalendar() {
             const status = arg.event.extendedProps.status;
             const statusIcon = getStatusIcon(status);
             const statusClass = `status-${status}`;
+            const assignmentCount = arg.event.extendedProps.assignmentCount || 0;
+
+            let title = arg.event.title;
+            if (assignmentCount > 1) {
+                title += ` (${assignmentCount} jobs)`;
+            } else if (assignmentCount === 1) {
+                title += ` (1 job)`;
+            }
 
             return {
                 html: `<div class="event-content ${statusClass}" style="padding: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                         <span class="status-icon">${statusIcon}</span>
-                        <strong>${arg.event.title}</strong><br>
+                        <strong>${title}</strong><br>
                         <small>${arg.event.extendedProps.timeRange}</small>
                        </div>`
             };
@@ -294,9 +322,12 @@ function getFilteredEvents() {
             technicianId: item.technicianId,
             status: item.status,
             timeRange: `${formatTime(item.startTime)} - ${formatTime(item.endTime)}`,
-            workOrderId: item.workOrderId,
-            customer: item.customer,
-            service: item.service,
+            assignments: item.assignments || [],
+            assignmentCount: item.assignments ? item.assignments.length : 0,
+            // Legacy single assignment support
+            workOrderId: item.assignments?.[0]?.workOrderId,
+            customer: item.assignments?.[0]?.customer,
+            service: item.assignments?.[0]?.service,
             unavailableType: item.unavailableType,
             reason: item.reason,
             employeeCount: item.employeeCount || 1,
@@ -307,8 +338,8 @@ function getFilteredEvents() {
 
 // Group overlapping availabilities to reduce visual clutter
 function groupOverlappingAvailabilities(data) {
-    // For now, return data as-is, but this function can be enhanced
-    // to group employees with identical time slots on the same day
+    // Data is already grouped by employee+time in loadAvailabilityData
+    // This function can be used for additional visual grouping if needed
     return data;
 }
 
@@ -388,10 +419,33 @@ async function changePeriod(direction) {
 function populateTechnicianFilter() {
     const select = document.getElementById('technicianFilter');
 
-    technicians.forEach(tech => {
+    // Clear existing options (except "All Technicians")
+    while (select.children.length > 1) {
+        select.removeChild(select.lastChild);
+    }
+
+    // Get unique technicians from availability data
+    const uniqueTechnicians = [];
+    const seenIds = new Set();
+
+    availabilityData.forEach(item => {
+        if (!seenIds.has(item.technicianId)) {
+            seenIds.add(item.technicianId);
+            uniqueTechnicians.push({
+                id: item.technicianId,
+                name: item.technicianName
+            });
+        }
+    });
+
+    // Sort by name
+    uniqueTechnicians.sort((a, b) => a.name.localeCompare(b.name));
+
+    // Add to dropdown
+    uniqueTechnicians.forEach(tech => {
         const option = document.createElement('option');
         option.value = tech.id;
-        option.textContent = `${tech.name} (${tech.role})`;
+        option.textContent = tech.name;
         select.appendChild(option);
     });
 }
@@ -413,7 +467,7 @@ function filterByStatus() {
 // Refresh calendar events
 function refreshCalendarEvents() {
     if (calendar) {
-        calendar.removeAllEvents();
+        calendar.removeAllEventSources();
         calendar.addEventSource(getFilteredEvents());
     }
 }
@@ -494,7 +548,7 @@ function showAvailabilityDetails(event) {
     const props = event.extendedProps;
 
     // Set basic info
-    document.getElementById('modalTechName').textContent = event.title;
+    document.getElementById('modalTechName').textContent = event.title.replace(/ \(\d+ jobs?\)/, ''); // Remove job count from title
     document.getElementById('modalDate').textContent = event.start.toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
@@ -512,13 +566,59 @@ function showAvailabilityDetails(event) {
     const jobSection = document.getElementById('jobDetailsSection');
     const unavailableSection = document.getElementById('unavailableDetailsSection');
 
-    if (props.status === 'assigned') {
+    if (props.status === 'assigned' && props.assignments && props.assignments.length > 0) {
         jobSection.style.display = 'block';
         unavailableSection.style.display = 'none';
 
-        document.getElementById('modalWorkOrder').textContent = props.workOrderId || '-';
-        document.getElementById('modalCustomer').textContent = props.customer || '-';
-        document.getElementById('modalService').textContent = props.service || '-';
+        // Handle multiple assignments
+        if (props.assignments.length > 1) {
+            // Create multiple assignment display
+            let assignmentsHTML = '<div class="multiple-assignments">';
+            assignmentsHTML += `<h4>Multiple Assignments (${props.assignments.length})</h4>`;
+            assignmentsHTML += '<div class="assignments-list">';
+
+            props.assignments.forEach((assignment, index) => {
+                assignmentsHTML += `
+                    <div class="assignment-item">
+                        <div class="assignment-header">Assignment ${index + 1}</div>
+                        <div class="assignment-details">
+                            <div><strong>Work Order:</strong> ${assignment.workOrderId}</div>
+                            <div><strong>Customer:</strong> ${assignment.customer}</div>
+                            <div><strong>Service:</strong> ${assignment.service}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            assignmentsHTML += '</div></div>';
+
+            // Replace single job details with multiple assignments
+            jobSection.innerHTML = assignmentsHTML;
+        } else {
+            // Single assignment - use original layout
+            if (!jobSection.querySelector('.job-details-original')) {
+                jobSection.innerHTML = `
+                    <div class="job-details-original">
+                        <div class="detail-row">
+                            <span class="detail-label">Work Order:</span>
+                            <span class="detail-value" id="modalWorkOrder"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Customer:</span>
+                            <span class="detail-value" id="modalCustomer"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Service:</span>
+                            <span class="detail-value" id="modalService"></span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('modalWorkOrder').textContent = props.assignments[0].workOrderId || '-';
+            document.getElementById('modalCustomer').textContent = props.assignments[0].customer || '-';
+            document.getElementById('modalService').textContent = props.assignments[0].service || '-';
+        }
     } else if (props.status === 'unavailable') {
         jobSection.style.display = 'none';
         unavailableSection.style.display = 'block';
