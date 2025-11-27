@@ -93,31 +93,10 @@
         <!-- Job details will be populated here -->
       </div>
 
-      <div class="status-update-section">
-        <h3>Update Job Status</h3>
-        <div class="status-buttons">
-          <button class="status-btn pending" onclick="updateJobStatus('pending')">
-            <span>📋</span> Pending
-          </button>
-          <button class="status-btn in-progress" onclick="updateJobStatus('in-progress')">
-            <span>🔧</span> In Progress
-          </button>
-          <button class="status-btn completed" onclick="updateJobStatus('completed')">
-            <span>✅</span> Completed
-          </button>
-        </div>
-        <div class="cancel-job-section">
-          <button class="cancel-job-btn" onclick="openCancelModal()">
-            <span>❌</span> Cancel Job
-          </button>
-        </div>
-      </div>
-
-      <div class="notes-section">
-        <h3>Add Work Notes</h3>
-        <textarea id="workNotes" rows="4"
-          placeholder="Add notes about the work performed, issues encountered, materials used, etc."></textarea>
-        <button class="save-notes-btn" onclick="saveWorkNotes()">Save Notes</button>
+      <div class="cancel-job-section">
+        <button class="cancel-job-btn" onclick="openCancelModal()">
+          <span>❌</span> Cancel Job
+        </button>
       </div>
 
       <div class="modal-actions">

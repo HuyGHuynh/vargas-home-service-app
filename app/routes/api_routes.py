@@ -465,6 +465,77 @@ def get_availability_for_month(year, month):
         return {"success": False, "message": "Server error occurred"}, 500
 
 
+@api_bp.get("/employee/<int:employee_id>/jobs")
+def get_employee_jobs(employee_id):
+    """Get all jobs/work assignments for a specific employee."""
+    try:
+        with BaseRepository.get_cursor() as cursor:
+            query = """
+                SELECT 
+                    sr.requestid,
+                    sr.preferred_datetime,
+                    sr.description as request_description,
+                    sr.status as request_status,
+                    c.firstname,
+                    c.lastname,
+                    c.phone as customer_phone,
+                    c.email as customer_email,
+                    ab.address,
+                    ab.city,
+                    ab.state,
+                    ab.zip_code,
+                    s.job_name,
+                    s.service_price,
+                    st.service_type_name,
+                    fpd.pricetotal as final_price
+                FROM work_assignments wa
+                JOIN servicerequests sr ON wa.requestid = sr.requestid
+                LEFT JOIN customer c ON sr.customerid = c.customerid
+                LEFT JOIN addressbook ab ON sr.addressid = ab.address_id
+                LEFT JOIN services s ON sr.service_id = s.service_id
+                LEFT JOIN service_types st ON s.service_type_id = st.service_type_id
+                LEFT JOIN finalpricedetails fpd ON sr.requestid = fpd.request_id
+                WHERE wa.employeeid = %s
+                ORDER BY sr.preferred_datetime DESC;
+            """
+            
+            cursor.execute(query, (employee_id,))
+            results = cursor.fetchall()
+            
+            jobs = []
+            for row in results:
+                job = {
+                    'id': row[0],  # requestid
+                    'workOrderId': f'SR-{row[0]}',  # requestid with prefix
+                    'title': row[12],  # job_name
+                    'customer': f'{row[4]} {row[5]}' if row[4] and row[5] else 'Unknown Customer',
+                    'customerPhone': row[6] or 'N/A',
+                    'customerEmail': row[7] or 'N/A',
+                    'address': f'{row[8]}, {row[9]}, {row[10]} {row[11]}' if row[8] else 'N/A',
+                    'date': row[1].strftime('%Y-%m-%d') if row[1] else None,
+                    'startTime': row[1].strftime('%H:%M') if row[1] else None,
+                    'status': row[3] or 'pending',  # request_status
+                    'description': row[2] or 'No description available',
+                    'estimatedCost': float(row[13]) if row[13] else 0.0,  # service_price
+                    'actualCost': float(row[15]) if row[15] else None,  # final_price
+                    'serviceType': row[14] or 'General Service'  # service_type_name
+                }
+                jobs.append(job)
+            
+            return {
+                'success': True,
+                'data': jobs,
+                'count': len(jobs)
+            }, 200
+            
+    except Exception as e:
+        print(f'Error getting employee jobs: {e}')
+        return {
+            'success': False,
+            'message': 'Failed to retrieve employee jobs',
+            'error': str(e)
+        }, 500
+
 @api_bp.get("/employees/availability")
 def get_all_employees_availability():
     """Get availability records for all employees within a date range."""
