@@ -145,9 +145,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Load employee jobs
     const jobsLoaded = await loadEmployeeJobs(employeeId);
 
-    // Set employee name and role
-    document.getElementById('employeeName').textContent = `${currentEmployee.firstName} ${currentEmployee.lastName}`;
-    document.getElementById('employeeRole').textContent = currentEmployee.role;
+    // Employee name and role are already set by server-side template
+    // No need to update DOM elements
 
     // Update stats
     updateStats();
@@ -172,13 +171,19 @@ function getEmployeeIdFromURL() {
 
 // Load employee data (placeholder for now)
 async function loadEmployeeData(employeeId) {
-    // This would normally load from API, but for now set default values
+    // Employee data is already available from server-side rendering
+    // Get the name from the DOM elements that were populated by the template
+    const employeeNameElement = document.getElementById('employeeName');
+    const fullName = employeeNameElement.textContent.trim();
+    const [firstName, ...lastNameParts] = fullName.split(' ');
+    const lastName = lastNameParts.join(' ');
+
     currentEmployee = {
         id: employeeId,
-        firstName: "Employee",
-        lastName: `#${employeeId}`,
-        role: "Technician",
-        email: `employee${employeeId}@vargas.com`
+        firstName: firstName || 'Employee',
+        lastName: lastName || `#${employeeId}`,
+        role: 'employee',
+        email: `${firstName?.toLowerCase() || 'employee'}.${lastName?.toLowerCase() || employeeId}@vargas.com`
     };
 }
 
