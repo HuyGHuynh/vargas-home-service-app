@@ -1,3 +1,51 @@
+// Load service types from the database
+function loadServiceTypes() {
+    fetch('/api/service-types')
+        .then(response => response.json())
+        .then(data => {
+            const select = document.getElementById('serviceTypeSelect');
+            if (data.success && data.data) {
+                // Clear existing options
+                select.innerHTML = '<option value="">Select Service Type</option>';
+
+                // Add service types from database
+                data.data.forEach(serviceType => {
+                    const option = document.createElement('option');
+                    option.value = serviceType.service_type_name;
+                    option.textContent = serviceType.service_type_name;
+                    select.appendChild(option);
+                });
+            } else {
+                // Fallback to default options if API fails
+                select.innerHTML = `
+                    <option value="">Select Service Type</option>
+                    <option value="Remodeling">Remodeling</option>
+                    <option value="Roofing">Roofing</option>
+                    <option value="HVAC">HVAC</option>
+                    <option value="Outdoor Projects">Outdoor Projects</option>
+                    <option value="Plumbing">Plumbing</option>
+                    <option value="Electrical">Electrical</option>
+                    <option value="Other">Other</option>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading service types:', error);
+            const select = document.getElementById('serviceTypeSelect');
+            // Fallback to default options if API fails
+            select.innerHTML = `
+                <option value="">Select Service Type</option>
+                <option value="Remodeling">Remodeling</option>
+                <option value="Roofing">Roofing</option>
+                <option value="HVAC">HVAC</option>
+                <option value="Outdoor Projects">Outdoor Projects</option>
+                <option value="Plumbing">Plumbing</option>
+                <option value="Electrical">Electrical</option>
+                <option value="Other">Other</option>
+            `;
+        });
+}
+
 // Sample warranty data (in production, this would come from a database)
 const sampleWarranties = [
     {
@@ -213,6 +261,9 @@ function lookupWarranty() {
 
 // Allow Enter key to trigger search
 document.addEventListener('DOMContentLoaded', function () {
+    // Load service types when page loads
+    loadServiceTypes();
+
     const searchInput = document.getElementById('warrantySearchInput');
     if (searchInput) {
         searchInput.addEventListener('keypress', function (event) {

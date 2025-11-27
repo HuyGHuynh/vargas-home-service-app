@@ -401,9 +401,12 @@ async function loadFinancialData() {
     // Show loading state
     showLoadingState();
 
-    // Fetch data from API
-    const dataSuccess = await fetchFinancialData();
-    const chartSuccess = await fetchChartData();
+    // Get initial filter values (default to current month)
+    const dateRange = calculateDateRange('current-month');
+
+    // Fetch data from API with current month filter
+    const dataSuccess = await fetchFinancialData('all', dateRange.startDate, dateRange.endDate);
+    const chartSuccess = await fetchChartData('all');
 
     if (dataSuccess && chartSuccess) {
       // Initialize UI with data
@@ -412,6 +415,7 @@ async function loadFinancialData() {
       updateFinancialSummary();
       createRevenueChart();
       createServiceChart();
+      updateFilterIndicator();
     } else {
       showErrorState();
     }
@@ -455,14 +459,56 @@ function setupEventListeners() {
       if (this.value === 'custom') {
         document.getElementById('customDateRange').style.display = 'flex';
         document.getElementById('customDateRangeEnd').style.display = 'flex';
+        // Don't auto-update - wait for user to select custom dates
       } else {
         document.getElementById('customDateRange').style.display = 'none';
         document.getElementById('customDateRangeEnd').style.display = 'none';
-        renderTransactions();
-        updateFinancialSummary();
+        // Update report with predefined date range
+        updateReport();
       }
+      updateFilterIndicator();
     });
   }
+}
+
+// Update filter indicator to show current filters
+function updateFilterIndicator() {
+  const categoryFilter = document.getElementById('categoryFilter');
+  const dateRangeSelect = document.getElementById('dateRange');
+  const filterIndicator = document.getElementById('filterIndicator');
+  const currentCategory = document.getElementById('currentCategory');
+
+  if (!filterIndicator || !currentCategory) return;
+
+  let filterText = '';
+  const categoryValue = categoryFilter ? categoryFilter.value : 'all';
+  const dateRangeValue = dateRangeSelect ? dateRangeSelect.value : '';
+
+  // Add category filter info
+  if (categoryValue !== 'all') {
+    filterText += `Category: ${categoryValue}`;
+  } else {
+    filterText += 'All Categories';
+  }
+
+  // Add date range info
+  if (dateRangeValue && dateRangeValue !== '') {
+    const dateRangeText = {
+      'current-month': 'Current Month',
+      'last-month': 'Last Month',
+      'current-quarter': 'Current Quarter',
+      'current-year': 'Current Year',
+      'custom': 'Custom Range'
+    };
+
+    filterText += ` | ${dateRangeText[dateRangeValue] || dateRangeValue}`;
+  }
+
+  currentCategory.textContent = filterText;
+
+  // Show/hide indicator based on whether filters are active
+  const hasActiveFilters = categoryValue !== 'all' || (dateRangeValue && dateRangeValue !== '');
+  filterIndicator.style.display = hasActiveFilters ? 'flex' : 'none';
 }
 
 // Render transactions table
@@ -555,16 +601,91 @@ function formatNumber(num) {
   return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
+// Calculate date range based on selection
+function calculateDateRange(rangeType) {
+  const today = new Date();
+  let startDate, endDate;
+
+  switch (rangeType) {
+    case 'current-month':
+      startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+      endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      break;
+
+    case 'last-month':
+      startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      endDate = new Date(today.getFullYear(), today.getMonth(), 0);
+      break;
+
+    case 'current-quarter':
+      const quarterStart = Math.floor(today.getMonth() / 3) * 3;
+      startDate = new Date(today.getFullYear(), quarterStart, 1);
+      endDate = new Date(today.getFullYear(), quarterStart + 3, 0);
+      break;
+
+    case 'current-year':
+      startDate = new Date(today.getFullYear(), 0, 1);
+      endDate = new Date(today.getFullYear(), 11, 31);
+      break;
+
+    case 'custom':
+      // Return null - will use custom date inputs
+      return { startDate: null, endDate: null };
+
+    default:
+      // No filter - return null
+      return { startDate: null, endDate: null };
+  }
+
+  // Format dates as YYYY-MM-DD for API
+  const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  return {
+    startDate: formatDate(startDate),
+    endDate: formatDate(endDate)
+  };
+}
+
 // Update report
 async function updateReport() {
   const categoryFilter = document.getElementById('categoryFilter');
-  const startDate = document.getElementById('startDate');
-  const endDate = document.getElementById('endDate');
+  const dateRangeSelect = document.getElementById('dateRange');
+  const startDateInput = document.getElementById('startDate');
+  const endDateInput = document.getElementById('endDate');
 
   // Get filter values
   const category = categoryFilter ? categoryFilter.value : 'all';
-  const start = startDate ? startDate.value : null;
-  const end = endDate ? endDate.value : null;
+  const dateRangeType = dateRangeSelect ? dateRangeSelect.value : '';
+
+  let start, end;
+
+  if (dateRangeType === 'custom') {
+    // Use custom date inputs - only proceed if both dates are provided
+    const startValue = startDateInput ? startDateInput.value : null;
+    const endValue = endDateInput ? endDateInput.value : null;
+
+    // If custom range is selected but dates are incomplete, don't update
+    if (!startValue || !endValue) {
+      return; // Exit early - don't update report until both dates are provided
+    }
+
+    start = startValue;
+    end = endValue;
+  } else if (dateRangeType) {
+    // Calculate predefined date range
+    const dateRange = calculateDateRange(dateRangeType);
+    start = dateRange.startDate;
+    end = dateRange.endDate;
+  } else {
+    // No date filter
+    start = null;
+    end = null;
+  }
 
   // Show loading state
   showLoadingState();
@@ -580,6 +701,7 @@ async function updateReport() {
       updateFinancialSummary();
       createRevenueChart();
       createServiceChart();
+      updateFilterIndicator();
     } else {
       showErrorState();
     }
@@ -593,13 +715,39 @@ async function updateReport() {
 async function exportToCSV() {
   try {
     const categoryFilter = document.getElementById('categoryFilter');
-    const startDate = document.getElementById('startDate');
-    const endDate = document.getElementById('endDate');
+    const dateRangeSelect = document.getElementById('dateRange');
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
 
     // Get filter values
     const category = categoryFilter ? categoryFilter.value : 'all';
-    const start = startDate ? startDate.value : null;
-    const end = endDate ? endDate.value : null;
+    const dateRangeType = dateRangeSelect ? dateRangeSelect.value : '';
+
+    let start, end;
+
+    if (dateRangeType === 'custom') {
+      // Use custom date inputs - only proceed if both dates are provided
+      const startValue = startDateInput ? startDateInput.value : null;
+      const endValue = endDateInput ? endDateInput.value : null;
+
+      // If custom range is selected but dates are incomplete, show error
+      if (!startValue || !endValue) {
+        alert('Please select both start and end dates for custom range export.');
+        return; // Exit early
+      }
+
+      start = startValue;
+      end = endValue;
+    } else if (dateRangeType) {
+      // Calculate predefined date range
+      const dateRange = calculateDateRange(dateRangeType);
+      start = dateRange.startDate;
+      end = dateRange.endDate;
+    } else {
+      // No date filter
+      start = null;
+      end = null;
+    }
 
     // Build query parameters
     const params = new URLSearchParams({
