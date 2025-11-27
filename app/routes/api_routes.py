@@ -487,7 +487,8 @@ def get_employee_jobs(employee_id):
                     s.job_name,
                     s.service_price,
                     st.service_type_name,
-                    fpd.pricetotal as final_price
+                    fpd.pricetotal as final_price,
+                    s.duration_hours
                 FROM work_assignments wa
                 JOIN servicerequests sr ON wa.requestid = sr.requestid
                 LEFT JOIN customer c ON sr.customerid = c.customerid
@@ -518,7 +519,8 @@ def get_employee_jobs(employee_id):
                     'description': row[2] or 'No description available',
                     'estimatedCost': float(row[13]) if row[13] else 0.0,  # service_price
                     'actualCost': float(row[15]) if row[15] else None,  # final_price
-                    'serviceType': row[14] or 'General Service'  # service_type_name
+                    'serviceType': row[14] or 'General Service',  # service_type_name
+                    'durationHours': float(row[16]) if row[16] else 0.0  # duration_hours
                 }
                 jobs.append(job)
             

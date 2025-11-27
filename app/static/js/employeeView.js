@@ -189,29 +189,49 @@ async function loadEmployeeData(employeeId) {
 
 // Update statistics cards
 function updateStats() {
-    const pending = employeeJobs.filter(job => job.status === 'pending').length;
-    const inProgress = employeeJobs.filter(job => job.status === 'in-progress').length;
-    const completed = employeeJobs.filter(job => job.status === 'completed').length;
+    // Count jobs by status
+    const pending = countJobsByStatus('pending');
+    const inProgress = countJobsByStatus('in-progress');
+    const completed = countJobsByStatus('completed');
 
-    // Calculate hours this week
-    const now = new Date();
-    const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
-    const weekEnd = new Date(now.setDate(now.getDate() - now.getDay() + 6));
-
-    const hoursThisWeek = employeeJobs.filter(job => {
-        const jobDate = new Date(job.date);
-        return jobDate >= weekStart && jobDate <= weekEnd;
-    }).reduce((total, job) => {
-        const start = new Date(`2000-01-01 ${job.startTime}`);
-        const end = new Date(`2000-01-01 ${job.endTime}`);
-        const hours = (end - start) / (1000 * 60 * 60);
-        return total + hours;
-    }, 0);
+    // Calculate hours this week using duration_hours from database
+    const hoursThisWeek = calculateHoursThisWeek();
 
     document.getElementById('pendingCount').textContent = pending;
     document.getElementById('inProgressCount').textContent = inProgress;
     document.getElementById('completedCount').textContent = completed;
     document.getElementById('hoursCount').textContent = hoursThisWeek.toFixed(1);
+}
+
+// Count jobs by status
+function countJobsByStatus(status) {
+    return employeeJobs.filter(job => {
+        const normalizedStatus = job.status ? job.status.toLowerCase().trim() : '';
+        const targetStatus = status.toLowerCase().trim();
+
+        // Handle different status formats
+        if (targetStatus === 'in-progress') {
+            return normalizedStatus === 'in-progress' || normalizedStatus === 'in progress' || normalizedStatus === 'inprogress';
+        }
+        return normalizedStatus === targetStatus;
+    }).length;
+}
+
+// Calculate total hours for current week using duration_hours from database
+function calculateHoursThisWeek() {
+    const now = new Date();
+    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay())); // Sunday
+    const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6)); // Saturday
+
+    return employeeJobs.filter(job => {
+        if (!job.date) return false;
+        const jobDate = new Date(job.date);
+        return jobDate >= startOfWeek && jobDate <= endOfWeek;
+    }).reduce((total, job) => {
+        // Use duration_hours from the database instead of calculating from start/end times
+        const duration = job.durationHours || 0;
+        return total + duration;
+    }, 0);
 }
 
 // Initialize FullCalendar
