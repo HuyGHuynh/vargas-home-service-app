@@ -34,7 +34,7 @@
   <!-- Hero Section --> <!--add logo-->
   <section class="hero">
     <div class="hero-content">
-      <img src="client/images/detective.webp" alt="Vargas Home Services Logo" class="hero-logo">
+      <img src="{{ url_for('static', filename='images/VargasLogo.png') }}"" alt="Vargas Home Services Logo" class="hero-logo">
       <h2>Your trusted partner for all home improvement needs.</h2>
       <p class="phone">Call us today: <strong>(555) 123-4567</strong></p>
       <button class="appointment-btn" onclick="window.location.href='/appointment'">Schedule
@@ -65,10 +65,10 @@
   <section class="gallery" id="gallery">
     <h2>Our Work</h2>
     <div class="gallery-grid">
-      <img src="client/images/work1.webp" alt="Project 1">
-      <img src="client/images/work2.webp" alt="Project 2">
-      <img src="client/images/work3.webp" alt="Project 3">
-      <img src="client/images/work4.webp" alt="Project 4">
+      <img src="{{ url_for('static', filename='images/image1.png') }}" alt="Project 1">
+      <img src="{{ url_for('static', filename='images/image2.png') }}" alt="Project 2">
+      <img src="{{ url_for('static', filename='images/image3.png') }}" alt="Project 3">
+      <img src="{{ url_for('static', filename='images/image4.png') }}" alt="Project 4">
     </div>
   </section>
 
