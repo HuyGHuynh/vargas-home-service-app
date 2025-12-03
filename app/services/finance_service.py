@@ -25,6 +25,7 @@ class FinanceService:
         for txn in transactions:
             formatted_transactions.append({
                 'txnId': f"TXN-{txn['txn_id']}",
+                'rawId': txn['txn_id'],  # Raw ID for API calls
                 'date': txn['txn_date'],
                 'category': txn['category'],
                 'direction': 'Income' if txn['direction'] == 'IN' else 'Expense',

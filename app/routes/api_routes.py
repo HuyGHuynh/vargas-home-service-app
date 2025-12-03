@@ -1928,3 +1928,41 @@ def get_financial_form_data():
             "success": False,
             "message": "Failed to fetch form data"
         }, 500
+
+
+@api_bp.route("/admin/financial/update-status", methods=["PUT"])
+def update_transaction_status():
+    """Update the status of a financial transaction."""
+    try:
+        # Check if user is authenticated and is admin
+        if 'user_id' not in session:
+            return {"success": False, "message": "Authentication required"}, 401
+        
+        # Get request data
+        data = request.get_json()
+        if not data:
+            return {"success": False, "message": "No data provided"}, 400
+        
+        # Extract and validate required fields
+        txn_id = data.get('txn_id')
+        status = data.get('status')
+        
+        if not txn_id or not status:
+            return {"success": False, "message": "Missing required fields: txn_id and status"}, 400
+        
+        # Validate status value
+        if status not in ['Pending', 'Cleared']:
+            return {"success": False, "message": "Invalid status. Must be 'Pending' or 'Cleared'"}, 400
+        
+        # Update the transaction status
+        from repositories.finance_repository import FinanceRepository
+        success = FinanceRepository.update_transaction_status(txn_id, status)
+        
+        if success:
+            return {"success": True, "message": f"Transaction status updated to {status}"}, 200
+        else:
+            return {"success": False, "message": "Failed to update transaction status"}, 500
+        
+    except Exception as e:
+        print(f"Error updating transaction status: {e}")
+        return {"success": False, "message": "Internal server error"}, 500

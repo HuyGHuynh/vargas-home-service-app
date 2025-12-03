@@ -347,7 +347,7 @@ class FinanceRepository(BaseRepository):
                 cur.execute("""
                     SELECT employeeid, firstname, lastname
                     FROM employee
-                    WHERE status = 'active'
+                    WHERE LOWER(status) = 'active' OR status IS NULL
                     ORDER BY firstname, lastname
                 """)
                 rows = cur.fetchall()
@@ -364,3 +364,21 @@ class FinanceRepository(BaseRepository):
         except Exception as e:
             print(f"Error fetching employees: {e}")
             return []
+    
+    @classmethod
+    def update_transaction_status(cls, txn_id: int, status: str) -> bool:
+        """Update the status of a financial transaction."""
+        try:
+            with cls.get_cursor() as cur:
+                cur.execute("""
+                    UPDATE finance_transactions 
+                    SET status = %s 
+                    WHERE txn_id = %s
+                """, (status, txn_id))
+                
+                # Check if any rows were affected
+                return cur.rowcount > 0
+                
+        except Exception as e:
+            print(f"Error updating transaction status: {e}")
+            return False
