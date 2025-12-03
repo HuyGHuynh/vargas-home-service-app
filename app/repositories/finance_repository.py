@@ -347,7 +347,7 @@ class FinanceRepository(BaseRepository):
                 cur.execute("""
                     SELECT employeeid, firstname, lastname
                     FROM employee
-                    WHERE status = 'active'
+                    WHERE LOWER(status) = 'active' OR status IS NULL
                     ORDER BY firstname, lastname
                 """)
                 rows = cur.fetchall()
