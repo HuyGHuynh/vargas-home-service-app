@@ -547,6 +547,14 @@ function renderTransactions() {
       <td>${txn.description}</td>
       <td>${txn.employee}</td>
       <td>${txn.requestOrder}</td>
+      <td>
+        ${txn.status === 'Pending' ? `
+          <input type="checkbox" class="mark-cleared-checkbox" 
+                 data-txn-id="${txn.rawId}" 
+                 onchange="markAsCleared(${txn.rawId})"
+                 title="Mark as Cleared">
+        ` : '<span class="no-action">—</span>'}
+      </td>
     </tr>
   `).join('');
 }
@@ -822,12 +830,14 @@ async function initializeTransactionForm() {
       const employeeSelect = document.getElementById('transactionEmployee');
       employeeSelect.innerHTML = '<option value="">No Employee</option>';
 
-      result.data.employees.forEach(employee => {
-        const option = document.createElement('option');
-        option.value = employee.id;
-        option.textContent = employee.name;
-        employeeSelect.appendChild(option);
-      });
+      if (result.data.employees && result.data.employees.length > 0) {
+        result.data.employees.forEach(employee => {
+          const option = document.createElement('option');
+          option.value = employee.id;
+          option.textContent = employee.name;
+          employeeSelect.appendChild(option);
+        });
+      }
     }
 
   } catch (error) {
@@ -893,6 +903,64 @@ async function submitTransaction(event) {
     console.error('Error submitting transaction:', error);
     alert('Error adding transaction. Please try again.');
   }
+}
+
+// Function to mark transaction as cleared
+async function markAsCleared(txnId) {
+  try {
+    const checkbox = document.querySelector(`input[data-txn-id="${txnId}"]`);
+
+    if (!checkbox.checked) {
+      checkbox.checked = false;
+      return;
+    }
+
+    const response = await fetch('/api/admin/financial/update-status', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        txn_id: txnId,
+        status: 'Cleared'
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      showNotification('Transaction marked as cleared!', 'success');
+      // Refresh the data to update the table
+      await loadFinancialData();
+    } else {
+      showNotification(`Error: ${result.message}`, 'error');
+      checkbox.checked = false; // Revert checkbox
+    }
+
+  } catch (error) {
+    console.error('Error updating transaction status:', error);
+    showNotification('Error updating transaction. Please try again.', 'error');
+    const checkbox = document.querySelector(`input[data-txn-id="${txnId}"]`);
+    if (checkbox) checkbox.checked = false; // Revert checkbox
+  }
+}
+
+// Function to show notifications
+function showNotification(message, type = 'info') {
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.className = `notification notification-${type}`;
+  notification.textContent = message;
+
+  // Add to page
+  document.body.appendChild(notification);
+
+  // Auto remove after 3 seconds
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.parentNode.removeChild(notification);
+    }
+  }, 3000);
 }
 
 // Close modal when clicking outside

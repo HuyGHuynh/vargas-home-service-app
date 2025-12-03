@@ -851,3 +851,64 @@ tfoot td {
         padding: 20px;
     }
 }
+
+/* Checkbox Actions Column */
+.mark-cleared-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #28a745;
+    transform: scale(1.2);
+}
+
+.mark-cleared-checkbox:hover {
+    transform: scale(1.3);
+}
+
+.no-action {
+    color: #999;
+    font-size: 1.2rem;
+    text-align: center;
+    display: block;
+}
+
+/* Notification System */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    z-index: 9999;
+    max-width: 300px;
+    animation: slideIn 0.3s ease-out;
+}
+
+.notification-success {
+    background-color: #28a745;
+    border-left: 4px solid #1e7e34;
+}
+
+.notification-error {
+    background-color: #dc3545;
+    border-left: 4px solid #c82333;
+}
+
+.notification-info {
+    background-color: #17a2b8;
+    border-left: 4px solid #138496;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
