@@ -44,20 +44,18 @@ class EmailService:
         if os.path.exists(self.token_file):
             creds = Credentials.from_authorized_user_file(self.token_file, SCOPES)
         
-        # If no valid credentials, get new ones
+        # If no valid credentials, try to refresh or raise error
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
+                try:
+                    creds.refresh(Request())
+                    # Save refreshed credentials
+                    with open(self.token_file, 'w') as token:
+                        token.write(creds.to_json())
+                except Exception as e:
+                    raise Exception(f"Token refresh failed: {e}. Please regenerate token.json locally.")
             else:
-                if not os.path.exists(self.credentials_file):
-                    raise Exception(f"Credentials file not found: {self.credentials_file}")
-                
-                flow = InstalledAppFlow.from_client_secrets_file(self.credentials_file, SCOPES)
-                creds = flow.run_local_server(port=0)
-            
-            # Save credentials for next run
-            with open(self.token_file, 'w') as token:
-                token.write(creds.to_json())
+                raise Exception(f"No valid credentials found. Please ensure token.json exists and contains a valid refresh token.")
         
         service = build('gmail', 'v1', credentials=creds)
         return service
